@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { solicitation as solModel } from "@/app/models";
 
 import styles from "./page.module.scss";
 
@@ -55,8 +56,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               aria-label="Save solicitation"
               onClick={async (e) => {
                 e.stopPropagation();
-                await updateSol(sol.id, { cnLiked: !sol.cnLiked });
-                await refreshSols();
+                await solModel.patch(sol.id, { cnLiked: !sol.cnLiked });
+                // await refreshSols();
               }}
             >
               <Heart />
@@ -90,9 +91,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <div className={styles.sol_externalLinks}>
                 <label>External Links</label>
                 <div>
-                  {sol.externalLinks?.map((link, index) => (
-                    <div>
-                      <a key={index} href={link} target="_blank">
+                  {sol.externalLinks?.map((link: string) => (
+                    <div key={`external-link-${link}`}>
+                      <a href={link} target="_blank">
                         {link}
                       </a>
                     </div>
@@ -102,8 +103,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </div>
             <div className={styles.sol_categories}>
               <label>Categories</label>
-              {sol.categories?.map((category, index) => (
-                <span key={index} className={styles.sol_category}>
+              {sol.categories?.map((category: string) => (
+                <span
+                  key={`category-${category}`}
+                  className={styles.sol_category}
+                >
                   {category}
                 </span>
               ))}
@@ -145,7 +149,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <Select
                 defaultValue={sol.cnStatus || "new"}
                 onValueChange={(value) => {
-                  updateSol(sol.id, { cnStatus: value });
+                  solModel.patch(sol.id, { cnStatus: value });
                 }}
               >
                 <SelectTrigger>

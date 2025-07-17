@@ -33,7 +33,7 @@ async function main() {
       await elastic.update({
         index: elasticIndex,
         id: doc.id,
-        body: { doc: { site: "bidnetdirect" } },
+        doc: { site: "bidnetdirect" },
       });
       console.log(`Elasticsearch: Updated ${doc.id}`);
     } catch (err) {

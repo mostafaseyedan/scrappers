@@ -19,7 +19,7 @@ const tasks = {
     1. Navigate to bidnetdirect.com and log in.
     2. Click on the "Solicitations" tab and then click "Search".
     4. Getting the total number of pages and results from the bottom of the page.`,
-  executeSummarySolByPage: (page) =>
+  executeSummarySolByPage: (page: number) =>
     `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
     1. Navigate to bidnetdirect.com and log in.
     2. Click 'Allow all cookies'.
@@ -28,7 +28,7 @@ const tasks = {
     5. Scroll down to the bottom and click on page ${page}.
     6. Wait 5 seconds for page to load. Scroll to the bottom.
     7. Extract all solicitations with their URLs from the current page. Make sure to get the description.`,
-  executeSolDetails: (urlPath) =>
+  executeSolDetails: (urlPath: string) =>
     `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
     1. Navigate to bidnetdirect.com${urlPath}.
     2. If 'See more' exists below Description, click on 'See more' to get the full description.
@@ -144,7 +144,7 @@ async function checkLatestSummary() {
   return { isoString: folders[folders.length - 1], summary };
 }
 
-function convertSizeToUnix(sizeStr) {
+function convertSizeToUnix(sizeStr: any) {
   const size = sizeStr
     .replace(" Kb", "KB")
     .replace(" Mb", "MB")
@@ -152,12 +152,17 @@ function convertSizeToUnix(sizeStr) {
   return size;
 }
 
-async function executeSolDetails(agent, folder, solicitationId, urlPath) {
+async function executeSolDetails(
+  agent: any,
+  folder: any,
+  solicitationId: any,
+  urlPath: any
+) {
   const result = await agent.executeTask(tasks.executeSolDetails(urlPath), {
-    onDebugStep: (debug) => {
+    onDebugStep: (debug: any) => {
       console.dir(debug);
     },
-    onStep: (step) => {
+    onStep: (step: any) => {
       performance.mark(`executeSolDetails-step-${step.idx + 1}`);
       const duration =
         step.idx === 0
@@ -199,9 +204,9 @@ async function executeSolDetails(agent, folder, solicitationId, urlPath) {
   return JSON.parse(result.output);
 }
 
-async function executeSummary(agent, folder) {
+async function executeSummary(agent: any, folder: any) {
   const result = await agent.executeTask(tasks.executeSummary(), {
-    onStep: (step) => {
+    onStep: (step: any) => {
       performance.mark(`executeSummary-step-${step.idx + 1}`);
       const duration =
         step.idx === 0
@@ -242,9 +247,9 @@ async function executeSummary(agent, folder) {
   return JSON.parse(result.output);
 }
 
-async function executeSummarySolByPage(agent, page, folder) {
+async function executeSummarySolByPage(agent: any, page: any, folder: any) {
   const result = await agent.executeTask(tasks.executeSummarySolByPage(page), {
-    onStep: (step) => {
+    onStep: (step: any) => {
       performance.mark(`executeSummarySolByPage-step-${step.idx + 1}`);
       const duration =
         step.idx === 0
@@ -286,7 +291,7 @@ async function executeSummarySolByPage(agent, page, folder) {
   return JSON.parse(result.output);
 }
 
-async function getFile(filePath) {
+async function getFile(filePath: any) {
   let results;
 
   if (fs.existsSync(filePath)) {
@@ -296,7 +301,7 @@ async function getFile(filePath) {
   return results;
 }
 
-function sanitizeSolForDb(solicitation) {
+function sanitizeSolForDb(solicitation: Record<string, any>) {
   if (!solicitation || !solicitation.id) {
     throw new Error("Invalid solicitation data");
   }
@@ -336,7 +341,7 @@ function sanitizeSolForDb(solicitation) {
   };
 }
 
-function parseFileSize(sizeStr) {
+function parseFileSize(sizeStr: string) {
   let size;
   size = parseInt(
     sizeStr
@@ -347,7 +352,15 @@ function parseFileSize(sizeStr) {
   return size;
 }
 
-async function processDownloads({ solDetails, solPath, bucket }) {
+async function processDownloads({
+  solDetails,
+  solPath,
+  bucket,
+}: {
+  solDetails: any;
+  solPath: any;
+  bucket: any;
+}) {
   let cmd, out;
 
   if (!solDetails || !solPath) {
@@ -357,7 +370,7 @@ async function processDownloads({ solDetails, solPath, bucket }) {
   // Move downloaded files to the correct folder
   // Note: This is a workaround. Playwright is not exposing the original file name so we are guessing by file size.
   const sortedDocs = solDetails.documents.sort(
-    (a, b) => parseFileSize(a.size) - parseFileSize(b.size)
+    (a: any, b: any) => parseFileSize(a.size) - parseFileSize(b.size)
   );
   cmd = `find .output/biddirect/tmp/downloads/ -maxdepth 1 -type f -printf "%s %f\n" | awk '{cmd="numfmt --to=iec --suffix=B "$1; cmd | getline size; close(cmd); print size, substr($0, index($0,$2))}' | sort -h`;
   out = execSync(cmd);
@@ -366,7 +379,7 @@ async function processDownloads({ solDetails, solPath, bucket }) {
     .split("\n")
     .filter((line) => line.trim() !== "");
 
-  if (rawFiles === "" || rawFiles.length === 0) {
+  if (rawFiles.length === 0) {
     return [];
   }
 
@@ -612,9 +625,9 @@ async function run() {
         );
 
         totalSolicitations++;
-      } catch (error) {
+      } catch (error: any) {
         console.error(chalk.red("    Failed to process solicitation"));
-        console.error(chalk.red(`    ${error}`, error.stack));
+        console.error(chalk.red(`    ${error}`, error?.stack));
       }
     }
   }
@@ -627,7 +640,7 @@ const start = new Date();
 performance.mark("start");
 
 run()
-  .catch((error) => console.error(chalk.red(`  ${error}`, error.stack)))
+  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
   .finally(() => {
     performance.mark("end");
     const totalSec = (

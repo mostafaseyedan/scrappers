@@ -20,6 +20,10 @@
 
   &_contentCol {
     flex: 1 1 100%;
+
+    label {
+      margin-right: 10px;
+    }
   }
 
   &_datesCol {

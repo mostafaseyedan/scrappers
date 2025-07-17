@@ -1,4 +1,4 @@
-import { Braces, Heart, Pencil, Plus } from "lucide-react";
+import { Braces, Heart, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -98,8 +98,8 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
           <div className={styles.sol_externalLinks}>
             <label>External Links</label>
             <div>
-              {sol.externalLinks?.map((link, index) => (
-                <a key={index} href={link} target="_blank">
+              {sol.externalLinks?.map((link: string) => (
+                <a key={`external-link-${link}`} href={link} target="_blank">
                   {link}
                 </a>
               ))}
@@ -108,8 +108,8 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
         </div>
         <div className={styles.sol_categories}>
           <label>Categories</label>
-          {sol.categories?.map((category, index) => (
-            <span key={index} className={styles.sol_category}>
+          {sol.categories?.map((category: string) => (
+            <span key={`category-${category}`} className={styles.sol_category}>
               {category}
             </span>
           ))}

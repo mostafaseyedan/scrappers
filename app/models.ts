@@ -2,7 +2,7 @@ import { z } from "zod";
 import { db } from "@/lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
 
-const solicitation = {
+const solicitation: any = {
   schema: z.object({
     url: z.string().url(),
     title: z.string(),
@@ -57,7 +57,9 @@ const solicitation = {
 
     return json;
   },
-  post: (data: z.infer<typeof solicitation.schema>) => {},
+  post: (data: z.infer<typeof solicitation.schema>) => {
+    return data;
+  },
   put: async (id: string, data: z.infer<typeof solicitation.schema>) => {
     const resp = await fetch(`/api/solicitations/${id}`, {
       method: "PUT",
@@ -71,7 +73,9 @@ const solicitation = {
 
     return json;
   },
-  remove: (id: string) => {},
+  remove: (id: string) => {
+    return id;
+  },
 };
 
 export { solicitation };

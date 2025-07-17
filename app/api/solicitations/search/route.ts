@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const sort = searchParams.get("sort") || "publicationDate desc";
 
-  let must: any[] = [];
-  let filterArr: any[] = [];
+  const must: any[] = [];
+  const filterArr: any[] = [];
   let queryObj = {};
 
   for (const [key, value] of searchParams.entries()) {

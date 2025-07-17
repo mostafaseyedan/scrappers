@@ -2,7 +2,7 @@ import "dotenv/config";
 import { initDb } from "@/lib/firebaseAdmin";
 import { Client } from "@elastic/elasticsearch";
 import chalk from "chalk";
-import { sanitizeFbToElasticSearch } from "@/lib/dataUtils";
+import { fbToJs } from "@/lib/dataUtils";
 
 const elasticApiKey = process.env.ELASTIC_API_KEY;
 if (!elasticApiKey) {
@@ -20,7 +20,7 @@ async function run() {
   const solicitationsSnapshot = await db.collection("solicitations").get();
   let docs: Record<string, any>[] = [];
   solicitationsSnapshot.forEach((doc) => {
-    let newEsDoc: Record<string, any> = sanitizeFbToElasticSearch({
+    let newEsDoc: Record<string, any> = fbToJs({
       id: doc.id,
       ...doc.data(),
     });
