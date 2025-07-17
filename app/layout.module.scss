@@ -1,0 +1,44 @@
+.layout {
+  font-size: 15px;
+  padding: 20px;
+
+  a[href] {
+    color: blue;
+  }
+
+  label {
+    margin-top: 5px;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  &_header {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 10px;
+    :global(h1) {
+      font-weight: bold;
+      font-size: 26px;
+      margin-right: 20px;
+    }
+  }
+
+  &_footer {
+    font-size: 13px;
+    margin-top: 20px;
+  }
+
+  &_nav {
+    a[href] {
+      color: gray;
+      font-size: 20px;
+      padding: 5px;
+    }
+  }
+
+  &_userBox {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+}

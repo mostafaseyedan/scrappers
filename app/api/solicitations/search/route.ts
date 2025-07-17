@@ -1,0 +1,93 @@
+import { NextRequest, NextResponse } from "next/server";
+import { Client } from "@elastic/elasticsearch";
+
+const elasticApiKey = process.env.ELASTIC_API_KEY;
+if (!elasticApiKey) {
+  throw new Error("ELASTIC_API_KEY environment variable is not defined");
+}
+
+const elasticClient = new Client({
+  node: process.env.ELASTIC_NODE,
+  auth: { apiKey: elasticApiKey },
+  serverMode: "serverless",
+});
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q") || "";
+  const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const sort = searchParams.get("sort") || "publicationDate desc";
+
+  let must: any[] = [];
+  let filterArr: any[] = [];
+  let queryObj = {};
+
+  for (const [key, value] of searchParams.entries()) {
+    if (key.startsWith("filter.")) {
+      const field = key.substring(7);
+      filterArr.push({
+        match: {
+          [field]: value,
+        },
+      });
+    }
+  }
+
+  if (q) {
+    must.push({
+      multi_match: {
+        query: q,
+        fields: [
+          "title",
+          "description",
+          "keywords",
+          "categories",
+          "cnNotes",
+          "location",
+          "issuer",
+          "id",
+          "site",
+          "siteId",
+        ],
+      },
+    });
+    queryObj = {
+      query: {
+        bool: {
+          must,
+          filter: filterArr,
+        },
+      },
+    };
+  } else if (filterArr.length > 0) {
+    queryObj = {
+      query: {
+        bool: {
+          filter: filterArr,
+        },
+      },
+    };
+  } else {
+    queryObj = {
+      query: {
+        match_all: {},
+      },
+    };
+  }
+
+  const [sortField, sortOrder] = sort.split(" ");
+  const sortObj = {
+    [sortField]: sortOrder || "desc",
+  };
+
+  const result = await elasticClient.search({
+    index: "solicitations",
+    from: (page - 1) * limit,
+    size: limit,
+    sort: sortObj,
+    ...queryObj,
+  });
+
+  return NextResponse.json(result);
+}

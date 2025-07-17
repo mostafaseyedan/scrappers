@@ -1,0 +1,639 @@
+import "dotenv/config";
+import HyperAgent from "@hyperbrowser/agent";
+import { ChatOpenAI } from "@langchain/openai";
+import chalk from "chalk";
+import { z } from "zod";
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+import { initDb, initStorage } from "@/lib/firebaseAdmin";
+
+const DEBUG = true;
+const HIDE_STEPS = true;
+const USER = process.env.BIDDIRECT_USER;
+const PASS = process.env.BIDDIRECT_PASS;
+
+const tasks = {
+  executeSummary: () =>
+    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
+    1. Navigate to bidnetdirect.com and log in.
+    2. Click on the "Solicitations" tab and then click "Search".
+    4. Getting the total number of pages and results from the bottom of the page.`,
+  executeSummarySolByPage: (page) =>
+    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
+    1. Navigate to bidnetdirect.com and log in.
+    2. Click 'Allow all cookies'.
+    3. Click on the "Solicitations" tab and then click "Search".
+    4. Wait at least 5 seconds for the page to refresh and confirm that 'Loading' text is not on the screen. 
+    5. Scroll down to the bottom and click on page ${page}.
+    6. Wait 5 seconds for page to load. Scroll to the bottom.
+    7. Extract all solicitations with their URLs from the current page. Make sure to get the description.`,
+  executeSolDetails: (urlPath) =>
+    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
+    1. Navigate to bidnetdirect.com${urlPath}.
+    2. If 'See more' exists below Description, click on 'See more' to get the full description.
+    3. Wait 5 seconds for the page to load before extracting the details.
+    4. Extract the following fields from the solicitation page:
+      - ID: Extract the ID from the URL.
+      - URL: The full URL of the solicitation.
+      - AI Overview
+      - Reference Number
+      - Issuing Organization
+      - Solicitation Title
+      - Title
+      - Source Id
+      - Location
+      - Purchase Type
+      - Piggyback Contract
+      - Publication Date
+      - Closing Date
+      - Questions Due By Date
+      - Contact Information
+      - Description: Copy word to word. Don't summarize.
+      - External Url
+      - Pre-Bidding Events: Extract for each event: type, date, attendance, and any notes.
+    5. Wait until most of the fields are extracted before clicking on Categories on sidebar to fill the categories array.
+    6. Click Documents on sidebar and save file name, file size, and URL to fill the documents array.
+    7. Download each file by clicking only once.`,
+};
+
+const schemas = {
+  solicitation: z.object({
+    id: z.string(),
+    url: z.string(),
+    aiOverview: z.string(),
+    referenceNumber: z.string(),
+    issuingOrganization: z.string(),
+    solicitationTitle: z.string(),
+    title: z.string(),
+    sourceId: z.string(),
+    location: z.string(),
+    purchaseType: z.string(),
+    piggybackContract: z.string(),
+    publicationDate: z.string(),
+    closingDate: z.string(),
+    questionsDueByDate: z.string(),
+    contactInformation: z.string(),
+    description: z.string(),
+    externalUrl: z.string(),
+    preBiddingEvents: z.array(
+      z.object({
+        eventType: z.string(),
+        eventDate: z.string(),
+        attendance: z.string(),
+        note: z.string(),
+      })
+    ),
+    categories: z.array(z.string()),
+    documents: z.array(
+      z.object({
+        name: z.string(),
+        size: z.string(),
+        url: z.string(),
+      })
+    ),
+  }),
+  summary: z.object({
+    total: z.number(),
+    pages: z.number(),
+  }),
+  summarySolicitations: z.object({
+    page: z.number(),
+    solicitations: z.array(
+      z.object({
+        id: z.string(),
+        url: z.string(),
+        title: z.string(),
+        issuingOrganization: z.string(),
+        publicationDate: z.string(),
+        closingDate: z.string(),
+        description: z.string(),
+        location: z.string(),
+      })
+    ),
+  }),
+};
+
+async function checkLatestSummary() {
+  let summary;
+
+  let dir = path.join(".output", "biddirect");
+  const folders = fs
+    .readdirSync(dir)
+    .filter(
+      (f) =>
+        f.match(/^\d{4}-\d{2}-\d{2}/) &&
+        fs.statSync(path.join(dir, f)).isDirectory()
+    );
+
+  if (folders.length === 0) {
+    return false;
+  }
+
+  dir = path.join(
+    ".output",
+    "biddirect",
+    folders[folders.length - 1],
+    "summary.json"
+  );
+
+  if (fs.existsSync(dir)) {
+    summary = JSON.parse(fs.readFileSync(dir, "utf-8"));
+  }
+
+  return { isoString: folders[folders.length - 1], summary };
+}
+
+function convertSizeToUnix(sizeStr) {
+  const size = sizeStr
+    .replace(" Kb", "KB")
+    .replace(" Mb", "MB")
+    .replace(" Gb", "GB");
+  return size;
+}
+
+async function executeSolDetails(agent, folder, solicitationId, urlPath) {
+  const result = await agent.executeTask(tasks.executeSolDetails(urlPath), {
+    onDebugStep: (debug) => {
+      console.dir(debug);
+    },
+    onStep: (step) => {
+      performance.mark(`executeSolDetails-step-${step.idx + 1}`);
+      const duration =
+        step.idx === 0
+          ? performance.measure(
+              `executeSolDetails-step-${step.idx + 1}-duration`,
+              "start",
+              `executeSolDetails-step-${step.idx + 1}`
+            )
+          : performance.measure(
+              `executeSolDetails-step-${step.idx + 1}-duration`,
+              `executeSolDetails-step-${step.idx}`,
+              `executeSolDetails-step-${step.idx + 1}`
+            );
+
+      if (HIDE_STEPS) return;
+
+      console.log(
+        chalk.gray(`      ${(duration.duration / 1000).toFixed(1)}s`)
+      );
+      console.log(
+        `    ${step.idx + 1}. ${step.agentOutput.actions[0].actionDescription}`
+      );
+    },
+    debugDir: path.join(
+      ".output",
+      "biddirect",
+      folder,
+      "solicitations",
+      solicitationId,
+      "debug"
+    ),
+    outputSchema: schemas.solicitation,
+  });
+
+  if (!result.output) {
+    throw new Error("Unable to get JSON output from agent");
+  }
+
+  return JSON.parse(result.output);
+}
+
+async function executeSummary(agent, folder) {
+  const result = await agent.executeTask(tasks.executeSummary(), {
+    onStep: (step) => {
+      performance.mark(`executeSummary-step-${step.idx + 1}`);
+      const duration =
+        step.idx === 0
+          ? performance.measure(
+              `executeSummary-step-${step.idx + 1}-duration`,
+              "start",
+              `executeSummary-step-${step.idx + 1}`
+            )
+          : performance.measure(
+              `executeSummary-step-${step.idx + 1}-duration`,
+              `executeSummary-step-${step.idx}`,
+              `executeSummary-step-${step.idx + 1}`
+            );
+
+      if (HIDE_STEPS) return;
+
+      console.log(
+        chalk.gray(`      ${(duration.duration / 1000).toFixed(1)}s`)
+      );
+      console.log(
+        `    ${step.idx + 1}. ${step.agentOutput.actions[0].actionDescription}`
+      );
+    },
+    outputSchema: schemas.summary,
+    debugDir: path.join(
+      ".output",
+      "biddirect",
+      folder,
+      "debug",
+      "executeSummary"
+    ),
+  });
+
+  if (!result.output) {
+    throw new Error("Unable to get JSON output from agent");
+  }
+
+  return JSON.parse(result.output);
+}
+
+async function executeSummarySolByPage(agent, page, folder) {
+  const result = await agent.executeTask(tasks.executeSummarySolByPage(page), {
+    onStep: (step) => {
+      performance.mark(`executeSummarySolByPage-step-${step.idx + 1}`);
+      const duration =
+        step.idx === 0
+          ? performance.measure(
+              `executeSummarySolByPage-step-${step.idx + 1}-duration`,
+              "start",
+              `executeSummarySolByPage-step-${step.idx + 1}`
+            )
+          : performance.measure(
+              `executeSummarySolByPage-step-${step.idx + 1}-duration`,
+              `executeSummarySolByPage-step-${step.idx}`,
+              `executeSummarySolByPage-step-${step.idx + 1}`
+            );
+
+      if (HIDE_STEPS) return;
+
+      console.log(
+        chalk.gray(`      ${(duration.duration / 1000).toFixed(1)}s`)
+      );
+      console.log(
+        `    ${step.idx + 1}. ${step.agentOutput.actions[0].actionDescription}`
+      );
+    },
+    outputSchema: schemas.summarySolicitations,
+    debugDir: path.join(
+      ".output",
+      "biddirect",
+      folder,
+      "debug",
+      "executeSummarySolByPage",
+      page
+    ),
+  });
+
+  if (!result.output) {
+    throw new Error("Unable to get JSON output from agent");
+  }
+
+  return JSON.parse(result.output);
+}
+
+async function getFile(filePath) {
+  let results;
+
+  if (fs.existsSync(filePath)) {
+    results = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  }
+
+  return results;
+}
+
+function sanitizeSolForDb(solicitation) {
+  if (!solicitation || !solicitation.id) {
+    throw new Error("Invalid solicitation data");
+  }
+
+  const questionsDueByDate = new Date(solicitation.questionsDueByDate);
+  const publicationDate = new Date(solicitation.publicationDate);
+  const closingDate = new Date(solicitation.closingDate);
+
+  return {
+    url: solicitation.url,
+    title: solicitation.title,
+    description: solicitation.description,
+    location: solicitation.location,
+    issuingOrganization: solicitation.issuingOrganization,
+    publicationDate: !isNaN(publicationDate.getTime()) ? publicationDate : null,
+    closingDate: !isNaN(closingDate.getTime()) ? closingDate : null,
+    questionsDueByDate: !isNaN(questionsDueByDate.getTime())
+      ? questionsDueByDate
+      : null,
+    contactName: "",
+    contactEmail: "",
+    contactPhone: "",
+    contactNote: "",
+    externalLinks: solicitation.externalUrl ? [solicitation.externalUrl] : [],
+    categories: solicitation.categories || [],
+    documents: [],
+    siteData: { ...solicitation },
+    site: "bidnetdirect",
+    siteId: solicitation.id,
+    siteUrl: solicitation.url,
+    extractedDate: new Date(),
+    keywords: "",
+    rfpType: "",
+    meta: {},
+    created: new Date(),
+    updated: new Date(),
+  };
+}
+
+function parseFileSize(sizeStr) {
+  let size;
+  size = parseInt(
+    sizeStr
+      .replace(" Kb", "000")
+      .replace(" Mb", "000000")
+      .replace(" Gb", "000000000")
+  );
+  return size;
+}
+
+async function processDownloads({ solDetails, solPath, bucket }) {
+  let cmd, out;
+
+  if (!solDetails || !solPath) {
+    throw new Error("solDetails and solPath required for processDownloads");
+  }
+
+  // Move downloaded files to the correct folder
+  // Note: This is a workaround. Playwright is not exposing the original file name so we are guessing by file size.
+  const sortedDocs = solDetails.documents.sort(
+    (a, b) => parseFileSize(a.size) - parseFileSize(b.size)
+  );
+  cmd = `find .output/biddirect/tmp/downloads/ -maxdepth 1 -type f -printf "%s %f\n" | awk '{cmd="numfmt --to=iec --suffix=B "$1; cmd | getline size; close(cmd); print size, substr($0, index($0,$2))}' | sort -h`;
+  out = execSync(cmd);
+  const rawFiles = out
+    .toString()
+    .split("\n")
+    .filter((line) => line.trim() !== "");
+
+  if (rawFiles === "" || rawFiles.length === 0) {
+    return [];
+  }
+
+  let docIndex = 0;
+  let fileUrls: string[] = [];
+  for (let doc of sortedDocs) {
+    const rawLine = rawFiles[docIndex];
+
+    if (!rawLine) {
+      continue;
+    }
+
+    const rawSep = rawLine.indexOf(" ");
+    const [rawSize, rawName] = [
+      rawLine.slice(0, rawSep),
+      rawLine.slice(rawSep + 1),
+    ];
+    const size = convertSizeToUnix(doc.size);
+
+    // If the first and second to last characters are the same, we assume it's the same file
+    let targetName;
+    if (
+      size[0] === rawSize[0] &&
+      size[size.length - 2] === rawSize[rawSize.length - 2]
+    ) {
+      targetName = doc.name.replace(/[^a-z0-9.]+/gi, "-");
+    } else {
+      targetName = rawName;
+    }
+
+    const target = `${solPath}/documents/${targetName}`;
+    cmd = `mv '.output/biddirect/tmp/downloads/${rawName}' '${target}'`;
+    execSync(cmd);
+    console.log(`    ${targetName} saved`);
+
+    const destination = `solicitations/${solDetails.siteId}/documents/${targetName}`;
+    const uploadResults = await bucket.upload(target, {
+      destination,
+      public: true,
+    });
+
+    if (!uploadResults || !uploadResults[0]) {
+      console.error(chalk.red(`    Failed to upload ${targetName} to storage`));
+      continue;
+    }
+
+    const fileUrl = `https://storage.googleapis.com/${process.env.FIREBASE_STORAGE_BUCKET}/${destination}`;
+    console.log(`    ${targetName} uploaded to storage`);
+    fileUrls.push(fileUrl);
+
+    docIndex++;
+  }
+
+  return fileUrls;
+}
+
+async function run() {
+  console.log(`\nExtracting from bidnetdirect.com ${start.toLocaleString()}`);
+
+  const db = initDb();
+  const storage = initStorage();
+  const bucket = storage.bucket();
+  const solCollection = db.collection("solicitations");
+
+  let out, cmd;
+
+  const llm = new ChatOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    model: "gpt-4.1-mini",
+    temperature: 0,
+    cache: true,
+  });
+
+  const agent = new HyperAgent({
+    llm: llm,
+    debug: DEBUG,
+    browserProvider: "Local",
+    localConfig: {
+      downloadsPath: path.join(
+        ".output",
+        "biddirect",
+        "tmp",
+        "downloads"
+      ) as string,
+    },
+  });
+
+  const latestSummary = await checkLatestSummary();
+  let cacheFolder = start.toISOString();
+
+  console.log("  Get summary");
+
+  // Get the overall summary
+  let summary;
+  if (latestSummary && latestSummary.summary) {
+    console.log(`    Cache found ${latestSummary.isoString}`);
+    summary = latestSummary.summary;
+    cacheFolder = latestSummary.isoString;
+  } else {
+    summary = await executeSummary(agent, cacheFolder);
+    const baseDir = path.join(".output", "biddirect", `${start.toISOString()}`);
+    fs.mkdirSync(baseDir, { recursive: true });
+    fs.mkdirSync(path.join(baseDir, "solicitations"), { recursive: true });
+    fs.mkdirSync(path.join(baseDir, "debug"), { recursive: true });
+    fs.writeFileSync(
+      path.join(baseDir, "summary.json"),
+      JSON.stringify(summary, null, 2)
+    );
+    console.log(`  summary.json saved`);
+  }
+
+  if (summary.pages === 0) {
+    console.log(`    No pages found`);
+    return;
+  }
+
+  // Loop through all pages
+  for (let currPage = 1; currPage <= summary.pages; currPage++) {
+    console.log(`\n  Get solicitations for page ${currPage}`);
+
+    const pageFileName = `page-${currPage.toString().padStart(3, "0")}.json`;
+    const pageFilePath = path.join(
+      ".output",
+      "biddirect",
+      cacheFolder,
+      pageFileName
+    );
+    const checkPage = await getFile(pageFilePath);
+
+    let pageSummary;
+    if (checkPage) {
+      console.log("     Cache found");
+      pageSummary = checkPage;
+    } else {
+      pageSummary = await executeSummarySolByPage(agent, currPage, cacheFolder);
+      fs.writeFileSync(pageFilePath, JSON.stringify(pageSummary, null, 2));
+      console.log(`    ${pageFileName} saved`);
+    }
+
+    if (pageSummary.solicitations.length === 0) {
+      console.log(`    No solicitations found on page ${currPage}`);
+      continue;
+    }
+
+    console.log(
+      `    ${pageSummary.solicitations.length} solicitations extracted`
+    );
+
+    const max = pageSummary.solicitations.length;
+    for (let solIndex = 0; solIndex < max; solIndex++) {
+      execSync(
+        `rm -rf .output/biddirect/tmp/downloads && mkdir -p .output/biddirect/tmp/downloads`
+      );
+
+      try {
+        const solicitation = pageSummary.solicitations[solIndex];
+        console.log(
+          `\n  Processing solicitation p${currPage} ${solIndex + 1}/${max} - ${
+            solicitation.id
+          } ${solicitation.title}`
+        );
+        const solicitationPath = path.join(
+          ".output",
+          "biddirect",
+          cacheFolder,
+          "solicitations",
+          solicitation.id
+        );
+        const checkFile = await getFile(
+          path.join(solicitationPath, "post.json")
+        );
+        let solDetails;
+
+        if (checkFile) {
+          solDetails = checkFile;
+          console.log(
+            `    Found cached solicitation details for ${solicitation.id}`
+          );
+        } else {
+          solDetails = await executeSolDetails(
+            agent,
+            cacheFolder,
+            solicitation.id,
+            solicitation.url
+          );
+
+          // Write to file
+          fs.mkdirSync(solicitationPath, { recursive: true });
+          fs.mkdirSync(path.join(solicitationPath, "documents"), {
+            recursive: true,
+          });
+          fs.writeFileSync(
+            path.join(solicitationPath, "post.json"),
+            JSON.stringify(solDetails, null, 2)
+          );
+          console.log("    post.json saved");
+
+          // Write to database
+          const solDbRecord = sanitizeSolForDb(solDetails);
+          const newDoc = await solCollection.add(solDbRecord);
+          console.log(
+            chalk.green(`    Initial record saved to db ${newDoc.id}`)
+          );
+        }
+
+        const fileUrls = await processDownloads({
+          solDetails,
+          solPath: solicitationPath,
+          bucket,
+        });
+
+        // Save fileUrls to the database
+        const checkDocs = await solCollection
+          .where("siteId", "==", solicitation.id)
+          .get();
+        let dbDoc = checkDocs.docs[0];
+
+        if (!dbDoc) {
+          console.log(
+            chalk.red(`    No database record found for ${solicitation.id}`)
+          );
+
+          // Write to database
+          const solDbRecord = sanitizeSolForDb({
+            ...solDetails,
+            siteId: solicitation.id,
+          });
+          const newDoc = await solCollection.add(solDbRecord);
+          const checkDocs = await solCollection
+            .where("siteId", "==", newDoc.id)
+            .get();
+          dbDoc = checkDocs.docs[0];
+          console.log(
+            chalk.green(`    Initial record saved to db ${newDoc.id}`)
+          );
+        }
+
+        dbDoc.ref.update({ documents: fileUrls });
+        console.log(
+          chalk.green(
+            chalk.green(`    Documents updated in db for ${solicitation.id}`)
+          )
+        );
+
+        totalSolicitations++;
+      } catch (error) {
+        console.error(chalk.red("    Failed to process solicitation"));
+        console.error(chalk.red(`    ${error}`, error.stack));
+      }
+    }
+  }
+
+  await agent.closeAgent();
+}
+
+let totalSolicitations = 0;
+const start = new Date();
+performance.mark("start");
+
+run()
+  .catch((error) => console.error(chalk.red(`  ${error}`, error.stack)))
+  .finally(() => {
+    performance.mark("end");
+    const totalSec = (
+      performance.measure("total-duration", "start", "end").duration / 1000
+    ).toFixed(1);
+    console.log(`Total solicitations processed: ${totalSolicitations}`);
+    console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
+    process.exit(0);
+  });

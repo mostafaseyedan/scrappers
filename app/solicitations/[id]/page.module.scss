@@ -1,0 +1,99 @@
+.sol {
+  display: flex;
+  padding: 10px;
+  padding-left: 0;
+
+  &_actions {
+    float: left;
+    margin-right: 5px;
+    text-align: center;
+    width: 50px;
+    &_likeButton {
+      border-radius: 50%;
+      &__active {
+        border: 1px solid red;
+        border-radius: 50%;
+      }
+    }
+  }
+
+  &_contentCol {
+    flex: 1 1 100%;
+  }
+
+  &_datesCol {
+    padding-left: 10px;
+    text-align: right;
+    white-space: nowrap;
+    > * {
+      display: block;
+    }
+    > span {
+      margin-bottom: 5px;
+    }
+  }
+
+  &_description {
+    color: #666;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  &_descriptionBox {
+    margin-top: 5px;
+  }
+
+  &_externalLinks {
+    a {
+      white-space: nowrap;
+    }
+  }
+
+  &_issuerRow {
+    > * {
+      margin-right: 5px;
+    }
+  }
+
+  &_category,
+  &_keyword {
+    border: 1px solid #eee;
+    display: inline-block;
+    margin: 0 5px 3px 0;
+    padding: 0 10px;
+  }
+
+  &_categories,
+  &_keywords {
+    > label {
+      margin-right: 5px;
+    }
+  }
+
+  &_ourStatus {
+    margin-bottom: 5px;
+    > button {
+      margin-left: auto;
+    }
+  }
+
+  &_sourceRow {
+    > * {
+      margin-right: 5px;
+    }
+  }
+
+  &_title {
+    font-weight: bold;
+    display: block;
+  }
+
+  :global(pre.json) {
+    border: 1px solid #eee;
+    padding: 10px;
+    font-size: 14px;
+    max-height: 300px;
+    max-width: 70vw;
+    overflow: auto;
+  }
+}
