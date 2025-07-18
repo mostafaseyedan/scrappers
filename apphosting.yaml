@@ -25,8 +25,8 @@ runConfig:
 env:
   - variable: BIDDIRECT_USER
     secret: DEV_BIDDIRECT_USER
-  - variable: BIDDIRECT_PASSWORD
-    secret: DEV_BIDDIRECT_PASSWORD
+  - variable: BIDDIRECT_PASS
+    secret: DEV_BIDDIRECT_PASS
   - variable: COOKIE_KEY
     secret: DEV_COOKIE_KEY
   - variable: ELASTIC_NODE
@@ -43,8 +43,8 @@ env:
     value: rfpscraper-dc3d8.firebasestorage.app
   - variable: GEMINI_KEY
     secret: DEV_GEMINI_KEY
-  - variable: HYPERBROWSER_KEY
-    secret: DEV_HYPERBROWSER_KEY
+  - variable: HYPERBROWSER_API_KEY
+    secret: DEV_HYPERBROWSER_APIKEY
   - variable: OPENAI_API_KEY
     secret: DEV_OPENAI_API_KEY
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
