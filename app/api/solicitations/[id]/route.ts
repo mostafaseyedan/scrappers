@@ -18,6 +18,35 @@ const elasticClient = new Client({
 
 const db = initDb();
 
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  let results;
+  try {
+    const docRef = db.collection("solicitations").doc(id);
+    await docRef.delete();
+
+    const esResp = await elasticClient.delete({
+      index: "solicitations",
+      id: id,
+    });
+    if (esResp.result !== "deleted") {
+      throw new Error(`Failed to delete document in Elasticsearch ${id}`);
+    }
+
+    results = { success: id };
+  } catch (error) {
+    console.error(`Failed to delete solicitation ${id}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+
+  return NextResponse.json(results);
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

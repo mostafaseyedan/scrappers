@@ -1,10 +1,8 @@
 "use client";
 
-import { Heart, Braces, Pencil } from "lucide-react";
 import { db } from "@/lib/firebaseClient";
 import { use, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -14,8 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { solicitation as solModel } from "@/app/models";
+import { cnStatuses } from "@/app/config";
+import { SolActions } from "../solActions";
 
 import styles from "./page.module.scss";
 
@@ -44,33 +43,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     <div>
       {sol && (
         <div className={cn(styles.sol)}>
-          <div className={styles.sol_actions}>
-            <Button
-              className={
-                sol.cnLiked
-                  ? styles.sol_actions_likeButton__active
-                  : styles.sol_actions_likeButton
-              }
-              variant="ghost"
-              size="icon"
-              aria-label="Save solicitation"
-              onClick={async (e) => {
-                e.stopPropagation();
-                await solModel.patch(sol.id, { cnLiked: !sol.cnLiked });
-                // await refreshSols();
-              }}
-            >
-              <Heart />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Quick edit">
-              <Pencil />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="JSON edit">
-              <Link href={`/solicitations/${sol.id}/jsonEdit`}>
-                <Braces />
-              </Link>
-            </Button>
-          </div>
+          <SolActions sol={sol} />
           <div className={styles.sol_contentCol}>
             <span className={styles.sol_title}>{sol.title}</span>
             <div className={styles.sol_issuerRow}>
@@ -157,10 +130,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 </SelectTrigger>
                 <SelectContent align="end">
                   <SelectGroup>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="ignore">Ignore</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="applied">Applied</SelectItem>
+                    {cnStatuses &&
+                      Object.entries(cnStatuses).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>

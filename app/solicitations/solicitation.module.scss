@@ -4,20 +4,6 @@
   padding: 10px;
   padding-left: 0;
 
-  &_actions {
-    float: left;
-    margin-right: 5px;
-    text-align: center;
-    width: 50px;
-    &_likeButton {
-      border-radius: 50%;
-      &__active {
-        border: 1px solid red;
-        border-radius: 50%;
-      }
-    }
-  }
-
   &_contentCol {
     flex: 1 1 100%;
 

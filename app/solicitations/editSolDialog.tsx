@@ -60,11 +60,13 @@ const EditSolDialog = ({
       .map((cat: string) => cat.trim())
       .sort();
     formValues.categories = [...new Set(formValues.categories)];
+    formValues.categories = formValues.categories.filter((cat: string) => cat);
     formValues.keywords = formValues.keywords
       .split(",")
       .map((kw: string) => kw.trim())
       .sort();
     formValues.keywords = [...new Set(formValues.keywords)];
+    formValues.keywords = formValues.keywords.filter((kw: string) => kw);
 
     const resp = await solModel.patch(solId, formValues);
 
