@@ -44,7 +44,7 @@ env:
   - variable: GEMINI_KEY
     secret: DEV_GEMINI_KEY
   - variable: HYPERBROWSER_API_KEY
-    secret: DEV_HYPERBROWSER_APIKEY
+    secret: DEV_HYPERBROWSER_API_KEY
   - variable: OPENAI_API_KEY
     secret: DEV_OPENAI_API_KEY
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
