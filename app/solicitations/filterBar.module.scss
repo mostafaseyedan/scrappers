@@ -2,14 +2,50 @@
   margin-right: 20px;
   width: 220px;
 
+  > section > label {
+    display: block;
+    margin-top: 10px;
+  }
+
   &_other {
     button[role="checkbox"] {
       margin-right: 10px;
     }
   }
 
-  > section > label {
-    display: block;
-    margin-top: 10px;
+  &_status {
+    &[data-value="ignore"],
+    &[data-value="notPursuing"] {
+      > button {
+        @extend .cnStatusItem_ignore;
+      }
+    }
+    &[data-value="pursuing"],
+    &[data-value="processing"] {
+      > button {
+        @extend .cnStatusItem_pursuing;
+      }
+    }
+    &[data-value="applied"] {
+      > button {
+        @extend .cnStatusItem_applied;
+      }
+    }
   }
+}
+
+.cnStatusItem_ignore,
+.cnStatusItem_notPursuing {
+  background-color: #eee;
+  color: gray;
+}
+
+.cnStatusItem_pursuing,
+.cnStatusItem_processing {
+  background-color: lightgreen;
+}
+
+.cnStatusItem_applied {
+  background-color: green;
+  color: white;
 }

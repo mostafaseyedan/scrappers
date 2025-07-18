@@ -70,12 +70,7 @@ const SolActions = ({ sol, refreshSols, onEditSol }: SolActionsProps) => {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            className="hidden"
-            size="icon"
-            variant="ghost"
-            aria-label="Comment"
-          >
+          <Button size="icon" variant="ghost" aria-label="Comment">
             <MessageCircle />
           </Button>
         </TooltipTrigger>

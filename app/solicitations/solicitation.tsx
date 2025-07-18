@@ -35,19 +35,21 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
     <div className={cn(styles.sol, expanded ? styles.sol__expanded : "")}>
       <SolActions sol={sol} refreshSols={refreshSols} onEditSol={onEditSol} />
       <div className={styles.sol_contentCol}>
-        <span className={styles.sol_title}>{sol.title}</span>
+        <Link
+          className={styles.sol_title}
+          href={`/solicitations/${sol.id}`}
+          target="_blank"
+        >
+          {sol.title}
+        </Link>
         <div className={styles.sol_issuerRow}>
           <span>{sol.location}</span>
           <span>/</span>
           <span>{sol.issuingOrganization}</span>
         </div>
         <div className={styles.sol_sourceRow}>
-          <Link href={`/solicitations/${sol.id}`} target="_blank">
-            {sol.id}
-          </Link>
-          <span>/</span>
           <a href={sol.siteUrl} target="_blank">
-            <span>{sol.siteId}</span> <span>{sol.site}</span>
+            <span>{sol.site}</span>_<span>{sol.siteId}</span>
           </a>
         </div>
         <div
@@ -96,7 +98,7 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
       </div>
       <div className={styles.sol_datesCol}>
         <label>Our Status</label>
-        <div className={styles.sol_ourStatus}>
+        <div className={styles.sol_ourStatus} data-status={sol.cnStatus}>
           <Select
             defaultValue={sol.cnStatus || "new"}
             onValueChange={async (value) => {
@@ -110,7 +112,11 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
               <SelectGroup>
                 {cnStatuses &&
                   Object.entries(cnStatuses).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
+                    <SelectItem
+                      className={styles[`sol_statusItem_${value}`]}
+                      key={value}
+                      value={value}
+                    >
                       {label}
                     </SelectItem>
                   ))}
