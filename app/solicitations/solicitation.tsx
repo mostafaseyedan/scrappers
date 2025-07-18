@@ -14,6 +14,7 @@ import { SolActions } from "./solActions";
 import { cnStatuses } from "../config";
 
 import styles from "./solicitation.module.scss";
+import { set } from "zod";
 
 function isWithinAWeek(date: Date): boolean {
   const now = new Date();
@@ -30,6 +31,7 @@ type SolicitationProps = {
 
 const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
 
   return (
     <div className={cn(styles.sol, expanded ? styles.sol__expanded : "")}>
@@ -72,7 +74,10 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
         <div className={styles.sol_categories}>
           <label>Categories</label>
           {sol.categories?.map((category: string) => (
-            <span key={`category-${category}`} className={styles.sol_category}>
+            <span
+              key={`sol-${sol.id}-category-${category}`}
+              className={styles.sol_category}
+            >
               {category}
             </span>
           ))}
@@ -80,7 +85,10 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
         <div className={styles.sol_keywords}>
           <label>Keywords</label>
           {sol.keywords?.map((keyword: string) => (
-            <span key={`sol-keyword-${keyword}`} className={styles.sol_keyword}>
+            <span
+              key={`sol-${sol.id}-keyword-${keyword}`}
+              className={styles.sol_keyword}
+            >
               {keyword}
             </span>
           ))}
@@ -98,11 +106,12 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
       </div>
       <div className={styles.sol_datesCol}>
         <label>Our Status</label>
-        <div className={styles.sol_ourStatus} data-status={sol.cnStatus}>
+        <div className={styles.sol_ourStatus} data-status={cnStatus}>
           <Select
             defaultValue={sol.cnStatus || "new"}
             onValueChange={async (value) => {
               await solModel.patch(sol.id, { cnStatus: value });
+              setCnStatus(value);
             }}
           >
             <SelectTrigger>

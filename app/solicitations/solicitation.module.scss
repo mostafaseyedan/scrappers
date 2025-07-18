@@ -71,6 +71,11 @@
     > button {
       margin-left: auto;
     }
+    &[data-status="new"] {
+      > button {
+        @extend .sol_statusItem_new;
+      }
+    }
     &[data-status="ignore"],
     &[data-status="notPursuing"] {
       > button {
@@ -108,6 +113,10 @@
   }
 }
 
+.sol_statusItem_new {
+  background-color: inherit;
+  color: inherit;
+}
 .sol_statusItem_ignore,
 .sol_statusItem_notPursuing {
   background-color: #eee;
