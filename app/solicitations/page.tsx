@@ -19,7 +19,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { EditSolDialog } from "./editSolDialog";
 
 import styles from "./page.module.scss";
-import { set } from "zod";
 
 type SearchSolsParams = {
   q?: string;
@@ -65,7 +64,7 @@ export default function Page() {
     const finalFilter = paramFilter ?? filter;
     const finalQ = paramQ ?? q;
 
-    let flattenedFilter = {} as Record<string, any>;
+    const flattenedFilter = {} as Record<string, any>;
     for (const [key, value] of Object.entries(finalFilter)) {
       flattenedFilter[`filter.${key}`] = value;
     }

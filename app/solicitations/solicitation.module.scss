@@ -4,22 +4,12 @@
   padding: 10px;
   padding-left: 0;
 
-  &_actions {
-    float: left;
-    margin-right: 5px;
-    text-align: center;
-    width: 50px;
-    &_likeButton {
-      border-radius: 50%;
-      &__active {
-        border: 1px solid red;
-        border-radius: 50%;
-      }
-    }
-  }
-
   &_contentCol {
     flex: 1 1 100%;
+
+    label {
+      margin-right: 10px;
+    }
   }
 
   &_datesCol {
@@ -81,6 +71,23 @@
     > button {
       margin-left: auto;
     }
+    &[data-status="ignore"],
+    &[data-status="notPursuing"] {
+      > button {
+        @extend .sol_statusItem_ignore;
+      }
+    }
+    &[data-status="pursuing"],
+    &[data-status="processing"] {
+      > button {
+        @extend .sol_statusItem_pursuing;
+      }
+    }
+    &[data-status="applied"] {
+      > button {
+        @extend .sol_statusItem_applied;
+      }
+    }
   }
 
   &_sourceRow {
@@ -99,4 +106,20 @@
       height: auto;
     }
   }
+}
+
+.sol_statusItem_ignore,
+.sol_statusItem_notPursuing {
+  background-color: #eee;
+  color: gray;
+}
+
+.sol_statusItem_pursuing,
+.sol_statusItem_processing {
+  background-color: lightgreen;
+}
+
+.sol_statusItem_applied {
+  background-color: green;
+  color: white;
 }

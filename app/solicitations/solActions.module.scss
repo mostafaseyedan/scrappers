@@ -1,0 +1,21 @@
+.solActions {
+  float: left;
+  margin-right: 5px;
+  text-align: center;
+  width: 50px;
+
+  button {
+    border-radius: 50%;
+    color: gray;
+    margin-bottom: 5px;
+    a[href] {
+      color: gray;
+    }
+  }
+
+  &_likeButton {
+    &__active {
+      border: 1px solid red;
+    }
+  }
+}

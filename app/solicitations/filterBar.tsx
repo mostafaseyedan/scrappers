@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
+import { cnStatuses } from "../config";
+import { useState } from "react";
 
 import styles from "./filterBar.module.scss";
 
@@ -32,6 +34,8 @@ const FilterBar = ({
   setSort,
   setQ,
 }: FilterBarProps) => {
+  const [status, setStatus] = useState("none");
+
   return (
     <div className={styles.filterBar}>
       <section>
@@ -82,12 +86,13 @@ const FilterBar = ({
           </SelectContent>
         </Select>
       </section>
-      <section>
+      <section className={styles.filterBar_status} data-value={status}>
         <label>Our Status</label>
         <Select
           defaultValue="none"
           value={queryParams.filter.cnStatus || "none"}
-          onValueChange={(value) =>
+          onValueChange={(value) => {
+            setStatus(value);
             setFilter((prev) => {
               if (value === "none") {
                 const newValues = { ...prev };
@@ -96,8 +101,8 @@ const FilterBar = ({
               } else {
                 return { ...prev, cnStatus: value };
               }
-            })
-          }
+            });
+          }}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select a status" />
@@ -105,10 +110,16 @@ const FilterBar = ({
           <SelectContent>
             <SelectGroup>
               <SelectItem value="none">None</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="ignore">Ignore</SelectItem>
-              <SelectItem value="processing">Processing</SelectItem>
-              <SelectItem value="applied">Applied</SelectItem>
+              {cnStatuses &&
+                Object.entries(cnStatuses).map(([value, label]) => (
+                  <SelectItem
+                    className={styles[`cnStatusItem_${value}`]}
+                    key={value}
+                    value={value}
+                  >
+                    {label}
+                  </SelectItem>
+                ))}
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -155,7 +166,7 @@ const FilterBar = ({
             })
           }
         />
-        <span>Show liked items</span>
+        <span>Show saved items</span>
       </section>
     </div>
   );
