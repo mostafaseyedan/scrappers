@@ -1,0 +1,65 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 1
+  maxInstances: 20
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Environment variables and secrets.
+# env:
+# Configure environment variables.
+# See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+# - variable: MESSAGE
+#   value: Hello world!
+#   availability:
+#     - BUILD
+#     - RUNTIME
+
+# Grant access to secrets in Cloud Secret Manager.
+# See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+# - variable: MY_SECRET
+#   secret: mySecretRef
+
+env:
+  - variable: BIDDIRECT_USER
+    secret: DEV_BIDDIRECT_USER
+  - variable: BIDDIRECT_PASSWORD
+    secret: DEV_BIDDIRECT_PASSWORD
+  - variable: COOKIE_KEY
+    secret: DEV_COOKIE_KEY
+  - variable: ELASTIC_NODE
+    secret: DEV_ELASTIC_NODE
+  - variable: ELASTIC_API_KEY
+    secret: DEV_ELASTIC_API_KEY
+  - variable: FIREBASE_PROJECT_ID
+    value: rfpscraper-dc3d8
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: firebase-adminsdk-fbsvc@rfpscraper-dc3d8.iam.gserviceaccount.com
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: DEV_FIREBASE_PRIVATE_KEY
+  - variable: FIREBASE_STORAGE_BUCKET
+    value: rfpscraper-dc3d8.firebasestorage.app
+  - variable: GEMINI_KEY
+    secret: DEV_GEMINI_KEY
+  - variable: HYPERBROWSER_KEY
+    secret: DEV_HYPERBROWSER_KEY
+  - variable: OPENAI_API_KEY
+    secret: DEV_OPENAI_API_KEY
+  - variable: NEXT_PUBLIC_ELASTIC_API_KEY
+    valeue: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyA7_t4CGojp6vIYxEQS2vXOZSKmj-ZKaLw
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: rfpscraper-dc3d8.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: rfpscraper-dc3d8
+  - variable: NEXT_PUBLIC_FIREBASE_BUCKET
+    value: rfpscraper-dc3d8.firebasestorage.app
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: 1025032713267
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:1025032713267:web:bfb3a0ae85e4a648f55f46
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-P9TDT2PKR5
