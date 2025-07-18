@@ -72,7 +72,10 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
         <div className={styles.sol_categories}>
           <label>Categories</label>
           {sol.categories?.map((category: string) => (
-            <span key={`category-${category}`} className={styles.sol_category}>
+            <span
+              key={`sol-${sol.id}-category-${category}`}
+              className={styles.sol_category}
+            >
               {category}
             </span>
           ))}
@@ -80,7 +83,10 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
         <div className={styles.sol_keywords}>
           <label>Keywords</label>
           {sol.keywords?.map((keyword: string) => (
-            <span key={`sol-keyword-${keyword}`} className={styles.sol_keyword}>
+            <span
+              key={`sol-${sol.id}-keyword-${keyword}`}
+              className={styles.sol_keyword}
+            >
               {keyword}
             </span>
           ))}
