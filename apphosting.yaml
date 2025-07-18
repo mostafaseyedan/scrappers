@@ -48,7 +48,7 @@ env:
   - variable: OPENAI_API_KEY
     secret: DEV_OPENAI_API_KEY
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
-    valeue: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
+    value: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: AIzaSyA7_t4CGojp6vIYxEQS2vXOZSKmj-ZKaLw
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
