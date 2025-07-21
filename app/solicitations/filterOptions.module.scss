@@ -1,4 +1,4 @@
-.filterBar {
+.filterOptions {
   margin-right: 20px;
   width: 220px;
 
@@ -14,6 +14,12 @@
   }
 
   &_status {
+    &[data-value="none"],
+    &[data-value="new"] {
+      > button {
+        @extend .cnStatusItem_none;
+      }
+    }
     &[data-value="ignore"],
     &[data-value="notPursuing"] {
       > button {
@@ -34,6 +40,11 @@
   }
 }
 
+.cnStatusItem_none,
+.cnStatusItem_new {
+  background-color: inherit;
+  color: inherit;
+}
 .cnStatusItem_ignore,
 .cnStatusItem_notPursuing {
   background-color: #eee;

@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
 import { cnStatuses } from "../config";
+import { format as fnFormat } from "date-fns";
 
 import styles from "./solicitation.module.scss";
 
@@ -23,18 +24,44 @@ function isWithinAWeek(date: Date): boolean {
 }
 
 type SolicitationProps = {
+  className?: string;
   sol: Record<string, any>;
+  expandedSolIds?: string[];
+  setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
   refreshSols: () => void;
   onEditSol: (solId: string) => void;
+  variant?: "compact" | "expanded";
 };
 
-const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
+const Solicitation = ({
+  sol,
+  className,
+  expandedSolIds = [],
+  setExpandedSolIds,
+  refreshSols,
+  onEditSol,
+  variant = "compact",
+}: SolicitationProps) => {
   const [expanded, setExpanded] = useState(false);
   const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
 
   return (
-    <div className={cn(styles.sol, expanded ? styles.sol__expanded : "")}>
-      <SolActions sol={sol} refreshSols={refreshSols} onEditSol={onEditSol} />
+    <div
+      className={cn(
+        className,
+        styles.sol,
+        expanded ? styles.sol__expanded : ""
+      )}
+      data-variant={variant}
+    >
+      <SolActions
+        className={styles.sol_actions}
+        expandedSolIds={expandedSolIds}
+        setExpandedSolIds={setExpandedSolIds}
+        sol={sol}
+        refreshSols={refreshSols}
+        onEditSol={onEditSol}
+      />
       <div className={styles.sol_contentCol}>
         <Link
           className={styles.sol_title}
@@ -52,6 +79,28 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
           <a href={sol.siteUrl} target="_blank">
             <span>{sol.site}</span>_<span>{sol.siteId}</span>
           </a>
+        </div>
+        <div className={styles.sol_datesCol}>
+          <div>
+            <label>Closing</label>
+            <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
+              {sol.closingDate &&
+                fnFormat(new Date(sol.closingDate), "M/d/y haaa")}
+            </span>
+          </div>
+          <div>
+            <label>Published</label>
+            <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
+              {sol.publicationDate &&
+                fnFormat(new Date(sol.publicationDate), "M/d/y haaa")}
+            </span>
+          </div>
+          <div>
+            <label>Extracted</label>
+            <span>
+              {sol.created && fnFormat(new Date(sol.created), "M/d/y h:mmaaa")}
+            </span>
+          </div>
         </div>
         <div
           className={styles.sol_descriptionBox}
@@ -81,30 +130,8 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
             </span>
           ))}
         </div>
-        <div className={styles.sol_keywords}>
-          <label>Keywords</label>
-          {sol.keywords?.map((keyword: string) => (
-            <span
-              key={`sol-${sol.id}-keyword-${keyword}`}
-              className={styles.sol_keyword}
-            >
-              {keyword}
-            </span>
-          ))}
-        </div>
-        <div>
-          <label>Notes</label>
-          <span>{sol.cnNotes}</span>
-        </div>
-        <div>
-          <label>Comments (0)</label>
-        </div>
-        <div>
-          <label>Viewed By</label>
-        </div>
       </div>
-      <div className={styles.sol_datesCol}>
-        <label>Our Status</label>
+      <div className={styles.sol_statusCol}>
         <div className={styles.sol_ourStatus} data-status={cnStatus}>
           <Select
             defaultValue={sol.cnStatus || "new"}
@@ -132,19 +159,6 @@ const Solicitation = ({ sol, refreshSols, onEditSol }: SolicitationProps) => {
             </SelectContent>
           </Select>
         </div>
-        <label>Status</label>
-        <span>Active</span>
-        <label>Closing Date</label>
-        <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-          {sol.closingDate && new Date(sol.closingDate).toLocaleString()}
-        </span>
-        <label>Published Date</label>
-        <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-          {sol.publicationDate &&
-            new Date(sol.publicationDate).toLocaleString()}
-        </span>
-        <label>Extracted Date</label>
-        <span>{sol.created && new Date(sol.created).toLocaleString()}</span>
       </div>
     </div>
   );

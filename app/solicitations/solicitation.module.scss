@@ -1,27 +1,19 @@
 .sol {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #eee;
   display: flex;
-  padding: 10px;
-  padding-left: 0;
+  padding: 5px 10px 0 10px;
 
   &_contentCol {
     flex: 1 1 100%;
 
     label {
-      margin-right: 10px;
+      margin-right: 5px;
     }
   }
 
   &_datesCol {
-    padding-left: 10px;
-    text-align: right;
-    white-space: nowrap;
-    > * {
-      display: block;
-    }
-    > span {
-      margin-bottom: 5px;
-    }
+    display: flex;
+    gap: 20px;
   }
 
   &_description {
@@ -31,10 +23,7 @@
   }
 
   &_descriptionBox {
-    overflow: hidden;
     margin-top: 5px;
-    text-overflow: ellipsis;
-    height: 22px;
   }
 
   &_externalLinks {
@@ -46,6 +35,7 @@
   }
 
   &_issuerRow {
+    white-space: nowrap;
     > * {
       margin-right: 5px;
     }
@@ -101,6 +91,11 @@
     }
   }
 
+  &_statusCol {
+    padding-left: 10px;
+    text-align: right;
+  }
+
   &_title {
     font-weight: bold;
     display: block;
@@ -109,6 +104,20 @@
   &__expanded {
     .sol_descriptionBox {
       height: auto;
+    }
+  }
+
+  &[data-variant="compact"] {
+    .sol_descriptionBox,
+    .sol_sourceRow,
+    .sol_keywords,
+    .sol_categories,
+    .sol_notes,
+    .sol_comments {
+      display: none;
+    }
+    .sol_datesCol {
+      margin-bottom: 5px;
     }
   }
 }

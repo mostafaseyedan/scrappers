@@ -6,16 +6,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
-import { cnStatuses } from "../config";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
-import styles from "./filterBar.module.scss";
+import styles from "./filterOptions.module.scss";
 
-type FilterBarProps = {
+type FilterOptionsProps = {
   queryParams: {
     q: string;
     filter: Record<string, any>;
@@ -26,26 +24,18 @@ type FilterBarProps = {
   setFilter: Dispatch<SetStateAction<Record<string, any>>>;
   setQ: Dispatch<SetStateAction<string>>;
   setSort: (sort: string) => void;
+  setPage: Dispatch<SetStateAction<number>>;
 };
 
-const FilterBar = ({
+const FilterOptions = ({
   queryParams,
   setFilter,
   setSort,
   setQ,
-}: FilterBarProps) => {
-  const [status, setStatus] = useState("none");
-
+  setPage,
+}: FilterOptionsProps) => {
   return (
-    <div className={styles.filterBar}>
-      <section>
-        <label>Search</label>
-        <Input
-          type="text"
-          onChange={(e) => setQ(e.currentTarget.value)}
-          value={queryParams.q}
-        />
-      </section>
+    <div className={styles.filterOptions}>
       <section>
         <label>Sort</label>
         <Select
@@ -65,10 +55,10 @@ const FilterBar = ({
                 Closing Date <ArrowUp />
               </SelectItem>
               <SelectItem value="created desc">
-                Created <ArrowDown />
+                Extracted Date <ArrowDown />
               </SelectItem>
               <SelectItem value="created asc">
-                Created <ArrowUp />
+                Extracted Date <ArrowUp />
               </SelectItem>
               <SelectItem value="publicationDate desc">
                 Published Date <ArrowDown />
@@ -82,44 +72,6 @@ const FilterBar = ({
               <SelectItem value="updated asc">
                 Updated <ArrowUp />
               </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </section>
-      <section className={styles.filterBar_status} data-value={status}>
-        <label>Our Status</label>
-        <Select
-          defaultValue="none"
-          value={queryParams.filter.cnStatus || "none"}
-          onValueChange={(value) => {
-            setStatus(value);
-            setFilter((prev) => {
-              if (value === "none") {
-                const newValues = { ...prev };
-                delete newValues.cnStatus;
-                return newValues;
-              } else {
-                return { ...prev, cnStatus: value };
-              }
-            });
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">None</SelectItem>
-              {cnStatuses &&
-                Object.entries(cnStatuses).map(([value, label]) => (
-                  <SelectItem
-                    className={styles[`cnStatusItem_${value}`]}
-                    key={value}
-                    value={value}
-                  >
-                    {label}
-                  </SelectItem>
-                ))}
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -152,9 +104,10 @@ const FilterBar = ({
           </SelectContent>
         </Select>
       </section>
-      <section className={styles.filterBar_other}>
+      <section className={styles.filterOptions_other}>
         <label>Other</label>
         <Checkbox
+          checked={queryParams.filter.cnLiked || false}
           onCheckedChange={(checked) =>
             setFilter((prev) => {
               if (checked === false) {
@@ -168,8 +121,19 @@ const FilterBar = ({
         />
         <span>Show saved items</span>
       </section>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          setFilter({});
+          setQ("");
+          setPage(1);
+        }}
+      >
+        Clear filters
+      </Button>
     </div>
   );
 };
 
-export { FilterBar };
+export { FilterOptions };
