@@ -24,12 +24,15 @@ type FilterOptionsProps = {
   setFilter: Dispatch<SetStateAction<Record<string, any>>>;
   setQ: Dispatch<SetStateAction<string>>;
   setSort: (sort: string) => void;
+  setPage: Dispatch<SetStateAction<number>>;
 };
 
 const FilterOptions = ({
   queryParams,
   setFilter,
   setSort,
+  setQ,
+  setPage,
 }: FilterOptionsProps) => {
   return (
     <div className={styles.filterOptions}>

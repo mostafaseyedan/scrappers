@@ -48,7 +48,10 @@ type SearchSolsParams = {
 export default function Page() {
   const [sols, setSols] = useState<any[]>([]);
   const [limit, setLimit] = useState(20);
-  const [filter, setFilter] = useState({});
+  const [filter, setFilter] = useState<{
+    cnStatus?: string;
+    [key: string]: any;
+  }>({});
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("closingDate desc");
@@ -160,7 +163,9 @@ export default function Page() {
                   <TabsTrigger value="all">All</TabsTrigger>
                   {cnStatuses &&
                     Object.entries(cnStatuses).map(([value, label]) => (
-                      <TabsTrigger value={value}>{label}</TabsTrigger>
+                      <TabsTrigger value={value} key={`tabs-trigger-${value}`}>
+                        {label}
+                      </TabsTrigger>
                     ))}
                 </TabsList>
               </Tabs>
@@ -183,6 +188,7 @@ export default function Page() {
                       setFilter={setFilter}
                       setQ={setQ}
                       setSort={setSort}
+                      setPage={setPage}
                       queryParams={{ q, filter, limit, page, sort }}
                     />
                   </PopoverContent>

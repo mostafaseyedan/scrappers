@@ -88,12 +88,13 @@ const SolActions = ({
         <DropdownMenuContent className={styles.solActions_moreDropdown}>
           <DropdownMenuItem
             onClick={() => {
-              setExpandedSolIds &&
+              if (setExpandedSolIds) {
                 setExpandedSolIds((prev) => {
                   return prev.includes(sol.id)
                     ? prev.filter((id) => id !== sol.id)
                     : [...prev, sol.id];
                 });
+              }
             }}
           >
             {!expandedSolIds.includes(sol.id) ? (
