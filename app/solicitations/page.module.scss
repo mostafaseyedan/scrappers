@@ -1,21 +1,33 @@
-.pageMain {
-  display: flex;
-}
-
 .pageMain_solsSection {
-  width: calc(100vw - 240px);
   &_list {
+    border: 1px solid #eee;
     height: calc(100vh - 170px);
+    margin: 10px 0;
     overflow-y: auto;
   }
   &_pagination {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding-bottom: 5px;
     &_page {
       width: 50px;
       text-align: center;
+    }
+    &_perPage {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+    }
+  }
+  &_topBar {
+    display: flex;
+    gap: 5px;
+    &_filter {
+      margin-left: auto;
+    }
+    &_search {
+      width: 170px;
     }
   }
 }

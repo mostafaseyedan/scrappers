@@ -1,6 +1,7 @@
 .layout {
   font-size: 15px;
   padding: 20px;
+  padding-bottom: 0;
 
   a[href] {
     color: blue;
@@ -28,6 +29,7 @@
   }
 
   &_footer {
+    display: none;
     font-size: 13px;
     margin-top: 20px;
   }

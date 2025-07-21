@@ -1,4 +1,13 @@
-import { Braces, MessageCircle, Heart, Pencil, Trash } from "lucide-react";
+import {
+  Braces,
+  ChevronsUpDown,
+  ChevronsDownUp,
+  EllipsisVertical,
+  MessageCircle,
+  Heart,
+  Pencil,
+  Trash,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -18,18 +27,36 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Dispatch, SetStateAction } from "react";
 
 import styles from "./solActions.module.scss";
 
 type SolActionsProps = {
+  className?: string;
+  expandedSolIds?: string[];
+  setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
   sol: Record<string, any>;
   refreshSols?: () => void;
   onEditSol?: (solId: string) => void;
 };
 
-const SolActions = ({ sol, refreshSols, onEditSol }: SolActionsProps) => {
+const SolActions = ({
+  className,
+  expandedSolIds = [],
+  setExpandedSolIds,
+  sol,
+  refreshSols,
+  onEditSol,
+}: SolActionsProps) => {
   return (
-    <div className={styles.solActions}>
+    <div className={cn(styles.solActions, className)}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -52,81 +79,90 @@ const SolActions = ({ sol, refreshSols, onEditSol }: SolActionsProps) => {
         </TooltipTrigger>
         <TooltipContent side="left">Save to favorites</TooltipContent>
       </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Quick edit"
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="More actions">
+            <EllipsisVertical />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className={styles.solActions_moreDropdown}>
+          <DropdownMenuItem
+            onClick={() => {
+              setExpandedSolIds &&
+                setExpandedSolIds((prev) => {
+                  return prev.includes(sol.id)
+                    ? prev.filter((id) => id !== sol.id)
+                    : [...prev, sol.id];
+                });
+            }}
+          >
+            {!expandedSolIds.includes(sol.id) ? (
+              <a>
+                <ChevronsUpDown />
+                <span>Expand</span>
+              </a>
+            ) : (
+              <a>
+                <ChevronsDownUp />
+                <span>Collapse</span>
+              </a>
+            )}
+          </DropdownMenuItem>
+          <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
               if (onEditSol) onEditSol(sol.id);
             }}
           >
-            <Pencil />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">Quick edit</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button size="icon" variant="ghost" aria-label="Comment">
-            <MessageCircle />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">Comment</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label="JSON edit"
-            onClick={(e) => e.stopPropagation()}
-          >
+            <a>
+              <Pencil />
+              <span>Quick edit</span>
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Link href={`/solicitations/${sol.id}/comments`} target="_blank">
+              <MessageCircle />
+              <span>Comment</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
             <Link href={`/solicitations/${sol.id}/jsonEdit`} target="_blank">
               <Braces />
+              JSON edit
             </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">JSON edit</TooltipContent>
-      </Tooltip>
-      <AlertDialog>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <AlertDialogTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="Delete solicitation"
-              >
-                <Trash />
-              </Button>
-            </AlertDialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="left">Delete</TooltipContent>
-        </Tooltip>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Deleting solicitation <b>{sol.title}</b> {sol.id} cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                await solModel.remove(sol.id);
-                if (refreshSols) await refreshSols();
-              }}
-            >
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <a>
+                  <Trash />
+                  Delete
+                </a>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Solicitation</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this solicitation? This
+                    action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      await solModel.delete(sol.id);
+                      if (refreshSols) await refreshSols();
+                    }}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

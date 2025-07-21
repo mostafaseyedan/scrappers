@@ -18,4 +18,16 @@
       border: 1px solid red;
     }
   }
+
+  &_moreDropdown {
+    [role="menuitem"] {
+      a > * {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      a > svg {
+        margin-right: 10px;
+      }
+    }
+  }
 }
