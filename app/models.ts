@@ -103,7 +103,13 @@ const solicitation_comment: any = {
     solId: string,
     data: z.infer<typeof solicitation_comment.schema>
   ) => {
-    console.log("solicitation_comment.post", solId, data);
+    const resp = await fetch(`/api/solicitations/${solId}/comments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to create comment");
+    return json;
   },
 };
 

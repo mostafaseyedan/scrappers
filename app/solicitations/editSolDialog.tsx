@@ -72,8 +72,8 @@ const EditSolDialog = ({
     const resp = await solModel.patch(solId, formValues);
 
     if (resp.error) {
-      console.error("Error updating solicitation:", resp.error);
-      return;
+      toast.error("Failed to update solicitation");
+      return console.error("Error updating solicitation:", resp.error);
     }
 
     onOpenChange(false);
