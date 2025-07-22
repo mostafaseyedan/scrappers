@@ -171,7 +171,7 @@ const Solicitation = ({
         <div className={styles.sol_iconCounts}>
           {Boolean(sol.keywords?.length) && (
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button variant={"ghost"} aria-label="Tags">
                   {sol.keywords.length || 0} <Tag />
                 </Button>
@@ -182,7 +182,7 @@ const Solicitation = ({
             </Tooltip>
           )}
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button
                 variant={"ghost"}
                 aria-label="Comments"
@@ -199,7 +199,7 @@ const Solicitation = ({
           </Tooltip>
           {sol.cnNotes && (
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button variant={"ghost"} aria-label="Notes">
                   <StickyNote />
                 </Button>
