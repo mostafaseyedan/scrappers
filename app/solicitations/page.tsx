@@ -33,9 +33,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cnStatuses } from "../config";
+import { CreateCommentDialog } from "./createCommentDialog";
 
 import styles from "./page.module.scss";
-import { cnStatuses } from "../config";
+import { set } from "zod";
+import { on } from "events";
 
 type SearchSolsParams = {
   q?: string;
@@ -58,9 +61,10 @@ export default function Page() {
   const [totalFiltered, setTotalFiltered] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [editSolId, setEditSolId] = useState<string>("");
+  const [activeSolId, setActiveSolId] = useState<string>("");
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
   const [showEditSol, setShowEditSol] = useState(false);
+  const [showCreateComment, setShowCreateComment] = useState(false);
 
   const debouncedSearchSols = useDebouncedCallback(
     async (params: Partial<SearchSolsParams>) => {
@@ -124,11 +128,6 @@ export default function Page() {
 
   async function refreshSols() {
     await searchSols({ filter, limit, page, q, sort });
-  }
-
-  function onEditSol(solId: string) {
-    setEditSolId(solId);
-    setShowEditSol(true);
   }
 
   useEffect(() => {
@@ -222,7 +221,14 @@ export default function Page() {
                     key={`sol-${sol.id}`}
                     sol={sol}
                     refreshSols={refreshSols}
-                    onEditSol={() => onEditSol(sol.id)}
+                    onClickComment={() => {
+                      setActiveSolId(sol.id);
+                      setShowCreateComment(true);
+                    }}
+                    onEditSol={() => {
+                      setActiveSolId(sol.id);
+                      setShowEditSol(true);
+                    }}
                     expandedSolIds={expandedSolIds}
                     setExpandedSolIds={setExpandedSolIds}
                     variant={
@@ -296,10 +302,17 @@ export default function Page() {
         </div>
 
         <EditSolDialog
-          solId={editSolId}
+          solId={activeSolId}
           open={showEditSol}
+          onOpenChange={setShowEditSol}
           onSubmitSuccess={() => refreshSols()}
-          setShowEditSol={setShowEditSol}
+        />
+
+        <CreateCommentDialog
+          solId={activeSolId}
+          open={showCreateComment}
+          onOpenChange={setShowCreateComment}
+          onSubmitSuccess={() => refreshSols()}
         />
       </div>
     </div>

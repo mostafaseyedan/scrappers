@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import styles from "./solicitation.module.scss";
+import { on } from "events";
 
 function isWithinAWeek(date: Date): boolean {
   const now = new Date();
@@ -36,6 +37,7 @@ type SolicitationProps = {
   expandedSolIds?: string[];
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
   refreshSols: () => void;
+  onClickComment?: (solId: string) => void;
   onEditSol: (solId: string) => void;
   variant?: "compact" | "expanded";
 };
@@ -46,6 +48,7 @@ const Solicitation = ({
   expandedSolIds = [],
   setExpandedSolIds,
   refreshSols,
+  onClickComment,
   onEditSol,
   variant = "compact",
 }: SolicitationProps) => {
@@ -181,7 +184,15 @@ const Solicitation = ({
           )}
           <Tooltip>
             <TooltipTrigger>
-              <Button variant={"ghost"} aria-label="Comments">
+              <Button
+                variant={"ghost"}
+                aria-label="Comments"
+                onClick={() => {
+                  if (onClickComment) {
+                    onClickComment(sol.id);
+                  }
+                }}
+              >
                 0 <MessageCircle />
               </Button>
             </TooltipTrigger>

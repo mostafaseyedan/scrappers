@@ -89,4 +89,17 @@ const solicitation: any = {
   },
 };
 
-export { solicitation };
+const solicitation_comment: any = {
+  schema: z.object({
+    body: z.string(),
+    attachments: z.array(z.string().url()).default([]),
+    authorId: z.string(),
+  }),
+  get: async (solId: string) => {},
+  post: async (
+    solId: string,
+    data: z.infer<typeof solicitation_comment.schema>
+  ) => {},
+};
+
+export { solicitation, solicitation_comment };
