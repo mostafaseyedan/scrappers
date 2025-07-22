@@ -20,18 +20,19 @@ import { useForm } from "react-hook-form";
 import { solicitation as solModel } from "../models";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 type EditSolDialogProps = {
   solId: string;
   open: boolean;
-  setShowEditSol: (show: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   onSubmitSuccess?: () => void;
 };
 
 const EditSolDialog = ({
   solId,
   open,
-  setShowEditSol,
+  onOpenChange,
   onSubmitSuccess,
 }: EditSolDialogProps) => {
   const form = useForm();
@@ -75,16 +76,17 @@ const EditSolDialog = ({
       return;
     }
 
-    setShowEditSol(false);
+    onOpenChange(false);
     toast.success(`Solicitation ${solId} updated successfully`);
     onSubmitSuccess?.();
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => setShowEditSol(false)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Edit Solicitation {solId}</DialogTitle>
+          <DialogTitle>Quick Edit Solicitation</DialogTitle>
+          <DialogDescription>{solId}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -193,7 +195,7 @@ const EditSolDialog = ({
         </Form>
         <DialogFooter>
           <Button onClick={() => saveButtonRef.current?.click()}>Save</Button>
-          <Button variant="secondary" onClick={() => setShowEditSol(false)}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </DialogFooter>

@@ -56,6 +56,12 @@
     }
   }
 
+  &_iconCounts {
+    color: gray;
+    display: flex;
+    justify-content: flex-end;
+  }
+
   &_ourStatus {
     margin-bottom: 5px;
     > button {
