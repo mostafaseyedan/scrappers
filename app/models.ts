@@ -12,6 +12,7 @@ const solicitation: any = {
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),
     cnStatus: z.enum(Object.keys(cnStatuses)).default("new"),
+    commentsCount: z.number().default(0),
     contactEmail: z.string(),
     contactName: z.string(),
     contactNote: z.string(),
