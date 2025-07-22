@@ -95,11 +95,15 @@ const solicitation_comment: any = {
     attachments: z.array(z.string().url()).default([]),
     authorId: z.string(),
   }),
-  get: async (solId: string) => {},
+  get: async (solId: string) => {
+    console.log("solicitation_comment.get", solId);
+  },
   post: async (
     solId: string,
     data: z.infer<typeof solicitation_comment.schema>
-  ) => {},
+  ) => {
+    console.log("solicitation_comment.post", solId, data);
+  },
 };
 
 export { solicitation, solicitation_comment };

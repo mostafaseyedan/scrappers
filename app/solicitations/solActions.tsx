@@ -3,7 +3,6 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   EllipsisVertical,
-  MessageCircle,
   Heart,
   Pencil,
   Trash,

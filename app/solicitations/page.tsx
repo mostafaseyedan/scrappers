@@ -37,8 +37,6 @@ import { cnStatuses } from "../config";
 import { CreateCommentDialog } from "./createCommentDialog";
 
 import styles from "./page.module.scss";
-import { set } from "zod";
-import { on } from "events";
 
 type SearchSolsParams = {
   q?: string;

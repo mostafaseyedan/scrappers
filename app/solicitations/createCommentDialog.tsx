@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
@@ -38,6 +38,10 @@ const CreateCommentDialog = ({
 
   async function onSubmit(formValues: Record<string, any>) {
     console.log("onSubmit", formValues);
+
+    onOpenChange(false);
+    toast.success(`Comment created for solicitation ${solId} successfully`);
+    onSubmitSuccess?.();
   }
 
   return (
