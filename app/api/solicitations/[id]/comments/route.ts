@@ -3,6 +3,7 @@ import { getTokens } from "next-firebase-auth-edge";
 import { cookies } from "next/headers";
 import { authConfig } from "@/config/serverConfig";
 import { get, getById, patch, post } from "@/lib/firebaseAdmin";
+import { patch as elasticPatch } from "@/lib/elastic";
 
 export async function GET(
   req: NextRequest,
@@ -49,14 +50,12 @@ export async function POST(
     const sol = await getById("solicitations", id);
     if (!sol) throw new Error("Solicitation not found");
 
-    await patch("solicitations", id, {
-      commentCount: (sol.commentCount || 0) + 1,
-    });
+    const countData = { commentsCount: (sol.commentsCount || 0) + 1 };
+    await patch("solicitations", id, { ...countData });
+    await elasticPatch("solicitations", id, { ...countData });
 
-    results = {
-      results:
-        (await post(`solicitations/${id}/comments`, updateData, user)) || [],
-    };
+    results =
+      (await post(`solicitations/${id}/comments`, updateData, user)) || {};
   } catch (error) {
     console.error("Error creating new comment", error);
     const errorMessage = error instanceof Error ? error.message : String(error);

@@ -192,7 +192,7 @@ const Solicitation = ({
                   }
                 }}
               >
-                0 <MessageCircle />
+                {sol.commentsCount} <MessageCircle />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Comments</TooltipContent>
