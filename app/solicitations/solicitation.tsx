@@ -1,3 +1,4 @@
+import { Eye, MessageCircle, StickyNote, Tag } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,6 +14,12 @@ import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
 import { cnStatuses } from "../config";
 import { format as fnFormat } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import styles from "./solicitation.module.scss";
 
@@ -158,6 +165,43 @@ const Solicitation = ({
               </SelectGroup>
             </SelectContent>
           </Select>
+        </div>
+        <div className={styles.sol_iconCounts}>
+          {Boolean(sol.keywords?.length) && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Button variant={"ghost"} aria-label="Tags">
+                  {sol.keywords.length || 0} <Tag />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {sol.keywords.length || 0} Tags - {sol.keywords.join(", ")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant={"ghost"} aria-label="Comments">
+                0 <MessageCircle />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Comments</TooltipContent>
+          </Tooltip>
+          {sol.cnNotes && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Button variant={"ghost"} aria-label="Notes">
+                  <StickyNote />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Notes - {sol.cnNotes.substr(0, 250)}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Button variant={"ghost"} aria-label="Views">
+            0 <Eye />
+          </Button>
         </div>
       </div>
     </div>

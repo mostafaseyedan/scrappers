@@ -121,12 +121,6 @@ const SolActions = ({
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/solicitations/${sol.id}/comments`} target="_blank">
-              <MessageCircle />
-              <span>Comment</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
             <Link href={`/solicitations/${sol.id}/jsonEdit`} target="_blank">
               <Braces />
               JSON edit
@@ -135,7 +129,7 @@ const SolActions = ({
           <DropdownMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <a>
+                <a className={styles.solActions_delete}>
                   <Trash />
                   Delete
                 </a>

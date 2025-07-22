@@ -13,6 +13,13 @@
     }
   }
 
+  &_delete {
+    color: red;
+    svg {
+      color: red;
+    }
+  }
+
   &_likeButton {
     &__active {
       border: 1px solid red;
