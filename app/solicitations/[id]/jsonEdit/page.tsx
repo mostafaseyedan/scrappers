@@ -73,7 +73,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <div className={styles.sol_issuerRow}>
               <span>{sol.location}</span>
               <span>/</span>
-              <span>{sol.issuingOrganization}</span>
+              <span>{sol.issuer}</span>
             </div>
             <div className={styles.sol_sourceRow}>
               <Link href={`/solicitations/${sol.id}`} target="_blank">

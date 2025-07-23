@@ -18,7 +18,6 @@ const solicitation: any = {
   schema: z.object({
     categories: z.array(z.string()).default([]),
     closingDate: z.string().datetime(),
-    cnComments: z.array(z.object({})).default([]),
     cnData: z.object({}).default({}),
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),

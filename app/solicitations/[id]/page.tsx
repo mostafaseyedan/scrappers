@@ -49,7 +49,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <div className={styles.sol_issuerRow}>
               <span>{sol.location}</span>
               <span>/</span>
-              <span>{sol.issuingOrganization}</span>
+              <span>{sol.issuer}</span>
             </div>
             <div className={styles.sol_sourceRow}>
               <span>{sol.id}</span>
@@ -87,7 +87,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </div>
             <div className={styles.sol_keywords}>
               <label>Keywords</label>
-              {sol.keywords?.map((keyword: string) => (
+              {(sol.keywords || []).map((keyword: string) => (
                 <span
                   key={`sol-keyword-${keyword}`}
                   className={styles.sol_keyword}
@@ -148,7 +148,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </span>
             <label>Published Date</label>
             <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-              {sol.publicationDate.toDate().toLocaleString()}
+              {sol.publicationDate?.toDate().toLocaleString()}
             </span>
             <label>Extracted Date</label>
             <span>{sol.created.toDate().toLocaleString()}</span>

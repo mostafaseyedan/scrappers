@@ -44,7 +44,7 @@ const EditSolDialog = ({
         const sol = await solModel.getById(solId);
         form.reset({
           title: sol.title ?? "",
-          issuingOrganization: sol.issuingOrganization ?? "",
+          issuer: sol.issuer ?? "",
           location: sol.location ?? "",
           description: sol.description ?? "",
           categories: sol.categories?.length ? sol.categories.join(", ") : "",
@@ -105,7 +105,7 @@ const EditSolDialog = ({
               }}
             />
             <FormField
-              name="issuingOrganization"
+              name="issuer"
               render={({ field }) => {
                 return (
                   <FormItem>

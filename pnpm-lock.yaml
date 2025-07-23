@@ -11,6 +11,9 @@ importers:
       '@elastic/elasticsearch':
         specifier: ^9.0.3
         version: 9.0.3
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.60.0(react@19.1.0))
@@ -635,6 +638,10 @@ packages:
 
   '@google/genai@0.8.0':
     resolution: {integrity: sha512-Zs+OGyZKyMbFofGJTR9/jTQSv8kITh735N3tEuIZj4VlMQXTC0soCFahysJ9NaeenRlD7xGb6fyqmX+FwrpU6Q==}
+    engines: {node: '>=18.0.0'}
+
+  '@google/generative-ai@0.24.1':
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
     engines: {node: '>=18.0.0'}
 
   '@grpc/grpc-js@1.13.4':
@@ -4861,6 +4868,8 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
+
+  '@google/generative-ai@0.24.1': {}
 
   '@grpc/grpc-js@1.13.4':
     dependencies:

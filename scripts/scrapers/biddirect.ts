@@ -6,7 +6,7 @@ import { z } from "zod";
 import fs from "fs";
 import { execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
-import { patch as elasticPatch } from "@/lib/elastic";
+import { post as elasticPost } from "@/lib/elastic";
 import { fbToJs } from "@/lib/dataUtils";
 
 const DEBUG = true;
@@ -16,7 +16,7 @@ const PASS = process.env.BIDDIRECT_PASS;
 
 const tasks = {
   executeSummary: () =>
-    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
+    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'. Do not click any links that will leave the site, and do not click any links that will open a new tab or window. You will be using the browser to navigate the site and extract data. The goal is to extract all solicitations from bidnetdirect.com.
     1. Navigate to bidnetdirect.com and log in.
     2. Click on the "Solicitations" tab and then click "Search".
     4. Getting the total number of pages and results from the bottom of the page.`,
@@ -299,9 +299,8 @@ function sanitizeSolForDb(solicitation: Record<string, any>) {
     created: new Date(),
     description: solicitation.description,
     documents: [],
-    extractedDate: new Date(),
     externalLinks: solicitation.externalUrl ? [solicitation.externalUrl] : [],
-    issuingOrganization: solicitation.issuingOrganization,
+    issuer: solicitation.issuingOrganization,
     keywords: "",
     location: solicitation.location,
     meta: {},
@@ -394,7 +393,7 @@ async function processDownloads({
     execSync(cmd);
     console.log(`    ${targetName} saved`);
 
-    const destination = `solicitations/${solDetails.siteId}/documents/${targetName}`;
+    const destination = `solicitations/${solDetails.id}/documents/${targetName}`;
     const uploadResults = await bucket.upload(target, {
       destination,
       public: true,
@@ -506,9 +505,9 @@ async function run() {
       try {
         const rawSol = pageSummary.solicitations[solIndex];
         console.log(
-          `\n  Processing solicitation p${currPage} ${solIndex + 1}/${max} - ${
-            rawSol.id
-          } ${rawSol.title}`
+          `\n  Processing solicitation p${currPage}/${summary.pages} ${
+            solIndex + 1
+          }/${max} - ${rawSol.id} ${rawSol.title}`
         );
         const solPath = `.output/biddirect/${cacheFolder}/solicitations/${rawSol.id}`;
         const checkFile = await getFile(`${solPath}/post.json`);
@@ -587,8 +586,10 @@ async function run() {
           )
         );
 
-        await elasticPatch("solicitations", dbDoc.id, fbToJs(dbDoc.data()));
+        /* TODO: Fix me
+        await elasticPost("solicitations", dbDoc.id, fbToJs(dbDoc.data()));
         console.log(chalk.green(`    Elastic record created ${dbDoc.id}`));
+        */
 
         totalSolicitations++;
       } catch (error: any) {

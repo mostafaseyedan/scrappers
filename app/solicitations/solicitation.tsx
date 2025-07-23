@@ -82,11 +82,9 @@ const Solicitation = ({
         <div className={styles.sol_issuerRow}>
           <span>{sol.location}</span>
           <span>/</span>
-          <span>{sol.issuingOrganization}</span>
-        </div>
-        <div className={styles.sol_sourceRow}>
+          <span>{sol.issuer}</span>
           <a href={sol.siteUrl} target="_blank">
-            <span>{sol.site}</span>_<span>{sol.siteId}</span>
+            {sol.site}
           </a>
         </div>
         <div className={styles.sol_datesCol}>

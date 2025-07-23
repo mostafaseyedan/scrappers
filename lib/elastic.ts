@@ -32,6 +32,22 @@ export async function patch(
   }
 }
 
+export async function post(
+  index: string,
+  id: string,
+  doc: Record<string, any>
+) {
+  const response = await client.index({
+    index,
+    id,
+    body: doc,
+  });
+  if (response.result !== "created") {
+    throw new Error(`Failed to create document in Elasticsearch ${id}`);
+  }
+  return { success: id };
+}
+
 export async function remove(index: string, id: string) {
   const response = await client.delete({ index, id });
   if (response.result !== "deleted") {
