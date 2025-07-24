@@ -1,3 +1,5 @@
+@use "../variables";
+
 .sol {
   border-bottom: 1px solid #eee;
   display: flex;
@@ -12,6 +14,7 @@
   }
 
   &_datesCol {
+    color: variables.$lightGray;
     display: flex;
     gap: 20px;
   }

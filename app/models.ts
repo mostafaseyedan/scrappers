@@ -21,7 +21,9 @@ const solicitation: any = {
     cnData: z.object({}).default({}),
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),
-    cnStatus: z.enum(Object.keys(cnStatuses)).default("new"),
+    cnStatus: z
+      .enum(Object.keys(cnStatuses) as [string, ...string[]])
+      .default("new"),
     comments: z.array(z.object({})).default([]).describe("[submodel]"),
     commentsCount: z.number().default(0),
     contactEmail: z.string(),
