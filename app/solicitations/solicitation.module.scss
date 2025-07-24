@@ -1,3 +1,4 @@
+@use "sass:map";
 @use "../variables";
 
 .sol {
@@ -70,26 +71,36 @@
     > button {
       margin-left: auto;
     }
-    &[data-status="new"] {
+    &[data-status="submitted"],
+    &[data-status="awarded"] {
       > button {
-        @extend .sol_statusItem_new;
+        @extend .sol_statusItem_submitted;
+        border-color: map.get(variables.$statusColors, "submitted");
       }
     }
-    &[data-status="ignore"],
+    &[data-status="rfps"],
+    &[data-status="monitor"] {
+      > button {
+        @extend .sol_statusItem_rfps;
+        border-color: map.get(variables.$statusColors, "rfps");
+      }
+    }
+    &[data-status="erp"] {
+      > button {
+        @extend .sol_statusItem_erp;
+        border-color: map.get(variables.$statusColors, "erp");
+      }
+    }
+    &[data-status="notWon"] {
+      > button {
+        @extend .sol_statusItem_notWon;
+        border-color: map.get(variables.$statusColors, "notWon");
+      }
+    }
     &[data-status="notPursuing"] {
       > button {
-        @extend .sol_statusItem_ignore;
-      }
-    }
-    &[data-status="pursuing"],
-    &[data-status="processing"] {
-      > button {
-        @extend .sol_statusItem_pursuing;
-      }
-    }
-    &[data-status="applied"] {
-      > button {
-        @extend .sol_statusItem_applied;
+        @extend .sol_statusItem_notPursuing;
+        border-color: map.get(variables.$statusColors, "notPursuing");
       }
     }
   }
@@ -131,22 +142,20 @@
   }
 }
 
-.sol_statusItem_new {
-  background-color: inherit;
-  color: inherit;
+.sol_statusItem_submitted,
+.sol_statusItem_awarded {
+  color: map.get(variables.$statusColors, "submitted");
 }
-.sol_statusItem_ignore,
+.sol_statusItem_rfps,
+.sol_statusItem_monitor {
+  color: map.get(variables.$statusColors, "rfps");
+}
+.sol_statusItem_erp {
+  color: map.get(variables.$statusColors, "erp");
+}
+.sol_statusItem_notWon {
+  color: map.get(variables.$statusColors, "notWon");
+}
 .sol_statusItem_notPursuing {
-  background-color: #eee;
-  color: gray;
-}
-
-.sol_statusItem_pursuing,
-.sol_statusItem_processing {
-  background-color: lightgreen;
-}
-
-.sol_statusItem_applied {
-  background-color: green;
-  color: white;
+  color: map.get(variables.$statusColors, "notPursuing");
 }

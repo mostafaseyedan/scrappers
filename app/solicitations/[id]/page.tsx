@@ -17,6 +17,7 @@ import { cnStatuses } from "@/app/config";
 import { SolActions } from "../solActions";
 
 import styles from "./page.module.scss";
+import { set } from "date-fns";
 
 function isWithinAWeek(date: Date): boolean {
   const now = new Date();
@@ -28,12 +29,13 @@ function isWithinAWeek(date: Date): boolean {
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
+  const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
 
   async function refresh() {
     const docRef = doc(db, "solicitations", id);
     const resp = await getDoc(docRef);
     setSol({ id, ...resp.data() });
-    console.log({ id, ...resp.data() });
+    setCnStatus(resp.data()?.cnStatus || "new");
   }
 
   useEffect(() => {
@@ -129,11 +131,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
           <div className={styles.sol_datesCol}>
             <label>Our Status</label>
-            <div className={styles.sol_ourStatus}>
+            <div className={styles.sol_ourStatus} data-status={cnStatus}>
               <Select
-                value={sol.cnStatus || "new"}
+                value={cnStatus}
                 onValueChange={async (value) => {
                   await solModel.patch(sol.id, { cnStatus: value });
+                  setCnStatus(value);
                 }}
               >
                 <SelectTrigger>
@@ -143,7 +146,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <SelectGroup>
                     {cnStatuses &&
                       Object.entries(cnStatuses).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
+                        <SelectItem
+                          className={styles[`sol_ourStatus_${value}`]}
+                          key={value}
+                          value={value}
+                        >
                           {label}
                         </SelectItem>
                       ))}
