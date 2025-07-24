@@ -29,13 +29,17 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
 
+  async function refresh() {
+    const docRef = doc(db, "solicitations", id);
+    const resp = await getDoc(docRef);
+    setSol({ id, ...resp.data() });
+  }
+
   useEffect(() => {
     (async () => {
       document.title = `${id} | Cendien Recon`;
 
-      const docRef = doc(db, "solicitations", id);
-      const resp = await getDoc(docRef);
-      setSol({ id, ...resp.data() });
+      await refresh();
     })();
   }, [id]);
 
@@ -43,7 +47,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     <div>
       {sol && (
         <div className={cn(styles.sol)}>
-          <SolActions sol={sol} />
+          <SolActions sol={sol} refreshSols={refresh} />
           <div className={styles.sol_contentCol}>
             <span className={styles.sol_title}>{sol.title}</span>
             <div className={styles.sol_issuerRow}>
