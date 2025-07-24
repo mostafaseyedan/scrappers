@@ -33,6 +33,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     const docRef = doc(db, "solicitations", id);
     const resp = await getDoc(docRef);
     setSol({ id, ...resp.data() });
+    console.log({ id, ...resp.data() });
   }
 
   useEffect(() => {
@@ -148,14 +149,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <span>Active</span>
             <label>Closing Date</label>
             <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-              {new Date(sol.closingDate).toLocaleString()}
+              {sol.closingDate?.seconds &&
+                sol.closingDate.toDate().toLocaleString()}
             </span>
             <label>Published Date</label>
             <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-              {new Date(sol.publicationDate).toLocaleString()}
+              {sol.publicationDate?.seconds &&
+                sol.publicationDate.toDate().toLocaleString()}
             </span>
             <label>Extracted Date</label>
-            <span>{new Date(sol.created).toLocaleString()}</span>
+            <span>
+              {sol.created?.seconds && sol.created.toDate().toLocaleString()}
+            </span>
           </div>
         </div>
       )}
