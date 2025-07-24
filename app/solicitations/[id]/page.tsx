@@ -19,6 +19,9 @@ import {
 import { cnStatuses } from "@/app/config";
 import { SolActions } from "../solActions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { EditSolDialog } from "@/app/solicitations/editSolDialog";
+import { CreateCommentDialog } from "@/app/solicitations/createCommentDialog";
 
 import styles from "./page.module.scss";
 
@@ -34,6 +37,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [sol, setSol] = useState<Record<string, any> | undefined>();
   const [comments, setComments] = useState<Record<string, any>[]>([]);
   const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
+  const [showEditSol, setShowEditSol] = useState(false);
+  const [showCreateComment, setShowCreateComment] = useState(false);
 
   async function refresh() {
     const docRef = doc(db, "solicitations", id);
@@ -65,7 +70,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     <div>
       {sol && (
         <div className={cn(styles.sol)}>
-          <SolActions sol={sol} refreshSols={refresh} />
+          <SolActions
+            sol={sol}
+            showExpandOption={false}
+            refreshSols={refresh}
+            onEditSol={() => setShowEditSol(true)}
+          />
           <div className={styles.sol_contentCol}>
             <span className={styles.sol_title}>{sol.title}</span>
             <div className={styles.sol_issuerRow}>
@@ -139,6 +149,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 className={styles.sol_tabs_commentsContent}
                 value="comments"
               >
+                <Button>Leave a comment</Button>
                 <div>
                   {Boolean(comments?.length) ? (
                     comments.map((comment) => (
@@ -180,10 +191,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 value="documents"
               >
                 {sol.documents?.length &&
-                  sol.documents.map((url: string) => (
+                  sol.documents.map((url: string, index: number) => (
                     <div
                       className={styles.sol_tabs_documentsContent_document}
-                      key={url}
+                      key={`sol-doc-${index}-${url}`}
                     >
                       <a href={url} target="_blank">
                         <span>{url.substring(url.lastIndexOf("/") + 1)}</span>
@@ -197,7 +208,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </TabsContent>
 
               <TabsContent value="notes">
-                <span>{sol.cnNotes}</span>
+                {sol.cnNotes ? (
+                  <>{sol.cnNotes}</>
+                ) : (
+                  <div className="p-3">No notes available</div>
+                )}
               </TabsContent>
 
               <TabsContent value="source">
@@ -253,6 +268,20 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               {sol.created?.seconds && sol.created.toDate().toLocaleString()}
             </span>
           </div>
+
+          <EditSolDialog
+            solId={sol.id}
+            open={showEditSol}
+            onOpenChange={setShowEditSol}
+            onSubmitSuccess={() => refresh()}
+          />
+
+          <CreateCommentDialog
+            solId={sol.id}
+            open={showCreateComment}
+            onOpenChange={setShowCreateComment}
+            onSubmitSuccess={() => refresh()}
+          />
         </div>
       )}
     </div>
