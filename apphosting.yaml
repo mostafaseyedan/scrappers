@@ -37,6 +37,8 @@ env:
     secret: DEV_ELASTIC_NODE
   - variable: ELASTIC_API_KEY
     secret: DEV_ELASTIC_API_KEY
+  - variable: FIREBASE_API_KEY
+    value: DEV_FIREBASE_API_KEY
   - variable: FIREBASE_PROJECT_ID
     value: rfpscraper-dc3d8
   - variable: FIREBASE_CLIENT_EMAIL
