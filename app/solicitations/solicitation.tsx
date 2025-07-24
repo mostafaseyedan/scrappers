@@ -76,11 +76,7 @@ const Solicitation = ({
         onEditSol={onEditSol}
       />
       <div className={styles.sol_contentCol}>
-        <Link
-          className={styles.sol_title}
-          href={`/solicitations/${sol.id}`}
-          target="_blank"
-        >
+        <Link className={styles.sol_title} href={`/solicitations/${sol.id}`}>
           {sol.title}
         </Link>
         <div className={styles.sol_issuerRow}>
