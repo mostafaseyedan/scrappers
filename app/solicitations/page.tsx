@@ -166,7 +166,7 @@ export default function Page() {
               )}
             </div>
             <div className={styles.pageMain_solsSection_pagination}>
-              {totalFiltered > 0 ? (
+              {q || Object.keys(filter).length > 0 ? (
                 <>
                   {totalFiltered} out {totalRecords} items.
                 </>
