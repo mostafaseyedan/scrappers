@@ -17,8 +17,16 @@ const elasticClient = new Client({
 
 async function run() {
   const db = initDb();
+
+  const test = await elasticClient.deleteByQuery({
+    index: "solicitations",
+    query: { match_all: {} },
+  });
+  console.log({ test });
+
   const solicitationsSnapshot = await db.collection("solicitations").get();
   let docs: Record<string, any>[] = [];
+
   solicitationsSnapshot.forEach((doc) => {
     let newEsDoc: Record<string, any> = fbToJs({
       id: doc.id,

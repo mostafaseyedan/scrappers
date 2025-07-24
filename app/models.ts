@@ -181,7 +181,7 @@ const solicitation: any = {
     });
 
     const resp = await fetch(
-      `${params.baseUrl}/api/solicitations/search?${urlQueryString}`,
+      `${baseUrl}/api/solicitations/search?${urlQueryString}`,
       {
         headers: {
           Cookie: `AuthToken=${params.token}`,
