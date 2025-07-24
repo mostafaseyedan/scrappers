@@ -144,14 +144,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <span>Active</span>
             <label>Closing Date</label>
             <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-              {sol.closingDate.toDate().toLocaleString()}
+              {new Date(sol.closingDate).toLocaleString()}
             </span>
             <label>Published Date</label>
             <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-              {sol.publicationDate?.toDate().toLocaleString()}
+              {new Date(sol.publicationDate).toLocaleString()}
             </span>
             <label>Extracted Date</label>
-            <span>{sol.created.toDate().toLocaleString()}</span>
+            <span>{new Date(sol.created).toLocaleString()}</span>
           </div>
         </div>
       )}
