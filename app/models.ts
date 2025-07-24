@@ -9,6 +9,17 @@ import {
   where,
 } from "firebase/firestore";
 import { cnStatuses } from "./config";
+import queryString from "query-string";
+
+type SolSearchParams = {
+  baseUrl?: string;
+  q?: string;
+  limit?: number;
+  page?: number;
+  sort?: string;
+  filter?: Record<string, any>;
+  token?: string;
+};
 
 const dbSol: any = {
   schema: z.object({
@@ -139,9 +150,13 @@ const solicitation: any = {
 
     return json;
   },
-  remove: async (id: string) => {
-    const resp = await fetch(`/api/solicitations/${id}`, {
+  remove: async (id: string, baseUrl: string = "", token: string) => {
+    const resp = await fetch(`${baseUrl}/api/solicitations/${id}`, {
       method: "DELETE",
+      headers: {
+        Cookie: `AuthToken=${token}`,
+      },
+      credentials: "include",
     });
     const json = await resp.json();
 
@@ -150,6 +165,38 @@ const solicitation: any = {
     }
 
     return id;
+  },
+  search: async (params: SolSearchParams = {}) => {
+    const baseUrl = params.baseUrl || "";
+
+    const flattenedFilter: Record<string, any> = {};
+    for (const [key, value] of Object.entries(params.filter || {})) {
+      flattenedFilter[`filter.${key}`] = value;
+    }
+
+    delete params.filter;
+    const urlQueryString = queryString.stringify({
+      ...params,
+      ...flattenedFilter,
+    });
+
+    const resp = await fetch(
+      `${params.baseUrl}/api/solicitations/search?${urlQueryString}`,
+      {
+        headers: {
+          Cookie: `AuthToken=${params.token}`,
+        },
+        credentials: "include",
+      }
+    );
+    const json = await resp.json();
+
+    return (
+      json.hits?.hits?.map((hit: Record<string, any>) => ({
+        id: hit._id,
+        ...hit._source,
+      })) || []
+    );
   },
 };
 
