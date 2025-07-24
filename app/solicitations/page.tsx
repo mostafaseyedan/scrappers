@@ -119,6 +119,7 @@ export default function Page() {
 
     document.addEventListener("visibilitychange", refreshSols);
     window.addEventListener("focus", refreshSols);
+
     return () => {
       document.removeEventListener("visibilitychange", refreshSols);
       window.removeEventListener("focus", refreshSols);

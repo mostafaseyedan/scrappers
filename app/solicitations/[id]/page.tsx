@@ -42,6 +42,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       await refresh();
     })();
+
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+    };
   }, [id]);
 
   return (
@@ -125,9 +131,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <label>Our Status</label>
             <div className={styles.sol_ourStatus}>
               <Select
-                defaultValue={sol.cnStatus || "new"}
-                onValueChange={(value) => {
-                  solModel.patch(sol.id, { cnStatus: value });
+                value={sol.cnStatus || "new"}
+                onValueChange={async (value) => {
+                  await solModel.patch(sol.id, { cnStatus: value });
                 }}
               >
                 <SelectTrigger>
