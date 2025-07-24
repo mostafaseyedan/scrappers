@@ -118,8 +118,12 @@ const Solicitation = ({
           <div className={styles.sol_externalLinks}>
             <label>External Links</label>
             <div>
-              {sol.externalLinks?.map((link: string) => (
-                <a key={`external-link-${link}`} href={link} target="_blank">
+              {sol.externalLinks?.map((link: string, index: number) => (
+                <a
+                  key={`external-link-${sol.id}-${index}-${link}`}
+                  href={link}
+                  target="_blank"
+                >
                   {link}
                 </a>
               ))}
@@ -128,9 +132,9 @@ const Solicitation = ({
         </div>
         <div className={styles.sol_categories}>
           <label>Categories</label>
-          {sol.categories?.map((category: string) => (
+          {sol.categories?.map((category: string, index: number) => (
             <span
-              key={`sol-${sol.id}-category-${category}`}
+              key={`sol-${sol.id}-${index}-category-${category}`}
               className={styles.sol_category}
             >
               {category}

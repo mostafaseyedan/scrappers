@@ -35,7 +35,7 @@ export default function Page() {
   const [filter, setFilter] = useState<{
     cnStatus?: string;
     [key: string]: any;
-  }>({});
+  }>({ cnStatus: "new" });
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("closingDate desc");
@@ -54,7 +54,9 @@ export default function Page() {
     500
   );
 
-  async function searchSols(params: Partial<SearchSolsParams> = {}) {
+  async function searchSols(
+    params: Partial<SearchSolsParams> = { filter: { cnStatus: "new" } }
+  ) {
     const {
       q: paramQ,
       limit: paramLimit,

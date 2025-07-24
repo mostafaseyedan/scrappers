@@ -72,7 +72,7 @@ const TopBar = ({
   return (
     <div className={cn(styles.topBar, className)}>
       <Tabs
-        defaultValue="all"
+        defaultValue="new"
         onValueChange={(value) => {
           setFilter((prev) => {
             if (value === "all") {

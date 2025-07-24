@@ -11,7 +11,7 @@ import { cnStatuses } from "@/app/config";
 import { executeTask, getLatestFolder } from "@/scripts/utils";
 import jsdom from "jsdom";
 import { init as elasticInit } from "@/lib/elastic";
-import { fbToJs } from "@/lib/dataUtils";
+import { fireToJs } from "@/lib/dataUtils";
 
 const DEBUG = true;
 const HIDE_STEPS = false;
@@ -199,7 +199,7 @@ async function run() {
     elasticClient.index({
       index: "solicitations",
       id: fireDoc.id,
-      body: fbToJs({ id: fireDoc.id, ...fireDoc.data() }),
+      body: fireToJs({ id: fireDoc.id, ...fireDoc.data() }),
     });
     console.log(`      Saved to Elasticsearch ${fireDoc.id}`);
 

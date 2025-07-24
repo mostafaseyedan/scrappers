@@ -44,6 +44,7 @@ type SolActionsProps = {
   showExpandOption?: boolean;
   sol: Record<string, any>;
   refreshSols?: () => void;
+  onDeleteSuccess?: () => void;
   onEditSol?: (solId: string) => void;
 };
 
