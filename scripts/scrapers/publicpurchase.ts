@@ -66,7 +66,7 @@ const schemas = {
   }),
   dbSol: z.object({
     categories: z.array(z.string()).default([]),
-    closingDate: z.date().nullable(),
+    closingDate: z.date().optional(),
     cnData: z.object({}).default({}),
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),

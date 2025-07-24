@@ -34,7 +34,7 @@ export function initStorage() {
 
 export async function get(dbPath: string) {
   const dbCollection = client.collection(dbPath);
-  const docs = await dbCollection.get();
+  const docs = await dbCollection.orderBy("created", "desc").get();
   const normalizedDocs: Record<string, any>[] = [];
 
   docs.forEach((doc) => {

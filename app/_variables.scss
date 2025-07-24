@@ -1,2 +1,12 @@
 $blue: #0664c9;
 $lightGray: #c7c7c7;
+
+$statusColors: (
+  submitted: rgb(0, 200, 117),
+  rfps: rgb(102, 204, 255),
+  erp: rgb(255, 90, 196),
+  awarded: rgb(0, 200, 117),
+  monitor: rgb(102, 204, 255),
+  notWon: rgb(255, 100, 46),
+  notPursuing: rgb(187, 51, 84),
+);

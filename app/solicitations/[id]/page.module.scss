@@ -1,3 +1,6 @@
+@use "sass:map";
+@use "../../variables";
+
 .sol {
   display: flex;
   padding: 10px;
@@ -75,11 +78,66 @@
     > button {
       margin-left: auto;
     }
+    &[data-status="submitted"],
+    &[data-status="awarded"] {
+      > button {
+        @extend .sol_ourStatus_submitted;
+        border-color: map.get(variables.$statusColors, "submitted");
+      }
+    }
+    &[data-status="rfps"],
+    &[data-status="monitor"] {
+      > button {
+        @extend .sol_ourStatus_rfps;
+        border-color: map.get(variables.$statusColors, "rfps");
+      }
+    }
+    &[data-status="erp"] {
+      > button {
+        @extend .sol_ourStatus_erp;
+        border-color: map.get(variables.$statusColors, "erp");
+      }
+    }
+    &[data-status="notWon"] {
+      > button {
+        @extend .sol_ourStatus_notWon;
+        border-color: map.get(variables.$statusColors, "notWon");
+      }
+    }
+    &[data-status="notPursuing"] {
+      > button {
+        @extend .sol_ourStatus_notPursuing;
+        border-color: map.get(variables.$statusColors, "notPursuing");
+      }
+    }
   }
 
   &_sourceRow {
     > * {
       margin-right: 5px;
+    }
+  }
+
+  &_tabs {
+    &_commentsContent {
+      &_comment {
+        border-bottom: 1px solid #eee;
+        color: gray;
+        padding: 5px 20px;
+        &_author {
+          font-weight: 500;
+          margin-right: 10px;
+        }
+        &_body {
+          display: block;
+        }
+      }
+    }
+    &_documentsContent {
+      &_document {
+        border-bottom: 1px solid #eee;
+        padding: 5px 20px;
+      }
     }
   }
 
@@ -96,4 +154,22 @@
     max-width: 70vw;
     overflow: auto;
   }
+}
+
+.sol_ourStatus_submitted,
+.sol_ourStatus_awarded {
+  color: map.get(variables.$statusColors, "submitted");
+}
+.sol_ourStatus_rfps,
+.sol_ourStatus_monitor {
+  color: map.get(variables.$statusColors, "rfps");
+}
+.sol_ourStatus_erp {
+  color: map.get(variables.$statusColors, "erp");
+}
+.sol_ourStatus_notWon {
+  color: map.get(variables.$statusColors, "notWon");
+}
+.sol_ourStatus_notPursuing {
+  color: map.get(variables.$statusColors, "notPursuing");
 }

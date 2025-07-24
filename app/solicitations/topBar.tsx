@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cnStatuses } from "../config";
 import { Button } from "@/components/ui/button";
 import { FilterOptions } from "./filterOptions";
 import { Input } from "@/components/ui/input";
@@ -63,13 +62,37 @@ const TopBar = ({
         }}
       >
         <TabsList>
+          <TabsTrigger className={styles.topBar_tab__new} value="new">
+            New (123)
+          </TabsTrigger>
+          <TabsTrigger
+            className={styles.topBar_tab__submitted}
+            value="submitted"
+          >
+            Submitted
+          </TabsTrigger>
+          <TabsTrigger className={styles.topBar_tab__rfps} value="rfps">
+            RFPs
+          </TabsTrigger>
+          <TabsTrigger className={styles.topBar_tab__erp} value="erp">
+            ERP
+          </TabsTrigger>
+          <TabsTrigger className={styles.topBar_tab__awarded} value="awarded">
+            Awarded
+          </TabsTrigger>
+          <TabsTrigger className={styles.topBar_tab__monitor} value="monitor">
+            Monitor
+          </TabsTrigger>
+          <TabsTrigger className={styles.topBar_tab__notWon} value="notWon">
+            Not Won
+          </TabsTrigger>
+          <TabsTrigger
+            className={styles.topBar_tab__notPursuing}
+            value="notPursuing"
+          >
+            Not Pursuing
+          </TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
-          {cnStatuses &&
-            Object.entries(cnStatuses).map(([value, label]) => (
-              <TabsTrigger value={value} key={`tabs-trigger-${value}`}>
-                {label}
-              </TabsTrigger>
-            ))}
         </TabsList>
       </Tabs>
       <div className={styles.topBar_filter}>

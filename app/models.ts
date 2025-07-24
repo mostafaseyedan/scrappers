@@ -3,6 +3,43 @@ import { db } from "@/lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
 import { cnStatuses } from "./config";
 
+const dbSol: any = {
+  schema: z.object({
+    categories: z.array(z.string()).default([]),
+    closingDate: z.date().nullable(),
+    cnData: z.object({}).default({}),
+    cnLiked: z.boolean().default(false),
+    cnModified: z.boolean().default(false),
+    cnStatus: z
+      .enum(Object.keys(cnStatuses) as [string, ...string[]])
+      .default("new"),
+    comments: z.array(z.object({})).default([]).describe("[submodel]"),
+    commentsCount: z.number().default(0),
+    contactEmail: z.string().optional(),
+    contactName: z.string().optional(),
+    contactNote: z.string().optional(),
+    contactPhone: z.string().optional(),
+    created: z.date(),
+    description: z.string(),
+    documents: z.array(z.string().url()).default([]),
+    externalLinks: z.array(z.string()).default([]),
+    issuer: z.string(),
+    keywords: z.array(z.string()).default([]),
+    location: z.string(),
+    logs: z.array(z.any()).default([]).describe("[submodel]"),
+    publicationDate: z.date().optional(),
+    questionsDueByDate: z.date().optional(),
+    rfpType: z.string().optional(),
+    site: z.string(),
+    siteData: z.any().default({}),
+    siteId: z.string(),
+    siteUrl: z.string().optional(),
+    title: z.string(),
+    updated: z.date(),
+    url: z.string().optional(),
+  }),
+};
+
 const scraping_log: any = {
   schema: z.object({
     message: z.string(),
@@ -105,7 +142,10 @@ const solicitation_comment: any = {
     authorId: z.string(),
   }),
   get: async (solId: string) => {
-    console.log("solicitation_comment.get", solId);
+    const resp = await fetch(`/api/solicitations/${solId}/comments`);
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to fetch comments");
+    return json;
   },
   post: async (
     solId: string,
@@ -129,4 +169,10 @@ const solicitation_log: any = {
   }),
 };
 
-export { solicitation, solicitation_comment, solicitation_log, scraping_log };
+export {
+  dbSol,
+  solicitation,
+  solicitation_comment,
+  solicitation_log,
+  scraping_log,
+};

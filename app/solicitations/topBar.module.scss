@@ -1,3 +1,6 @@
+@use "sass:map";
+@use "../variables";
+
 .topBar {
   display: flex;
   gap: 5px;
@@ -6,5 +9,28 @@
   }
   &_search {
     width: 170px;
+  }
+  &_tab {
+    &__submitted {
+      color: map.get(variables.$statusColors, "submitted");
+    }
+    &__rfps {
+      color: map.get(variables.$statusColors, "rfps");
+    }
+    &__erp {
+      color: map.get(variables.$statusColors, "erp");
+    }
+    &__awarded {
+      color: map.get(variables.$statusColors, "awarded");
+    }
+    &__monitor {
+      color: map.get(variables.$statusColors, "monitor");
+    }
+    &__notWon {
+      color: map.get(variables.$statusColors, "notWon");
+    }
+    &__notPursuing {
+      color: map.get(variables.$statusColors, "notPursuing");
+    }
   }
 }
