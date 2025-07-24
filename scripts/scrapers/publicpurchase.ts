@@ -8,6 +8,7 @@ import { exec, execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
 import { solicitation as solModel } from "@/app/models";
 import { cnStatuses } from "@/app/config";
+import { executeTask, getLatestFolder } from "@/scripts/utils";
 
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -18,7 +19,7 @@ const tasks = {
   categorySummary: ({ categoryId }: Record<string, any>) =>
     `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'. Do not click any links that will leave the site, and do not click any links that will open a new tab or window. You will be using the browser to navigate the site and extract data. The goal is to extract all solicitations from publicpurchase.com.
     1. Go to https://publicpurchase.com/gems/browse/marketBids?reg=y&agt=y&cl=y&parentId=${categoryId}&stype=0
-    2. Extract from solicitation from table on this page and append to memory with the field mappings:
+    2. Extract solicitations from table on this page and append to memory with the field mappings:
       - id: Id column
       - title: Bid column
       - Issuer: Agency column
@@ -106,14 +107,6 @@ const interestedCategories = {
   "33705": "Professional, scientific, and technical services",
 };
 
-type ExecuteTaskParams = {
-  agent: any;
-  name: keyof typeof tasks;
-  folder: string;
-  data?: Record<string, any>;
-  outputSchema?: z.ZodTypeAny;
-};
-
 function cleanUpCategorySummary(
   categorySummary: z.infer<typeof schemas.categorySummary>
 ) {
@@ -144,80 +137,6 @@ function cleanUpCategorySummary(
   }
 
   return cleanedUpSols;
-}
-
-function getLatestFolder() {
-  const dir = ".output/purchasehistory";
-  fs.mkdirSync(dir, { recursive: true });
-  const folders = fs
-    .readdirSync(dir)
-    .filter(
-      (f) =>
-        f.match(/^\d{4}-\d{2}-\d{2}/) &&
-        fs.statSync(`${dir}/${f}`).isDirectory()
-    );
-  if (folders.length === 0) return "";
-  return folders[folders.length - 1];
-}
-
-async function executeTask({
-  agent,
-  name,
-  folder,
-  data = {},
-  outputSchema,
-}: ExecuteTaskParams) {
-  const task = tasks[name](data);
-  let result;
-  const outputFile = `.output/purchasehistory/${folder}/${name}/${JSON.stringify(
-    data
-  )
-    .replace(/[^a-z0-9]+/gi, "")
-    .toLowerCase()}.json`;
-
-  result = fs.existsSync(outputFile) && fs.readFileSync(outputFile, "utf8");
-  if (result) return result;
-
-  result = await agent.executeTask(task, {
-    onStep: (step: any) => {
-      performance.mark(`${name}-step-${step.idx + 1}`);
-      const duration =
-        step.idx === 0
-          ? performance.measure(
-              `${name}-step-${step.idx + 1}-duration`,
-              "start",
-              `${name}-step-${step.idx + 1}`
-            )
-          : performance.measure(
-              `${name}-step-${step.idx + 1}-duration`,
-              `${name}-step-${step.idx}`,
-              `${name}-step-${step.idx + 1}`
-            );
-
-      if (HIDE_STEPS) return;
-
-      console.log(
-        chalk.gray(`      ${(duration.duration / 1000).toFixed(1)}s`)
-      );
-      console.log(
-        `    ${step.idx + 1}. ${step.agentOutput.actions[0].actionDescription}`
-      );
-    },
-    debugDir: `.output/purchasehistory/${folder}/debug/${name}`,
-    ...(outputSchema ? { outputSchema } : {}),
-  });
-
-  if (!result.output) {
-    throw new Error("Unable to get JSON output from agent");
-  }
-
-  console.log(outputFile, outputFile.substr(0, outputFile.lastIndexOf("/")));
-  fs.mkdirSync(outputFile.substr(0, outputFile.lastIndexOf("/")), {
-    recursive: true,
-  });
-  fs.writeFileSync(outputFile, result.output);
-
-  return result.output;
 }
 
 function sanitizeSolForDb(rawSolData: Record<string, any>) {
@@ -251,7 +170,7 @@ function sanitizeSolForDb(rawSolData: Record<string, any>) {
 }
 
 async function run() {
-  console.log(`\nExtracting from bidnetdirect.com ${start.toLocaleString()}`);
+  console.log(`\nExtracting from publicpurchase.com ${start.toLocaleString()}`);
 
   const db = initDb();
   const storage = initStorage();
@@ -276,7 +195,7 @@ async function run() {
     },
   });
 
-  let cacheFolder = getLatestFolder();
+  let cacheFolder = getLatestFolder(".output/purchasehistory");
   if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
   else cacheFolder = start.toISOString();
 
@@ -289,9 +208,11 @@ async function run() {
     let categorySummary = await executeTask({
       agent,
       name: "categorySummary",
-      folder: cacheFolder,
+      task: tasks.categorySummary({ categoryId }),
+      folder: `.output/purchasehistory/${cacheFolder}`,
       data: { categoryId },
       outputSchema: schemas.categorySummary,
+      hideSteps: HIDE_STEPS,
     });
     categorySummary = JSON.parse(categorySummary);
     categorySummary.categoryId = categoryId;
@@ -320,9 +241,11 @@ async function run() {
       let solDetails = await executeTask({
         agent,
         name: "solDetails",
-        folder: cacheFolder,
+        folder: `.output/purchasehistory/${cacheFolder}`,
         data: { rawSolId: rawSol.id },
         outputSchema: schemas.solDetails,
+        task: tasks.solDetails({ rawSolId: rawSol.id }),
+        hideSteps: HIDE_STEPS,
       });
       solDetails = JSON.parse(solDetails);
 
