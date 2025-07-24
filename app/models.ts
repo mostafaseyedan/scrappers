@@ -94,7 +94,7 @@ const solicitation: any = {
     url: z.string().url(),
   }),
   count: async (filter: Record<string, any> = {}) => {
-    let colRef = collection(db, "solicitations");
+    const colRef = collection(db, "solicitations");
     let queryRef: any = colRef;
 
     Object.entries(filter).forEach(([key, value]) => {
