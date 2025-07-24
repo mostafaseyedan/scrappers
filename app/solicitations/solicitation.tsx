@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState, Dispatch, SetStateAction } from "react";
+import { useState, Dispatch, SetStateAction, useEffect } from "react";
 import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
 import { cnStatuses } from "../config";
@@ -53,6 +53,10 @@ const Solicitation = ({
 }: SolicitationProps) => {
   const [expanded, setExpanded] = useState(false);
   const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
+
+  useEffect(() => {
+    setCnStatus(sol.cnStatus);
+  }, [sol.cnStatus]);
 
   return (
     <div
@@ -141,7 +145,7 @@ const Solicitation = ({
       <div className={styles.sol_statusCol}>
         <div className={styles.sol_ourStatus} data-status={cnStatus}>
           <Select
-            defaultValue={sol.cnStatus || "new"}
+            value={cnStatus}
             onValueChange={async (value) => {
               await solModel.patch(sol.id, { cnStatus: value });
               setCnStatus(value);

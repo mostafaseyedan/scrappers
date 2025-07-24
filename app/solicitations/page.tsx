@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Solicitation } from "./solicitation";
 import queryString from "query-string";
@@ -107,17 +107,23 @@ export default function Page() {
     setTotalPages(Math.ceil(total / finalLimit));
   }
 
-  async function refreshSols() {
+  const refreshSols = useCallback(async () => {
     await searchSols({ filter, limit, page, q, sort });
-  }
+  }, [filter, limit, page, q, sort]);
 
   useEffect(() => {
     (async () => {
       document.title = `Solicitations | Cendien Recon`;
-
       await debouncedSearchSols({ filter, limit, page, q, sort });
     })();
-  }, [filter, limit, page, q, sort]);
+
+    document.addEventListener("visibilitychange", refreshSols);
+    window.addEventListener("focus", refreshSols);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshSols);
+      window.removeEventListener("focus", refreshSols);
+    };
+  }, [refreshSols, debouncedSearchSols, filter, limit, page, q, sort]);
 
   return (
     <div className={styles.page}>

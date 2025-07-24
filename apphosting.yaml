@@ -29,6 +29,10 @@ env:
     secret: DEV_BIDDIRECT_PASS
   - variable: COOKIE_KEY
     secret: DEV_COOKIE_KEY
+  - variable: COOKIE_SECRET_CURRENT
+    secret: DEV_COOKIE_SECRET_CURRENT
+  - variable: COOKIE_SECRET_PREVIOUS
+    secret: DEV_COOKIE_SECRET_PREVIOUS
   - variable: ELASTIC_NODE
     secret: DEV_ELASTIC_NODE
   - variable: ELASTIC_API_KEY
