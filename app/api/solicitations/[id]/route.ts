@@ -6,6 +6,8 @@ import { getTokens } from "next-firebase-auth-edge";
 import { cookies } from "next/headers";
 import { authConfig } from "@/config/serverConfig";
 
+const ALLOWED_KEYS = [process.env.MOHAMMID_KEY];
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,6 +24,37 @@ export async function DELETE(
     results = { success: id };
   } catch (error) {
     console.error(`Failed to delete solicitation ${id}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    results = { error: errorMessage };
+    status = 500;
+  }
+
+  return NextResponse.json({ ...results }, { status });
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const authHeader = req.headers.get("authorization");
+  const { id } = await params;
+  const tokens = await getTokens(await cookies(), authConfig);
+  let results = {};
+  let status = 200;
+  let bearerToken;
+  let isValidSession = Boolean(tokens);
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    bearerToken = authHeader.substring(7);
+    isValidSession = ALLOWED_KEYS.includes(bearerToken);
+  }
+
+  try {
+    if (!isValidSession) throw new Error("Unauthenticated");
+    const doc = await getById("solicitations", id);
+    results = doc;
+  } catch (error) {
+    console.error(`Failed to get solicitation ${id}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     results = { error: errorMessage };
     status = 500;
