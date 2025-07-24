@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { app } from "@/lib/firebaseClient";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -34,6 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  const pathname = usePathname();
   const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
 
@@ -48,6 +49,10 @@ export default function RootLayout({
     router.push("/login");
   }
 
+  function isActive(path: string) {
+    return pathname === path;
+  }
+
   return (
     <html lang="en">
       <title>Cendien Recon</title>
@@ -60,10 +65,36 @@ export default function RootLayout({
               <h1>Recon</h1>
 
               <nav className={styles.layout_nav}>
-                <Link href="/solicitations">Solicitations</Link>
-                <Link href="/contacts">Contacts</Link>
-                <Link href="/status">Status</Link>
-                <Link href="/settings">Settings</Link>
+                <Link
+                  href="/solicitations"
+                  data-state={isActive("/solicitations") ? "active" : undefined}
+                >
+                  Solicitations
+                </Link>
+                <Link
+                  href="/contacts"
+                  data-state={isActive("/contacts") ? "active" : undefined}
+                >
+                  Contacts
+                </Link>
+                <Link
+                  href="/logs"
+                  data-state={isActive("/logs") ? "active" : undefined}
+                >
+                  Logs
+                </Link>
+                <Link
+                  href="/stats"
+                  data-state={isActive("/stats") ? "active" : undefined}
+                >
+                  Stats
+                </Link>
+                <Link
+                  href="/settings"
+                  data-state={isActive("/settings") ? "active" : undefined}
+                >
+                  Settings
+                </Link>
               </nav>
             </header>
           )}
