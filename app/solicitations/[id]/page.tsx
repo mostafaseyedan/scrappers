@@ -12,12 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { solicitation as solModel } from "@/app/models";
+import {
+  solicitation as solModel,
+  solicitation_comment as solCommentModel,
+} from "@/app/models";
 import { cnStatuses } from "@/app/config";
 import { SolActions } from "../solActions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import styles from "./page.module.scss";
-import { set } from "date-fns";
 
 function isWithinAWeek(date: Date): boolean {
   const now = new Date();
@@ -29,11 +32,17 @@ function isWithinAWeek(date: Date): boolean {
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
+  const [comments, setComments] = useState<Record<string, any>[]>([]);
   const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
 
   async function refresh() {
     const docRef = doc(db, "solicitations", id);
     const resp = await getDoc(docRef);
+
+    // Grab comments
+    const respComments = await solCommentModel.get(id);
+    if (respComments.results?.length) setComments(respComments.results);
+
     setSol({ id, ...resp.data() });
     setCnStatus(resp.data()?.cnStatus || "new");
   }
@@ -50,7 +59,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return () => {
       window.removeEventListener("focus", refresh);
     };
-  }, [id]);
+  }, [id, comments.length]);
 
   return (
     <div>
@@ -110,24 +119,93 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               ))}
             </div>
             <div>
-              <label>Documents</label>
-              <pre className="json">
-                {JSON.stringify(sol.documents, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <label>Notes</label>
-              <span>{sol.cnNotes}</span>
-            </div>
-            <div>
-              <label>Source Data</label>
-              <pre className="json">
-                {JSON.stringify(sol.siteData, null, 2)}
-              </pre>
-            </div>
-            <div>
               <label>Viewed By</label>
             </div>
+
+            <Tabs defaultValue="notes">
+              <TabsList className={styles.sol_tabs}>
+                <TabsTrigger value="comments">
+                  Comments ({comments?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="documents">
+                  Documents ({sol.documents?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="logs">Logs</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+                <TabsTrigger value="source">Source Data</TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                className={styles.sol_tabs_commentsContent}
+                value="comments"
+              >
+                <div>
+                  {Boolean(comments?.length) ? (
+                    comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className={styles.sol_tabs_commentsContent_comment}
+                      >
+                        <span
+                          className={
+                            styles.sol_tabs_commentsContent_comment_author
+                          }
+                        >
+                          {comment.authorId}
+                        </span>
+                        <span
+                          className={
+                            styles.sol_tabs_commentsContent_comment_date
+                          }
+                        >
+                          {new Date(comment.created).toLocaleString()}
+                        </span>
+                        <span
+                          className={
+                            styles.sol_tabs_commentsContent_comment_body
+                          }
+                        >
+                          {comment.body}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <span>No comments yet.</span>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent
+                className={styles.sol_tabs_documentsContent}
+                value="documents"
+              >
+                {sol.documents?.length &&
+                  sol.documents.map((url: string) => (
+                    <div
+                      className={styles.sol_tabs_documentsContent_document}
+                      key={url}
+                    >
+                      <a href={url} target="_blank">
+                        <span>{url.substring(url.lastIndexOf("/") + 1)}</span>
+                      </a>
+                    </div>
+                  ))}
+              </TabsContent>
+
+              <TabsContent value="logs">
+                <p>Coming soon</p>
+              </TabsContent>
+
+              <TabsContent value="notes">
+                <span>{sol.cnNotes}</span>
+              </TabsContent>
+
+              <TabsContent value="source">
+                <pre className="json">
+                  {JSON.stringify(sol.siteData, null, 2)}
+                </pre>
+              </TabsContent>
+            </Tabs>
           </div>
           <div className={styles.sol_datesCol}>
             <label>Our Status</label>

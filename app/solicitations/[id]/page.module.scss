@@ -118,6 +118,29 @@
     }
   }
 
+  &_tabs {
+    &_commentsContent {
+      &_comment {
+        border-bottom: 1px solid #eee;
+        color: gray;
+        padding: 5px 20px;
+        &_author {
+          font-weight: 500;
+          margin-right: 10px;
+        }
+        &_body {
+          display: block;
+        }
+      }
+    }
+    &_documentsContent {
+      &_document {
+        border-bottom: 1px solid #eee;
+        padding: 5px 20px;
+      }
+    }
+  }
+
   &_title {
     font-weight: bold;
     display: block;

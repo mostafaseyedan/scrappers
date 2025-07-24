@@ -142,7 +142,10 @@ const solicitation_comment: any = {
     authorId: z.string(),
   }),
   get: async (solId: string) => {
-    console.log("solicitation_comment.get", solId);
+    const resp = await fetch(`/api/solicitations/${solId}/comments`);
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to fetch comments");
+    return json;
   },
   post: async (
     solId: string,
