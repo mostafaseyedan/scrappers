@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { db } from "@/lib/firebaseClient";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getCountFromServer,
+  getDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import { cnStatuses } from "./config";
 
 const dbSol: any = {
@@ -86,6 +93,17 @@ const solicitation: any = {
     updated: z.string().datetime(),
     url: z.string().url(),
   }),
+  count: async (filter: Record<string, any> = {}) => {
+    let colRef = collection(db, "solicitations");
+    let queryRef: any = colRef;
+
+    Object.entries(filter).forEach(([key, value]) => {
+      queryRef = query(queryRef, where(key, "==", value));
+    });
+
+    const snap = await getCountFromServer(queryRef);
+    return snap.data().count;
+  },
   get: () => {},
   getById: async (id: string) => {
     const docRef = doc(db, "solicitations", id);

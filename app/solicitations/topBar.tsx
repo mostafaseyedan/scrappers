@@ -15,6 +15,8 @@ import { FilterOptions } from "./filterOptions";
 import { Input } from "@/components/ui/input";
 import { Dispatch } from "react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { solicitation as solModel } from "../models";
 
 import styles from "./topBar.module.scss";
 
@@ -45,6 +47,28 @@ const TopBar = ({
   setPage,
   setExpandedSolIds,
 }: TopBarProps) => {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  async function refresh() {
+    const counts = {
+      new: await solModel.count({ cnStatus: "new" }),
+      submitted: await solModel.count({ cnStatus: "submitted" }),
+      rfps: await solModel.count({ cnStatus: "rfp" }),
+      erp: await solModel.count({ cnStatus: "erp" }),
+      awarded: await solModel.count({ cnStatus: "awarded" }),
+      monitor: await solModel.count({ cnStatus: "monitor" }),
+      notWon: await solModel.count({ cnStatus: "notWon" }),
+      notPursuing: await solModel.count({ cnStatus: "notPursuing" }),
+      total: await solModel.count(),
+    };
+    setCounts(counts);
+    console.log(counts);
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
   return (
     <div className={cn(styles.topBar, className)}>
       <Tabs
@@ -63,36 +87,36 @@ const TopBar = ({
       >
         <TabsList>
           <TabsTrigger className={styles.topBar_tab__new} value="new">
-            New (123)
+            New ({counts.new || 0})
           </TabsTrigger>
           <TabsTrigger
             className={styles.topBar_tab__submitted}
             value="submitted"
           >
-            Submitted
+            Submitted ({counts.submitted || 0})
           </TabsTrigger>
           <TabsTrigger className={styles.topBar_tab__rfps} value="rfps">
-            RFPs
+            RFPs ({counts.rfps || 0})
           </TabsTrigger>
           <TabsTrigger className={styles.topBar_tab__erp} value="erp">
-            ERP
+            ERP ({counts.erp || 0})
           </TabsTrigger>
           <TabsTrigger className={styles.topBar_tab__awarded} value="awarded">
-            Awarded
+            Awarded ({counts.awarded || 0})
           </TabsTrigger>
           <TabsTrigger className={styles.topBar_tab__monitor} value="monitor">
-            Monitor
+            Monitor ({counts.monitor || 0})
           </TabsTrigger>
           <TabsTrigger className={styles.topBar_tab__notWon} value="notWon">
-            Not Won
+            Not Won ({counts.notWon || 0})
           </TabsTrigger>
           <TabsTrigger
             className={styles.topBar_tab__notPursuing}
             value="notPursuing"
           >
-            Not Pursuing
+            Not Pursuing ({counts.notPursuing || 0})
           </TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="all">All ({counts.total})</TabsTrigger>
         </TabsList>
       </Tabs>
       <div className={styles.topBar_filter}>
