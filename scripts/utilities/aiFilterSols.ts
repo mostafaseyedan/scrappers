@@ -1,34 +1,66 @@
 import "dotenv/config";
 import { initDb } from "@/lib/firebaseAdmin";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { solicitation as solModel } from "@/app/models";
+import chalk from "chalk";
+
+const BASE_URL = "http://localhost:3000";
 
 const db = initDb();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY!);
 
-async function isITBid(record: any): Promise<boolean> {
+async function isItBid(record: any): Promise<boolean> {
   const prompt = `
 Given the following bid record, is it related to any of the following categories: IT, IT staffing, software services, or managed services? 
-Respond with "yes" or "no" and a short explanation.
+Respond with yes or no
 
 Record:
-${record}
-`;
+${JSON.stringify(record)}`; // and a short explanation
 
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   const result = await model.generateContent(prompt);
   const text = result.response.text().toLowerCase();
-  console.log({ text });
-  return text.includes("yes");
+
+  return text === "yes";
 }
 
 async function main() {
-  const snapshot = await db.collection("solicitations").limit(30).get();
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-    const isIT = await isITBid(data);
-    console.log(`Doc ${doc.id}: ${isIT ? "IT-related" : "Not IT-related"}`);
-    // Optionally, update Firestore or take other actions here
+  const sols = await solModel.search({
+    baseUrl: BASE_URL,
+    limit: 300,
+    filter: { cnStatus: "new" },
+    token: process.env.DEV_API_TOKEN,
+  });
+
+  if (sols.error) console.error(sols.error);
+
+  for (const sol of sols) {
+    console.log("\n", sol.id, sol.title);
+
+    // Run against AI
+    const isIt = await isItBid(sol);
+    console.log(`  isIt: ${isIt}`);
+
+    if (!isIt) {
+      await solModel.remove(sol.id, BASE_URL, process.env.DEV_API_TOKEN);
+      console.log(chalk.green("  Removed"));
+      countDeleted++;
+    }
   }
 }
 
-main().catch(console.error);
+let countDeleted = 0;
+const start = new Date();
+performance.mark("start");
+
+main()
+  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
+  .finally(() => {
+    performance.mark("end");
+    const totalSec = (
+      performance.measure("total-duration", "start", "end").duration / 1000
+    ).toFixed(1);
+    console.log(`\nTotal deleted: ${countDeleted}`);
+    console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
+    process.exit(0);
+  });

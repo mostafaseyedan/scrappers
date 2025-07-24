@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
   const result = await elasticClient.search({
     index: "solicitations",
     from: (page - 1) * limit,
-    size: limit,
+    ...(limit > 0 ? { size: limit } : {}),
     sort: sortObj,
     ...queryObj,
   });

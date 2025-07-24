@@ -1,22 +1,26 @@
 import "dotenv/config";
 import { initDb } from "@/lib/firebaseAdmin";
-import { FieldValue } from "firebase-admin/firestore";
 
 const db = initDb();
 
 async function migrateIssuingOrganization() {
-  const snapshot = await db.collection("solicitations").get();
+  const snapshot = await db
+    .collection("solicitations")
+    .where("cnStatus", "==", null)
+    .limit(5)
+    .get();
   const batch = db.batch();
 
+  console.log(snapshot.size, "solicitations to migrate");
+
   snapshot.forEach((doc) => {
-    const data = doc.data();
-    if (data.issuingOrganization !== undefined) {
-      const docRef = db.collection("solicitations").doc(doc.id);
-      batch.update(docRef, {
-        issuer: data.issuingOrganization,
-        issuingOrganization: FieldValue.delete(),
-      });
-    }
+    console.log(doc.id);
+    /*
+    const docRef = db.collection("solicitations").doc(doc.id);
+    batch.update(docRef, {
+      cnStatus: "new",
+    });
+    */
   });
 
   await batch.commit();
