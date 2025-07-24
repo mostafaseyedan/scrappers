@@ -128,7 +128,10 @@ const SolActions = ({
           <DropdownMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <a className={styles.solActions_delete}>
+                <a
+                  className={styles.solActions_delete}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Trash />
                   Delete
                 </a>
@@ -145,7 +148,7 @@ const SolActions = ({
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
-                      await solModel.delete(sol.id);
+                      await solModel.remove(sol.id);
                       if (refreshSols) await refreshSols();
                     }}
                   >

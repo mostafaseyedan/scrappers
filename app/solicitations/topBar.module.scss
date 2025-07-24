@@ -1,0 +1,10 @@
+.topBar {
+  display: flex;
+  gap: 5px;
+  &_filter {
+    margin-left: auto;
+  }
+  &_search {
+    width: 170px;
+  }
+}

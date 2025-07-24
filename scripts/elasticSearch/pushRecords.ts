@@ -24,6 +24,7 @@ async function run() {
       id: doc.id,
       ...doc.data(),
     });
+    delete newEsDoc.extractedDate;
     docs.push(newEsDoc);
   });
 

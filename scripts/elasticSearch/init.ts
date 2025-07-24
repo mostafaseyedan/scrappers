@@ -21,7 +21,7 @@ const elasticClient = new Client({
       title: { type: "text" },
       description: { type: "text" },
       location: { type: "text" },
-      issuingOrganization: { type: "text" },
+      issuer: { type: "text" },
       publicationDate: { type: "date" },
       closingDate: { type: "date" },
       questionsDueByDate: { type: "date" },

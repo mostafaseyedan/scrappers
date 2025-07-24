@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@elastic/elasticsearch";
+import { getTokens } from "next-firebase-auth-edge";
+import { cookies } from "next/headers";
+import { authConfig } from "@/config/serverConfig";
 
 const elasticApiKey = process.env.ELASTIC_API_KEY;
 if (!elasticApiKey) {
@@ -14,6 +17,7 @@ const elasticClient = new Client({
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const tokens = await getTokens(await cookies(), authConfig);
   const q = searchParams.get("q") || "";
   const limit = parseInt(searchParams.get("limit") || "20", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -22,6 +26,10 @@ export async function GET(req: NextRequest) {
   const must: any[] = [];
   const filterArr: any[] = [];
   let queryObj = {};
+
+  if (!tokens) {
+    return NextResponse.json({ error: "Unauthenticated" }, { status: 500 });
+  }
 
   for (const [key, value] of searchParams.entries()) {
     if (key.startsWith("filter.")) {

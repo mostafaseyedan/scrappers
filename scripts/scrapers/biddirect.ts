@@ -4,9 +4,10 @@ import { ChatOpenAI } from "@langchain/openai";
 import chalk from "chalk";
 import { z } from "zod";
 import fs from "fs";
-import path from "path";
 import { execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
+import { post as elasticPost } from "@/lib/elastic";
+import { fbToJs } from "@/lib/dataUtils";
 
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -15,7 +16,7 @@ const PASS = process.env.BIDDIRECT_PASS;
 
 const tasks = {
   executeSummary: () =>
-    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'.
+    `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'. Do not click any links that will leave the site, and do not click any links that will open a new tab or window. You will be using the browser to navigate the site and extract data. The goal is to extract all solicitations from bidnetdirect.com.
     1. Navigate to bidnetdirect.com and log in.
     2. Click on the "Solicitations" tab and then click "Search".
     4. Getting the total number of pages and results from the bottom of the page.`,
@@ -117,25 +118,22 @@ const schemas = {
 async function checkLatestSummary() {
   let summary;
 
-  let dir = path.join(".output", "biddirect");
+  fs.mkdirSync(".output/biddirect", { recursive: true });
+
+  let dir = ".output/biddirect";
   const folders = fs
     .readdirSync(dir)
     .filter(
       (f) =>
         f.match(/^\d{4}-\d{2}-\d{2}/) &&
-        fs.statSync(path.join(dir, f)).isDirectory()
+        fs.statSync(`${dir}/${f}`).isDirectory()
     );
 
   if (folders.length === 0) {
     return false;
   }
 
-  dir = path.join(
-    ".output",
-    "biddirect",
-    folders[folders.length - 1],
-    "summary.json"
-  );
+  dir = `.output/biddirect/${folders[folders.length - 1]}/summary.json`;
 
   if (fs.existsSync(dir)) {
     summary = JSON.parse(fs.readFileSync(dir, "utf-8"));
@@ -186,14 +184,7 @@ async function executeSolDetails(
         `    ${step.idx + 1}. ${step.agentOutput.actions[0].actionDescription}`
       );
     },
-    debugDir: path.join(
-      ".output",
-      "biddirect",
-      folder,
-      "solicitations",
-      solicitationId,
-      "debug"
-    ),
+    debugDir: `.output/biddirect/${folder}/debug/executeSolDetails/${solicitationId}/debug`,
     outputSchema: schemas.solicitation,
   });
 
@@ -231,13 +222,7 @@ async function executeSummary(agent: any, folder: any) {
       );
     },
     outputSchema: schemas.summary,
-    debugDir: path.join(
-      ".output",
-      "biddirect",
-      folder,
-      "debug",
-      "executeSummary"
-    ),
+    debugDir: `.output/biddirect/${folder}/debug/executeSummary`,
   });
 
   if (!result.output) {
@@ -274,14 +259,7 @@ async function executeSummarySolByPage(agent: any, page: any, folder: any) {
       );
     },
     outputSchema: schemas.summarySolicitations,
-    debugDir: path.join(
-      ".output",
-      "biddirect",
-      folder,
-      "debug",
-      "executeSummarySolByPage",
-      page
-    ),
+    debugDir: `.output/biddirect/${folder}/debug/executeSummarySolByPage/${page.toString()}`,
   });
 
   if (!result.output) {
@@ -321,9 +299,8 @@ function sanitizeSolForDb(solicitation: Record<string, any>) {
     created: new Date(),
     description: solicitation.description,
     documents: [],
-    extractedDate: new Date(),
     externalLinks: solicitation.externalUrl ? [solicitation.externalUrl] : [],
-    issuingOrganization: solicitation.issuingOrganization,
+    issuer: solicitation.issuingOrganization,
     keywords: "",
     location: solicitation.location,
     meta: {},
@@ -416,7 +393,7 @@ async function processDownloads({
     execSync(cmd);
     console.log(`    ${targetName} saved`);
 
-    const destination = `solicitations/${solDetails.siteId}/documents/${targetName}`;
+    const destination = `solicitations/${solDetails.id}/documents/${targetName}`;
     const uploadResults = await bucket.upload(target, {
       destination,
       public: true,
@@ -455,16 +432,11 @@ async function run() {
   });
 
   const agent = new HyperAgent({
-    llm: llm,
+    llm,
     debug: DEBUG,
     browserProvider: "Local",
     localConfig: {
-      downloadsPath: path.join(
-        ".output",
-        "biddirect",
-        "tmp",
-        "downloads"
-      ) as string,
+      downloadsPath: ".output/biddirect/tmp/downloads",
     },
   });
 
@@ -481,12 +453,12 @@ async function run() {
     cacheFolder = latestSummary.isoString;
   } else {
     summary = await executeSummary(agent, cacheFolder);
-    const baseDir = path.join(".output", "biddirect", `${start.toISOString()}`);
+    const baseDir = `.output/biddirect/${start.toISOString()}`;
     fs.mkdirSync(baseDir, { recursive: true });
-    fs.mkdirSync(path.join(baseDir, "solicitations"), { recursive: true });
-    fs.mkdirSync(path.join(baseDir, "debug"), { recursive: true });
+    fs.mkdirSync(`${baseDir}/solicitations`, { recursive: true });
+    fs.mkdirSync(`${baseDir}/debug`, { recursive: true });
     fs.writeFileSync(
-      path.join(baseDir, "summary.json"),
+      `${baseDir}/summary.json`,
       JSON.stringify(summary, null, 2)
     );
     console.log(`  summary.json saved`);
@@ -502,12 +474,7 @@ async function run() {
     console.log(`\n  Get solicitations for page ${currPage}`);
 
     const pageFileName = `page-${currPage.toString().padStart(3, "0")}.json`;
-    const pageFilePath = path.join(
-      ".output",
-      "biddirect",
-      cacheFolder,
-      pageFileName
-    );
+    const pageFilePath = `.output/biddirect/${cacheFolder}/pages/${pageFileName}`;
     const checkPage = await getFile(pageFilePath);
 
     let pageSummary;
@@ -536,44 +503,33 @@ async function run() {
       );
 
       try {
-        const solicitation = pageSummary.solicitations[solIndex];
+        const rawSol = pageSummary.solicitations[solIndex];
         console.log(
-          `\n  Processing solicitation p${currPage} ${solIndex + 1}/${max} - ${
-            solicitation.id
-          } ${solicitation.title}`
+          `\n  Processing solicitation p${currPage}/${summary.pages} ${
+            solIndex + 1
+          }/${max} - ${rawSol.id} ${rawSol.title}`
         );
-        const solicitationPath = path.join(
-          ".output",
-          "biddirect",
-          cacheFolder,
-          "solicitations",
-          solicitation.id
-        );
-        const checkFile = await getFile(
-          path.join(solicitationPath, "post.json")
-        );
+        const solPath = `.output/biddirect/${cacheFolder}/solicitations/${rawSol.id}`;
+        const checkFile = await getFile(`${solPath}/post.json`);
         let solDetails;
 
         if (checkFile) {
           solDetails = checkFile;
-          console.log(
-            `    Found cached solicitation details for ${solicitation.id}`
-          );
+          console.log(`    Found cached solicitation details for ${rawSol.id}`);
         } else {
           solDetails = await executeSolDetails(
             agent,
             cacheFolder,
-            solicitation.id,
-            solicitation.url
+            rawSol.id,
+            rawSol.url
           );
 
           // Write to file
-          fs.mkdirSync(solicitationPath, { recursive: true });
-          fs.mkdirSync(path.join(solicitationPath, "documents"), {
+          fs.mkdirSync(`${solPath}/documents`, {
             recursive: true,
           });
           fs.writeFileSync(
-            path.join(solicitationPath, "post.json"),
+            `${solPath}/post.json`,
             JSON.stringify(solDetails, null, 2)
           );
           console.log("    post.json saved");
@@ -582,31 +538,36 @@ async function run() {
           const solDbRecord = sanitizeSolForDb(solDetails);
           const newDoc = await solCollection.add(solDbRecord);
           console.log(
-            chalk.green(`    Initial record saved to db ${newDoc.id}`)
+            chalk.green(`    Initial record saved to Firestore ${newDoc.id}`)
           );
         }
 
         const fileUrls = await processDownloads({
           solDetails,
-          solPath: solicitationPath,
+          solPath: solPath,
           bucket,
         });
 
         // Save fileUrls to the database
+        if (fileUrls.length === 0) {
+          console.log(chalk.yellow(`    No files found for ${rawSol.id}`));
+          continue;
+        }
+
         const checkDocs = await solCollection
-          .where("siteId", "==", solicitation.id)
+          .where("siteId", "==", rawSol.id)
           .get();
         let dbDoc = checkDocs.docs[0];
 
         if (!dbDoc) {
           console.log(
-            chalk.red(`    No database record found for ${solicitation.id}`)
+            chalk.red(`    No Firestore record found for ${rawSol.id}`)
           );
 
           // Write to database
           const solDbRecord = sanitizeSolForDb({
             ...solDetails,
-            siteId: solicitation.id,
+            siteId: rawSol.id,
           });
           const newDoc = await solCollection.add(solDbRecord);
           const checkDocs = await solCollection
@@ -614,16 +575,21 @@ async function run() {
             .get();
           dbDoc = checkDocs.docs[0];
           console.log(
-            chalk.green(`    Initial record saved to db ${newDoc.id}`)
+            chalk.green(`    Initial record saved to Firestore ${newDoc.id}`)
           );
         }
 
         dbDoc.ref.update({ documents: fileUrls });
         console.log(
           chalk.green(
-            chalk.green(`    Documents updated in db for ${solicitation.id}`)
+            `    ${fileUrls.length} documents updated in Firestore for ${dbDoc.id}`
           )
         );
+
+        /* TODO: Fix me
+        await elasticPost("solicitations", dbDoc.id, fbToJs(dbDoc.data()));
+        console.log(chalk.green(`    Elastic record created ${dbDoc.id}`));
+        */
 
         totalSolicitations++;
       } catch (error: any) {

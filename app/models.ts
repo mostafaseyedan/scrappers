@@ -3,15 +3,27 @@ import { db } from "@/lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
 import { cnStatuses } from "./config";
 
+const scraping_log: any = {
+  schema: z.object({
+    message: z.string(),
+    scriptName: z.string(),
+    lastItemId: z.string().optional(),
+    successCount: z.number().default(0),
+    failCount: z.number().default(0),
+    timeStr: z.string().datetime(), // hh::mm:ss
+  }),
+};
+
 const solicitation: any = {
   schema: z.object({
     categories: z.array(z.string()).default([]),
     closingDate: z.string().datetime(),
-    cnComments: z.array(z.object({})).default([]),
     cnData: z.object({}).default({}),
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),
     cnStatus: z.enum(Object.keys(cnStatuses)).default("new"),
+    comments: z.array(z.object({})).default([]).describe("[submodel]"),
+    commentsCount: z.number().default(0),
     contactEmail: z.string(),
     contactName: z.string(),
     contactNote: z.string(),
@@ -23,14 +35,9 @@ const solicitation: any = {
     issuingOrganization: z.string(),
     keywords: z.array(z.string()).default([]),
     location: z.string(),
+    logs: z.array(z.any()).default([]).describe("[submodel]"),
     publicationDate: z.string().datetime(),
-    questionsDueByDate: z.coerce
-      .string()
-      .pipe(
-        z.transform((val) =>
-          val.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(val) : null
-        )
-      ),
+    questionsDueByDate: z.coerce.string(),
     rfpType: z.coerce.string(),
     site: z.string(),
     siteData: z.any().default({}),
@@ -102,8 +109,22 @@ const solicitation_comment: any = {
     solId: string,
     data: z.infer<typeof solicitation_comment.schema>
   ) => {
-    console.log("solicitation_comment.post", solId, data);
+    const resp = await fetch(`/api/solicitations/${solId}/comments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to create comment");
+    return json;
   },
 };
 
-export { solicitation, solicitation_comment };
+const solicitation_log: any = {
+  schema: z.object({
+    message: z.string(),
+    actionKey: z.string(),
+    userId: z.string(),
+  }),
+};
+
+export { solicitation, solicitation_comment, solicitation_log, scraping_log };

@@ -100,6 +100,7 @@ const FilterOptions = ({
             <SelectGroup>
               <SelectItem value="none">None</SelectItem>
               <SelectItem value="bidnetdirect">Bidnetdirect</SelectItem>
+              <SelectItem value="publicpurchase">Public Purchase</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>

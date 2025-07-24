@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRef } from "react";
 import { toast } from "sonner";
 import { DialogDescription } from "@radix-ui/react-dialog";
+import { solicitation_comment as solCommentModel } from "../models";
 
 type CreateCommentDialogProps = {
   solId: string;
@@ -37,8 +38,17 @@ const CreateCommentDialog = ({
   const saveButtonRef = useRef<HTMLButtonElement>(null);
 
   async function onSubmit(formValues: Record<string, any>) {
-    console.log("onSubmit", formValues);
+    const resp = await solCommentModel.post(solId, {
+      body: formValues.body,
+      attachments: [],
+    });
 
+    if (resp.error) {
+      toast.error("Failed to create comment");
+      return console.error("Error creating comment:", resp.error);
+    }
+
+    form.reset();
     onOpenChange(false);
     toast.success(`Comment created for solicitation ${solId} successfully`);
     onSubmitSuccess?.();
@@ -67,6 +77,9 @@ const CreateCommentDialog = ({
                 );
               }}
             />
+            <Button type="submit" ref={saveButtonRef} className="hidden">
+              Save
+            </Button>
           </form>
         </Form>
         <DialogFooter>

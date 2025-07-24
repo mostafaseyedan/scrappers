@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsDownUp,
-  Filter,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,23 +13,11 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Solicitation } from "./solicitation";
-import { FilterOptions } from "./filterOptions";
 import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
 import { EditSolDialog } from "./editSolDialog";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cnStatuses } from "../config";
 import { CreateCommentDialog } from "./createCommentDialog";
+import { TopBar } from "./topBar";
 
 import styles from "./page.module.scss";
 
@@ -141,77 +124,15 @@ export default function Page() {
       <div className={styles.pageMain}>
         <div className={styles.pageMain_content}>
           <div className={styles.pageMain_solsSection}>
-            <div className={styles.pageMain_solsSection_topBar}>
-              <Tabs
-                defaultValue="all"
-                onValueChange={(value) => {
-                  setFilter((prev) => {
-                    if (value === "all") {
-                      const newValues = { ...prev };
-                      delete newValues.cnStatus;
-                      return newValues;
-                    } else {
-                      return { ...prev, cnStatus: value };
-                    }
-                  });
-                }}
-              >
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  {cnStatuses &&
-                    Object.entries(cnStatuses).map(([value, label]) => (
-                      <TabsTrigger value={value} key={`tabs-trigger-${value}`}>
-                        {label}
-                      </TabsTrigger>
-                    ))}
-                </TabsList>
-              </Tabs>
-              <div className={styles.pageMain_solsSection_topBar_filter}>
-                <Popover>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <Filter />
-                        </Button>
-                      </PopoverTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>Filter results</TooltipContent>
-                  </Tooltip>
-                  <PopoverContent
-                    className={styles.pageMain_solsSection_popover}
-                  >
-                    <FilterOptions
-                      setFilter={setFilter}
-                      setQ={setQ}
-                      setSort={setSort}
-                      setPage={setPage}
-                      queryParams={{ q, filter, limit, page, sort }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              {expandedSolIds.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setExpandedSolIds([])}
-                    >
-                      <ChevronsDownUp />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Collapse all</TooltipContent>
-                </Tooltip>
-              )}
-              <Input
-                className={styles.pageMain_solsSection_topBar_search}
-                type="text"
-                placeholder="Search"
-                onChange={(e) => setQ(e.currentTarget.value)}
-              />
-            </div>
+            <TopBar
+              setFilter={setFilter}
+              setQ={setQ}
+              setSort={setSort}
+              setPage={setPage}
+              queryParams={{ q, filter, limit, page, sort }}
+              expandedSolIds={expandedSolIds}
+              setExpandedSolIds={setExpandedSolIds}
+            />
             <div className={styles.pageMain_solsSection_list}>
               {sols?.length ? (
                 sols.map((sol) => (

@@ -1,12 +1,13 @@
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
   authMiddleware,
   redirectToHome,
   redirectToLogin,
 } from "next-firebase-auth-edge";
-import { NextResponse } from "next/server";
+import { authConfig } from "./config/serverConfig";
 
-const PUBLIC_PATHS = ["/register", "/login"];
+const PUBLIC_PATHS = ["/register", "/login", "/reset-password"];
 
 export async function middleware(request: NextRequest) {
   // Redirect root path to /solicitations
@@ -17,21 +18,19 @@ export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
     loginPath: "/api/login",
     logoutPath: "/api/logout",
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-    cookieName: "AuthToken",
-    cookieSignatureKeys: [process.env.COOKIE_KEY || ""],
-    cookieSerializeOptions: {
-      path: "/",
-      httpOnly: true,
-      secure: false, // Set this to true on HTTPS environments
-      sameSite: "lax" as const,
-      maxAge: 12 * 60 * 60 * 24, // Twelve days
-    },
-    serviceAccount: {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") || "",
-    },
+    refreshTokenPath: "/api/refresh-token",
+    debug: authConfig.debug,
+    enableMultipleCookies: authConfig.enableMultipleCookies,
+    enableCustomToken: authConfig.enableCustomToken,
+    apiKey: authConfig.apiKey,
+    cookieName: authConfig.cookieName,
+    cookieSerializeOptions: authConfig.cookieSerializeOptions,
+    cookieSignatureKeys: authConfig.cookieSignatureKeys,
+    serviceAccount: authConfig.serviceAccount,
+    experimental_enableTokenRefreshOnExpiredKidHeader:
+      authConfig.experimental_enableTokenRefreshOnExpiredKidHeader,
+    tenantId: authConfig.tenantId,
+    dynamicCustomClaimsKeys: ["someCustomClaim"],
     handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
       // Authenticated user should not be able to access /login, /register and /reset-password routes
       if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
@@ -44,9 +43,7 @@ export async function middleware(request: NextRequest) {
         },
       });
     },
-    handleInvalidToken: async (reason) => {
-      console.info("Missing or malformed credentials", { reason });
-
+    handleInvalidToken: async (_reason) => {
       return redirectToLogin(request, {
         path: "/login",
         publicPaths: PUBLIC_PATHS,
@@ -65,9 +62,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/((?!_next|favicon.ico|__/auth|__/firebase|api|.*\\.).*)",
     "/api/login",
     "/api/logout",
-    "/",
-    "/((?!_next|favicon.ico|api|.*\\.).*)",
+    "/api/refresh-token",
   ],
 };
