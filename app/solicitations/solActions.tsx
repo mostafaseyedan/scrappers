@@ -41,6 +41,7 @@ type SolActionsProps = {
   className?: string;
   expandedSolIds?: string[];
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
+  showExpandOption?: boolean;
   sol: Record<string, any>;
   refreshSols?: () => void;
   onEditSol?: (solId: string) => void;
@@ -50,6 +51,7 @@ const SolActions = ({
   className,
   expandedSolIds = [],
   setExpandedSolIds,
+  showExpandOption = true,
   sol,
   refreshSols,
   onEditSol,
@@ -85,29 +87,31 @@ const SolActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={styles.solActions_moreDropdown}>
-          <DropdownMenuItem
-            onClick={() => {
-              if (setExpandedSolIds) {
-                setExpandedSolIds((prev) => {
-                  return prev.includes(sol.id)
-                    ? prev.filter((id) => id !== sol.id)
-                    : [...prev, sol.id];
-                });
-              }
-            }}
-          >
-            {!expandedSolIds.includes(sol.id) ? (
-              <a>
-                <ChevronsUpDown />
-                <span>Expand</span>
-              </a>
-            ) : (
-              <a>
-                <ChevronsDownUp />
-                <span>Collapse</span>
-              </a>
-            )}
-          </DropdownMenuItem>
+          {showExpandOption && (
+            <DropdownMenuItem
+              onClick={() => {
+                if (setExpandedSolIds) {
+                  setExpandedSolIds((prev) => {
+                    return prev.includes(sol.id)
+                      ? prev.filter((id) => id !== sol.id)
+                      : [...prev, sol.id];
+                  });
+                }
+              }}
+            >
+              {!expandedSolIds.includes(sol.id) ? (
+                <a>
+                  <ChevronsUpDown />
+                  <span>Expand</span>
+                </a>
+              ) : (
+                <a>
+                  <ChevronsDownUp />
+                  <span>Collapse</span>
+                </a>
+              )}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();

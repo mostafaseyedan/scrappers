@@ -40,6 +40,10 @@
       color: gray;
       font-size: 20px;
       padding: 5px;
+      &[data-state="active"] {
+        color: #666;
+        font-weight: bold;
+      }
     }
   }
 
