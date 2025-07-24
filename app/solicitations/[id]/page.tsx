@@ -29,21 +29,32 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
 
+  async function refresh() {
+    const docRef = doc(db, "solicitations", id);
+    const resp = await getDoc(docRef);
+    setSol({ id, ...resp.data() });
+    console.log({ id, ...resp.data() });
+  }
+
   useEffect(() => {
     (async () => {
       document.title = `${id} | Cendien Recon`;
 
-      const docRef = doc(db, "solicitations", id);
-      const resp = await getDoc(docRef);
-      setSol({ id, ...resp.data() });
+      await refresh();
     })();
+
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+    };
   }, [id]);
 
   return (
     <div>
       {sol && (
         <div className={cn(styles.sol)}>
-          <SolActions sol={sol} />
+          <SolActions sol={sol} refreshSols={refresh} />
           <div className={styles.sol_contentCol}>
             <span className={styles.sol_title}>{sol.title}</span>
             <div className={styles.sol_issuerRow}>
@@ -120,9 +131,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <label>Our Status</label>
             <div className={styles.sol_ourStatus}>
               <Select
-                defaultValue={sol.cnStatus || "new"}
-                onValueChange={(value) => {
-                  solModel.patch(sol.id, { cnStatus: value });
+                value={sol.cnStatus || "new"}
+                onValueChange={async (value) => {
+                  await solModel.patch(sol.id, { cnStatus: value });
                 }}
               >
                 <SelectTrigger>
@@ -144,14 +155,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <span>Active</span>
             <label>Closing Date</label>
             <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-              {new Date(sol.closingDate).toLocaleString()}
+              {sol.closingDate?.seconds &&
+                sol.closingDate.toDate().toLocaleString()}
             </span>
             <label>Published Date</label>
             <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-              {new Date(sol.publicationDate).toLocaleString()}
+              {sol.publicationDate?.seconds &&
+                sol.publicationDate.toDate().toLocaleString()}
             </span>
             <label>Extracted Date</label>
-            <span>{new Date(sol.created).toLocaleString()}</span>
+            <span>
+              {sol.created?.seconds && sol.created.toDate().toLocaleString()}
+            </span>
           </div>
         </div>
       )}

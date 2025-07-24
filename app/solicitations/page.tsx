@@ -119,6 +119,7 @@ export default function Page() {
 
     document.addEventListener("visibilitychange", refreshSols);
     window.addEventListener("focus", refreshSols);
+
     return () => {
       document.removeEventListener("visibilitychange", refreshSols);
       window.removeEventListener("focus", refreshSols);
@@ -166,7 +167,7 @@ export default function Page() {
               )}
             </div>
             <div className={styles.pageMain_solsSection_pagination}>
-              {totalFiltered > 0 ? (
+              {q || Object.keys(filter).length > 0 ? (
                 <>
                   {totalFiltered} out {totalRecords} items.
                 </>
