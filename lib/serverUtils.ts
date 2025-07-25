@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { authConfig } from "@/config/serverConfig";
 
 const ALLOWED_KEYS = {
-  MOHAMMID: process.env.MOHAMMID_KEY,
+  MOHAMMAD: process.env.MOHAMMAD_KEY,
 };
 
 export async function checkSession(req: NextRequest) {
