@@ -35,7 +35,10 @@ type SolicitationProps = {
   sol: Record<string, any>;
   expandedSolIds?: string[];
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
-  refreshSols: () => void;
+  refreshSols: (options?: {
+    list?: boolean;
+    topBar?: boolean;
+  }) => Promise<void>;
   onClickComment?: (solId: string) => void;
   onEditSol: (solId: string) => void;
   variant?: "compact" | "expanded";
@@ -73,6 +76,7 @@ const Solicitation = ({
         setExpandedSolIds={setExpandedSolIds}
         sol={sol}
         refreshSols={refreshSols}
+        onDeleteSuccess={refreshSols}
         onEditSol={onEditSol}
       />
       <div className={styles.sol_contentCol}>
@@ -149,6 +153,7 @@ const Solicitation = ({
             onValueChange={async (value) => {
               await solModel.patch(sol.id, { cnStatus: value });
               setCnStatus(value);
+              await refreshSols({ list: false });
             }}
           >
             <SelectTrigger>

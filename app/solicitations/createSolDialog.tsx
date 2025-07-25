@@ -19,17 +19,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { solicitation_comment as solCommentModel } from "../models";
-import { z } from "zod";
+import { solicitation as solModel } from "../models";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import {
+  randomString,
+  sanitizeDateString,
+  sanitizeUniqueCommaValues,
+} from "@/lib/utils";
 
 import styles from "./createSolDialog.module.scss";
-
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  issuer: z.string().min(1, "Issuer is required"),
-  location: z.string().min(1, "Location is required"),
-});
 
 type CreateSolDialogProps = {
   open: boolean;
@@ -43,13 +42,64 @@ const CreateSolDialog = ({
   onSubmitSuccess,
 }: CreateSolDialogProps) => {
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(solModel.schema.postForm),
   });
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const [formError, setFormError] = useState<string>("");
 
   async function onSubmit(formValues: Record<string, any>) {
-    console.log("Submitting form values:", formValues);
+    try {
+      if (formValues.closingDate)
+        formValues.closingDate = sanitizeDateString(formValues.closingDate);
+    } catch (error) {
+      console.error("Failed to create solicitation:", error);
+      setFormError(
+        "Invalid date format for Closing Date. Please use mm/dd/yyyy."
+      );
+      return;
+    }
+
+    try {
+      if (formValues.publicationDate)
+        formValues.publicationDate = sanitizeDateString(
+          formValues.publicationDate
+        );
+    } catch (error) {
+      console.error("Failed to create solicitation:", error);
+      setFormError(
+        "Invalid date format for Published Date. Please use mm/dd/yyyy."
+      );
+      return;
+    }
+
+    formValues.categories = sanitizeUniqueCommaValues(formValues.categories);
+    formValues.keywords = sanitizeUniqueCommaValues(formValues.keywords);
+    formValues.site = "manual";
+    formValues.siteId = `random-${randomString(32)}`;
+
+    if (formValues.externalLink)
+      formValues.externalLinks = [formValues.externalLink];
+
+    try {
+      await solModel.post(formValues);
+    } catch (error) {
+      console.error("Failed to create solicitation:", error);
+      setFormError("Failed to create solicitation due to server error.");
+      return;
+    }
+
+    setFormError("");
+    onOpenChange(false);
+    toast.success(`Solicitation created successfully`);
+    onSubmitSuccess?.();
   }
+
+  useEffect(() => {
+    if (open) {
+      form.reset();
+      setFormError("");
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,7 +243,7 @@ const CreateSolDialog = ({
               }}
             />
             <FormField
-              name="notes"
+              name="cnNotes"
               render={({ field }) => {
                 return (
                   <FormItem>
@@ -229,6 +279,7 @@ const CreateSolDialog = ({
           </form>
         </Form>
         <DialogFooter>
+          {formError && <div className={styles.formError}>{formError}</div>}
           <Button onClick={() => saveButtonRef.current?.click()}>Save</Button>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Close

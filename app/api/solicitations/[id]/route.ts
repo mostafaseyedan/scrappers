@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let user = await checkSession(req);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
@@ -33,7 +33,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let user = await checkSession(req);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
@@ -58,7 +58,7 @@ export async function PATCH(
   const { id } = await params;
   const { body } = req;
   const updateData = await new NextResponse(body).json();
-  let user = await checkSession(req);
+  const user = await checkSession(req);
   let results;
   let status = 200;
 
@@ -85,7 +85,7 @@ export async function PUT(
   const { id } = await params;
   const { body } = req;
   const updateData = await new NextResponse(body).json();
-  let user = await checkSession(req);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 

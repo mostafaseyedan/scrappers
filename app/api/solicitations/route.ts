@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
+import { solicitation as solModel } from "@/app/models";
+import { post as firePost } from "@/lib/firebaseAdmin";
+import { post as elasticPost } from "@/lib/elastic";
+import { fireToJs } from "@/lib/dataUtils";
 
 export async function POST(req: NextRequest) {
   const { body } = req;
@@ -8,10 +12,18 @@ export async function POST(req: NextRequest) {
   let results;
   let status = 200;
 
-  console.log(bodyJson);
-
   try {
     if (!user) throw new Error("Unauthenticated");
+
+    bodyJson.created = new Date().toISOString();
+    bodyJson.updated = new Date().toISOString();
+    bodyJson.authorId = user.uid;
+
+    const parsedData = solModel.schema.postApi.parse(bodyJson);
+    const fireDoc = await firePost("solicitations", parsedData, user);
+    await elasticPost("solicitations", fireDoc.id, fireToJs(fireDoc));
+
+    results = fireDoc;
   } catch (error) {
     console.error(`Failed to create solicitation`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);

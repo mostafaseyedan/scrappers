@@ -15,7 +15,7 @@ const elasticClient = new Client({
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  let user = await checkSession(req);
+  const user = await checkSession(req);
   const q = searchParams.get("q") || "";
   const limit = parseInt(searchParams.get("limit") || "20", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);

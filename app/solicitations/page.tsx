@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Solicitation } from "./solicitation";
 import queryString from "query-string";
@@ -56,8 +56,10 @@ export default function Page() {
     500
   );
 
+  const topBarRef = useRef<{ refresh?: () => void }>(null);
+
   async function searchSols(
-    params: Partial<SearchSolsParams> = { filter: { cnStatus: "new" } }
+    params: Partial<SearchSolsParams> = { filter: {} }
   ) {
     const {
       q: paramQ,
@@ -72,20 +74,22 @@ export default function Page() {
     const finalPage = paramPage ?? page;
     const finalSort = paramSort ?? sort;
     const finalFilter = paramFilter ?? filter;
-    const finalQ = paramQ ?? q;
+    const finalQ = paramQ || q;
 
     const flattenedFilter = {} as Record<string, any>;
     for (const [key, value] of Object.entries(finalFilter)) {
       flattenedFilter[`filter.${key}`] = value;
     }
 
-    const urlQueryString = queryString.stringify({
+    const queryObject = {
       q: finalQ,
       limit: finalLimit,
       page: finalPage,
       sort: finalSort,
       ...flattenedFilter,
-    });
+    } as Record<string, any>;
+    if (q) delete queryObject["filter.cnStatus"];
+    const urlQueryString = queryString.stringify(queryObject);
 
     const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
     const data = await resp.json();
@@ -111,9 +115,14 @@ export default function Page() {
     setTotalPages(Math.ceil(total / finalLimit));
   }
 
-  const refreshSols = useCallback(async () => {
-    await searchSols({ filter, limit, page, q, sort });
-  }, [filter, limit, page, q, sort]);
+  const refreshSols: (options?: {
+    list?: boolean;
+    topBar?: boolean;
+  }) => Promise<void> = async (options = {}) => {
+    const { list = true, topBar = true } = options || {};
+    if (list) await debouncedSearchSols({ filter, limit, page, q, sort });
+    if (topBar) await topBarRef.current?.refresh?.();
+  };
 
   useEffect(() => {
     (async () => {
@@ -121,14 +130,16 @@ export default function Page() {
       await debouncedSearchSols({ filter, limit, page, q, sort });
     })();
 
-    document.addEventListener("visibilitychange", refreshSols);
-    window.addEventListener("focus", refreshSols);
+    window.addEventListener("focus", () => refreshSols());
 
     return () => {
-      document.removeEventListener("visibilitychange", refreshSols);
-      window.removeEventListener("focus", refreshSols);
+      window.removeEventListener("focus", () => refreshSols());
     };
-  }, [refreshSols, debouncedSearchSols, filter, limit, page, q, sort]);
+  }, [debouncedSearchSols, filter, q]);
+
+  useEffect(() => {
+    refreshSols({ list: true, topBar: false });
+  }, [page, limit, sort]);
 
   return (
     <div className={styles.page}>
@@ -136,6 +147,7 @@ export default function Page() {
         <div className={styles.pageMain_content}>
           <div className={styles.pageMain_solsSection}>
             <TopBar
+              q={q}
               setFilter={setFilter}
               setQ={setQ}
               setSort={setSort}
@@ -144,6 +156,7 @@ export default function Page() {
               expandedSolIds={expandedSolIds}
               setExpandedSolIds={setExpandedSolIds}
               onClickCreateSol={() => setShowCreateSol(true)}
+              ref={topBarRef}
             />
             <div className={styles.pageMain_solsSection_list}>
               {sols?.length ? (
