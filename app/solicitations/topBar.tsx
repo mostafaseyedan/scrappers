@@ -23,6 +23,7 @@ import styles from "./topBar.module.scss";
 type TopBarProps = {
   className?: string;
   expandedSolIds: string[];
+  onClickCreateSol?: () => void;
   queryParams: {
     q: string;
     filter: Record<string, any>;
@@ -40,6 +41,7 @@ type TopBarProps = {
 const TopBar = ({
   className,
   expandedSolIds,
+  onClickCreateSol,
   queryParams,
   setFilter,
   setQ,
@@ -119,6 +121,7 @@ const TopBar = ({
           <TabsTrigger value="all">All ({counts.total})</TabsTrigger>
         </TabsList>
       </Tabs>
+      <Button onClick={onClickCreateSol}>Create</Button>
       <div className={styles.topBar_filter}>
         <Popover>
           <Tooltip>

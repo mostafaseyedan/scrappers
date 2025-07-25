@@ -17,6 +17,7 @@ import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
 import { EditSolDialog } from "./editSolDialog";
 import { CreateCommentDialog } from "./createCommentDialog";
+import { CreateSolDialog } from "./createSolDialog";
 import { TopBar } from "./topBar";
 
 import styles from "./page.module.scss";
@@ -46,6 +47,7 @@ export default function Page() {
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
+  const [showCreateSol, setShowCreateSol] = useState(false);
 
   const debouncedSearchSols = useDebouncedCallback(
     async (params: Partial<SearchSolsParams>) => {
@@ -141,6 +143,7 @@ export default function Page() {
               queryParams={{ q, filter, limit, page, sort }}
               expandedSolIds={expandedSolIds}
               setExpandedSolIds={setExpandedSolIds}
+              onClickCreateSol={() => setShowCreateSol(true)}
             />
             <div className={styles.pageMain_solsSection_list}>
               {sols?.length ? (
@@ -240,6 +243,12 @@ export default function Page() {
           solId={activeSolId}
           open={showCreateComment}
           onOpenChange={setShowCreateComment}
+          onSubmitSuccess={() => refreshSols()}
+        />
+
+        <CreateSolDialog
+          open={showCreateSol}
+          onOpenChange={setShowCreateSol}
           onSubmitSuccess={() => refreshSols()}
         />
       </div>
