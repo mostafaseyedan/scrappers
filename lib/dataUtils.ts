@@ -14,7 +14,7 @@ export function sanitizeForDb(obj: Record<string, any>) {
 }
 
 // Firebase to json
-export function fbToJs(fbData: Record<string, any>) {
+export function fireToJs(fbData: Record<string, any>) {
   const jsData = {} as Record<string, any>;
 
   for (const [key, value] of Object.entries(fbData)) {

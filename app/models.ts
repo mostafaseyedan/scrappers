@@ -70,40 +70,88 @@ const scraping_log: any = {
 };
 
 const solicitation: any = {
-  schema: z.object({
-    categories: z.array(z.string()).default([]),
-    closingDate: z.string().datetime(),
-    cnData: z.object({}).default({}),
-    cnLiked: z.boolean().default(false),
-    cnModified: z.boolean().default(false),
-    cnStatus: z
-      .enum(Object.keys(cnStatuses) as [string, ...string[]])
-      .default("new"),
-    comments: z.array(z.object({})).default([]).describe("[submodel]"),
-    commentsCount: z.number().default(0),
-    contactEmail: z.string(),
-    contactName: z.string(),
-    contactNote: z.string(),
-    contactPhone: z.string(),
-    created: z.string().datetime(),
-    description: z.string(),
-    documents: z.array(z.string().url()).default([]),
-    externalLinks: z.array(z.string().url()).default([]),
-    issuingOrganization: z.string(),
-    keywords: z.array(z.string()).default([]),
-    location: z.string(),
-    logs: z.array(z.any()).default([]).describe("[submodel]"),
-    publicationDate: z.string().datetime(),
-    questionsDueByDate: z.coerce.string(),
-    rfpType: z.coerce.string(),
-    site: z.string(),
-    siteData: z.any().default({}),
-    siteId: z.string(),
-    siteUrl: z.string().url(),
-    title: z.string(),
-    updated: z.string().datetime(),
-    url: z.string().url(),
-  }),
+  schema: {
+    old: z.object({
+      categories: z.array(z.string()).default([]),
+      closingDate: z.string().datetime(),
+      cnData: z.object({}).default({}),
+      cnLiked: z.boolean().default(false),
+      cnModified: z.boolean().default(false),
+      cnStatus: z
+        .enum(Object.keys(cnStatuses) as [string, ...string[]])
+        .default("new"),
+      comments: z.array(z.object({})).default([]).describe("[submodel]"),
+      commentsCount: z.number().default(0),
+      contactEmail: z.string(),
+      contactName: z.string(),
+      contactNote: z.string(),
+      contactPhone: z.string(),
+      created: z.string().datetime(),
+      description: z.string(),
+      documents: z.array(z.string().url()).default([]),
+      externalLinks: z.array(z.string().url()).default([]),
+      issuer: z.string(),
+      keywords: z.array(z.string()).default([]),
+      location: z.string(),
+      logs: z.array(z.any()).default([]).describe("[submodel]"),
+      publicationDate: z.string().datetime(),
+      questionsDueByDate: z.coerce.string(),
+      rfpType: z.coerce.string(),
+      site: z.string(),
+      siteData: z.any().default({}),
+      siteId: z.string(),
+      siteUrl: z.string().url(),
+      title: z.string(),
+      updated: z.string().datetime(),
+      url: z.string().url(),
+    }),
+    postApi: z.object({
+      authorId: z.string(),
+      categories: z.array(z.string()).default([]),
+      closingDate: z.string().datetime().optional(),
+      cnData: z.object({}).default({}),
+      cnLiked: z.boolean().default(false),
+      cnModified: z.boolean().default(false),
+      cnNotes: z.string().optional(),
+      cnStatus: z
+        .enum(Object.keys(cnStatuses) as [string, ...string[]])
+        .default("new"),
+      comments: z.array(z.object({})).default([]).describe("[submodel]"),
+      commentsCount: z.number().default(0),
+      contactNote: z.string().optional(),
+      created: z.string().datetime(),
+      description: z.string().optional(),
+      documents: z.array(z.string().url()).default([]),
+      externalLinks: z.array(z.string().url()).default([]),
+      issuer: z.string().min(1, "Issuer is required"),
+      keywords: z.array(z.string()).default([]),
+      location: z.string().min(1, "Location is required"),
+      logs: z.array(z.any()).default([]).describe("[submodel]"),
+      publicationDate: z.string().optional(),
+      questionsDueByDate: z.string().optional(),
+      rfpType: z.string().optional(),
+      site: z.string().default("unknown"),
+      siteData: z.any().default({}),
+      siteId: z.string().optional(),
+      siteUrl: z.string().url().optional(),
+      title: z.string().min(1, "Title is required"),
+      updated: z.string().datetime(),
+      url: z.string().url().optional(),
+    }),
+    postForm: z.object({
+      categories: z.string().optional(),
+      closingDate: z.string().optional(),
+      cnNotes: z.string().optional(),
+      contactNote: z.string().optional(),
+      description: z.string().optional(),
+      externalLink: z.string().url().optional(),
+      issuer: z.string().min(1, "Issuer is required"),
+      keywords: z.string().optional(),
+      location: z.string().min(1, "Location is required"),
+      publicationDate: z.string().optional(),
+      title: z.string().min(1, "Title is required"),
+    }),
+  },
   count: async (filter: Record<string, any> = {}) => {
     const colRef = collection(db, "solicitations");
     let queryRef: any = colRef;
@@ -134,8 +182,14 @@ const solicitation: any = {
 
     return json;
   },
-  post: (data: z.infer<typeof solicitation.schema>) => {
-    return data;
+  post: async (data: z.infer<typeof solicitation.schema>) => {
+    const resp = await fetch("/api/solicitations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to create solicitation");
+    return json;
   },
   put: async (id: string, data: z.infer<typeof solicitation.schema>) => {
     const resp = await fetch(`/api/solicitations/${id}`, {
@@ -143,11 +197,7 @@ const solicitation: any = {
       body: JSON.stringify(data),
     });
     const json = await resp.json();
-
-    if (json.error) {
-      throw new Error("Failed to update solicitation");
-    }
-
+    if (json.error) throw new Error("Failed to update solicitation");
     return json;
   },
   remove: async (id: string, baseUrl: string = "", token: string) => {
@@ -159,11 +209,7 @@ const solicitation: any = {
       credentials: "include",
     });
     const json = await resp.json();
-
-    if (json.error) {
-      throw new Error("Failed to delete solicitation");
-    }
-
+    if (json.error) throw new Error("Failed to delete solicitation");
     return id;
   },
   search: async (params: SolSearchParams = {}) => {

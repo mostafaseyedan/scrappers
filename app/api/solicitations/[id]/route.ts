@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fbToJs } from "@/lib/dataUtils";
+import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
 import { remove as elasticRemove, patch as elasticPatch } from "@/lib/elastic";
-import { getTokens } from "next-firebase-auth-edge";
-import { cookies } from "next/headers";
-import { authConfig } from "@/config/serverConfig";
-
-const ALLOWED_KEYS = [process.env.MOHAMMID_KEY];
+import { checkSession } from "@/lib/serverUtils";
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
   try {
-    if (!tokens) throw new Error("Unauthenticated");
+    if (!user) throw new Error("Unauthenticated");
     await fireRemove("solicitations", id);
     await elasticRemove("solicitations", id);
     results = { success: id };
@@ -36,21 +32,13 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authHeader = req.headers.get("authorization");
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
-  let bearerToken;
-  let isValidSession = Boolean(tokens);
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    bearerToken = authHeader.substring(7);
-    isValidSession = ALLOWED_KEYS.includes(bearerToken);
-  }
 
   try {
-    if (!isValidSession) throw new Error("Unauthenticated");
+    if (!user) throw new Error("Unauthenticated");
     const doc = await getById("solicitations", id);
     results = doc;
   } catch (error) {
@@ -68,17 +56,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
   const { body } = req;
   const updateData = await new NextResponse(body).json();
+  const user = await checkSession(req);
   let results;
   let status = 200;
 
   try {
-    if (!tokens) throw new Error("Unauthenticated");
+    if (!user) throw new Error("Unauthenticated");
     await getById("solicitations", id);
     const updatedDoc = await patch("solicitations", id, updateData);
-    await elasticPatch("solicitations", id, fbToJs(updateData));
+    await elasticPatch("solicitations", id, fireToJs(updateData));
     results = updatedDoc;
   } catch (error) {
     console.error(`Failed to update solicitation ${id}`, error);
@@ -95,17 +83,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
   const { body } = req;
   const updateData = await new NextResponse(body).json();
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
   try {
-    if (!tokens) throw new Error("Unauthenticated");
+    if (!user) throw new Error("Unauthenticated");
     await getById("solicitations", id);
     const updatedDoc = await put("solicitations", id, updateData);
-    await elasticPatch("solicitations", id, fbToJs(updateData));
+    await elasticPatch("solicitations", id, fireToJs(updateData));
     results = updatedDoc.data();
   } catch (error) {
     console.error(`Failed to update solicitation ${id}`, error);

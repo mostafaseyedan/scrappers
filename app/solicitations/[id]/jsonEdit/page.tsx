@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { fbToJs } from "@/lib/dataUtils";
+import { fireToJs } from "@/lib/dataUtils";
 import { toast } from "sonner";
 import { solicitation as solModel } from "@/app/models";
 
@@ -58,8 +58,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       if (!sol) {
         const sol = await solModel.getById(id);
-        setSol(fbToJs(sol));
-        setSolJson(JSON.stringify(fbToJs(sol), null, 2));
+        setSol(fireToJs(sol));
+        setSolJson(JSON.stringify(fireToJs(sol), null, 2));
       }
     })();
   }, [id]);

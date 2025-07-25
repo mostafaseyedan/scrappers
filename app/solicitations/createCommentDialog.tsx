@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,7 +19,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { DialogDescription } from "@radix-ui/react-dialog";
 import { solicitation_comment as solCommentModel } from "../models";
 
 type CreateCommentDialogProps = {

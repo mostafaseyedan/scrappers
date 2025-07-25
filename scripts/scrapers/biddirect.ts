@@ -7,7 +7,7 @@ import fs from "fs";
 import { execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
 import { post as elasticPost } from "@/lib/elastic";
-import { fbToJs } from "@/lib/dataUtils";
+import { fireToJs } from "@/lib/dataUtils";
 
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -587,7 +587,7 @@ async function run() {
         );
 
         /* TODO: Fix me
-        await elasticPost("solicitations", dbDoc.id, fbToJs(dbDoc.data()));
+        await elasticPost("solicitations", dbDoc.id, fireToJs(dbDoc.data()));
         console.log(chalk.green(`    Elastic record created ${dbDoc.id}`));
         */
 

@@ -35,7 +35,10 @@ type SolicitationProps = {
   sol: Record<string, any>;
   expandedSolIds?: string[];
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
-  refreshSols: () => void;
+  refreshSols: (options?: {
+    list?: boolean;
+    topBar?: boolean;
+  }) => Promise<void>;
   onClickComment?: (solId: string) => void;
   onEditSol: (solId: string) => void;
   variant?: "compact" | "expanded";
@@ -73,6 +76,7 @@ const Solicitation = ({
         setExpandedSolIds={setExpandedSolIds}
         sol={sol}
         refreshSols={refreshSols}
+        onDeleteSuccess={refreshSols}
         onEditSol={onEditSol}
       />
       <div className={styles.sol_contentCol}>
@@ -118,8 +122,12 @@ const Solicitation = ({
           <div className={styles.sol_externalLinks}>
             <label>External Links</label>
             <div>
-              {sol.externalLinks?.map((link: string) => (
-                <a key={`external-link-${link}`} href={link} target="_blank">
+              {sol.externalLinks?.map((link: string, index: number) => (
+                <a
+                  key={`external-link-${sol.id}-${index}-${link}`}
+                  href={link}
+                  target="_blank"
+                >
                   {link}
                 </a>
               ))}
@@ -128,9 +136,9 @@ const Solicitation = ({
         </div>
         <div className={styles.sol_categories}>
           <label>Categories</label>
-          {sol.categories?.map((category: string) => (
+          {sol.categories?.map((category: string, index: number) => (
             <span
-              key={`sol-${sol.id}-category-${category}`}
+              key={`sol-${sol.id}-${index}-category-${category}`}
               className={styles.sol_category}
             >
               {category}
@@ -145,6 +153,7 @@ const Solicitation = ({
             onValueChange={async (value) => {
               await solModel.patch(sol.id, { cnStatus: value });
               setCnStatus(value);
+              await refreshSols({ list: false });
             }}
           >
             <SelectTrigger>

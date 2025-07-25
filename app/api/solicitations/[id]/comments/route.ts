@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTokens } from "next-firebase-auth-edge";
-import { cookies } from "next/headers";
-import { authConfig } from "@/config/serverConfig";
 import { get, getById, patch, post } from "@/lib/firebaseAdmin";
 import { patch as elasticPatch } from "@/lib/elastic";
+import { checkSession } from "@/lib/serverUtils";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
   try {
-    if (!tokens) throw new Error("Unauthenticated");
+    if (!user) throw new Error("Unauthenticated");
     if (!id) throw new Error("ID is required");
 
     const normalizedDocs = await get(`solicitations/${id}/comments`);
@@ -35,16 +33,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tokens = await getTokens(await cookies(), authConfig);
-  const user = tokens?.decodedToken;
   const { body } = req;
   const updateData = await new NextResponse(body).json();
+  const user = await checkSession(req);
   let results = {};
   let status = 200;
 
   try {
-    if (!tokens) throw new Error("Unauthenticated");
-    if (!user || !user.uid) throw new Error("User not found");
+    if (!user) throw new Error("Unauthenticated");
     if (!id) throw new Error("ID is required");
 
     const sol = await getById("solicitations", id);
