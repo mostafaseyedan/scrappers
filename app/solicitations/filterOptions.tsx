@@ -101,6 +101,7 @@ const FilterOptions = ({
               <SelectItem value="none">None</SelectItem>
               <SelectItem value="bidnetdirect">Bidnetdirect</SelectItem>
               <SelectItem value="instantmarkets">Instant Markets</SelectItem>
+              <SelectItem value="manual">Manual</SelectItem>
               <SelectItem value="publicpurchase">Public Purchase</SelectItem>
               <SelectItem value="vendorregistry">Vendor Registry</SelectItem>
             </SelectGroup>
