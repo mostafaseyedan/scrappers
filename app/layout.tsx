@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
+import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
@@ -37,9 +38,13 @@ export default function RootLayout({
   const pathname = usePathname();
   const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setAuthChecked(true);
+    });
     return () => unsubscribe();
   }, []);
 
@@ -54,79 +59,87 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en">
-      <title>Cendien Recon</title>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className={styles.layout}>
-          {user?.uid && (
-            <header className={styles.layout_header}>
-              <h1>Recon</h1>
+    <UserContext.Provider
+      value={{ user, setUser, authChecked, setAuthChecked }}
+    >
+      <html lang="en">
+        <title>Cendien Recon</title>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <div className={styles.layout}>
+            {user?.uid && (
+              <header className={styles.layout_header}>
+                <h1>Recon</h1>
 
-              <nav className={styles.layout_nav}>
-                <Link
-                  href="/solicitations"
-                  data-state={isActive("/solicitations") ? "active" : undefined}
-                >
-                  Solicitations
-                </Link>
-                <Link
-                  href="/contacts"
-                  data-state={isActive("/contacts") ? "active" : undefined}
-                >
-                  Contacts
-                </Link>
-                <Link
-                  href="/logs"
-                  data-state={isActive("/logs") ? "active" : undefined}
-                >
-                  Logs
-                </Link>
-                <Link
-                  href="/stats"
-                  data-state={isActive("/stats") ? "active" : undefined}
-                >
-                  Stats
-                </Link>
-                <Link
-                  href="/settings"
-                  data-state={isActive("/settings") ? "active" : undefined}
-                >
-                  Settings
-                </Link>
-              </nav>
-            </header>
-          )}
-          <main>{children}</main>
-          <footer className={styles.layout_footer}>Cendien Recon</footer>
-          {user?.uid && (
-            <div className={styles.layout_userBox}>
-              <DropdownMenu>
-                <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
-                  <Avatar className="rounded-lg">
-                    <AvatarImage
-                      src="https://github.com/evilrabbit.png"
-                      alt="@evilrabbit"
-                    />
-                    <AvatarFallback>ER</AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className={styles.layout_userBoxContent}
-                  align="end"
-                >
-                  <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                <nav className={styles.layout_nav}>
+                  <Link
+                    href="/solicitations"
+                    data-state={
+                      isActive("/solicitations") ? "active" : undefined
+                    }
+                  >
+                    Solicitations
+                  </Link>
+                  <Link
+                    href="/contacts"
+                    data-state={isActive("/contacts") ? "active" : undefined}
+                  >
+                    Contacts
+                  </Link>
+                  <Link
+                    href="/logs"
+                    data-state={isActive("/logs") ? "active" : undefined}
+                  >
+                    Logs
+                  </Link>
+                  <Link
+                    href="/stats"
+                    data-state={isActive("/stats") ? "active" : undefined}
+                  >
+                    Stats
+                  </Link>
+                  <Link
+                    href="/settings"
+                    data-state={isActive("/settings") ? "active" : undefined}
+                  >
                     Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={logout}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-          <Toaster />
-        </div>
-      </body>
-    </html>
+                  </Link>
+                </nav>
+              </header>
+            )}
+            <main>{children}</main>
+            <footer className={styles.layout_footer}>Cendien Recon</footer>
+            {user?.uid && (
+              <div className={styles.layout_userBox}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
+                    <Avatar className="rounded-lg">
+                      <AvatarImage
+                        src="https://github.com/evilrabbit.png"
+                        alt="@evilrabbit"
+                      />
+                      <AvatarFallback>ER</AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className={styles.layout_userBoxContent}
+                    align="end"
+                  >
+                    <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={logout}>
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+            <Toaster />
+          </div>
+        </body>
+      </html>
+    </UserContext.Provider>
   );
 }

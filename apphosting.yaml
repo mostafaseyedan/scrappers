@@ -53,8 +53,8 @@ env:
     secret: DEV_HYPERBROWSER_API_KEY
   - variable: OPENAI_API_KEY
     secret: DEV_OPENAI_API_KEY
-  - variable: MOHAMMID_KEY
-    secret: DEV_MOHAMMID_KEY
+  - variable: MOHAMMAD_KEY
+    secret: DEV_MOHAMMAD_KEY
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
     value: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
   - variable: USE_SECURE_COOKIE
