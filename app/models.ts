@@ -104,6 +104,7 @@ const solicitation: any = {
       title: z.string(),
       updated: z.string().datetime(),
       url: z.string().url(),
+      viewedBy: z.array(z.string()).default([]),
     }),
     postApi: z.object({
       authorId: z.string(),
@@ -137,6 +138,7 @@ const solicitation: any = {
       title: z.string().min(1, "Title is required"),
       updated: z.string().datetime(),
       url: z.string().url().optional(),
+      viewedBy: z.array(z.string()).default([]),
     }),
     postForm: z.object({
       categories: z.string().optional(),

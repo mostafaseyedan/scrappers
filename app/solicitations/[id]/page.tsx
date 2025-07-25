@@ -1,7 +1,7 @@
 "use client";
 
 import { db } from "@/lib/firebaseClient";
-import { use, useEffect, useState } from "react";
+import { use, useContext, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import {
   Select,
@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { EditSolDialog } from "@/app/solicitations/editSolDialog";
 import { CreateCommentDialog } from "@/app/solicitations/createCommentDialog";
 import Link from "next/link";
+import { UserContext } from "@/app/userContext";
 
 import styles from "./page.module.scss";
 
@@ -40,6 +41,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
+
+  const user = useContext(UserContext)?.user;
 
   async function refresh() {
     const docRef = doc(db, "solicitations", id);
@@ -67,6 +70,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     };
   }, [id, comments.length]);
 
+  useEffect(() => {
+    (async () => {
+      if (sol) {
+        const viewedBy = sol.viewedBy || [];
+        if (!viewedBy.includes(user?.uid)) {
+          viewedBy.push(user?.uid);
+          await solModel.patch(sol.id, { viewedBy: viewedBy });
+        }
+      }
+    })();
+  }, [sol]);
+
   return (
     <div>
       {sol && (
@@ -93,6 +108,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <span>{sol.siteId}</span> <span>{sol.site}</span>
                 </a>
               </div>
+
+              <Link
+                href={`https://sales.cendien.com/index.html?source=reconrfp&solicitationId=${sol.id}`}
+                target="_blank"
+              >
+                <Button className="mt-3 mb-3">AI Analyze</Button>
+              </Link>
+
               <div className={styles.sol_descriptionBox}>
                 <span className={styles.sol_description}>
                   {sol.description}
@@ -133,8 +156,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   </span>
                 ))}
               </div>
-              <div>
-                <label>Viewed By</label>
+              <div className="mb-4">
+                <label>Viewed By ({sol.viewedBy?.length || 0})</label>
+                <span>{sol.viewedBy?.join(", ")}</span>
               </div>
 
               <Tabs defaultValue="notes">

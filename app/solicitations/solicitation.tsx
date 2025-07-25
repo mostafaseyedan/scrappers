@@ -216,9 +216,16 @@ const Solicitation = ({
               </TooltipContent>
             </Tooltip>
           )}
-          <Button variant={"ghost"} aria-label="Views">
-            0 <Eye />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant={"ghost"} aria-label="Views">
+                {sol.viewedBy?.length || 0} <Eye />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Viewed By - {sol.viewedBy?.join(", ") || "No one yet"}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>
