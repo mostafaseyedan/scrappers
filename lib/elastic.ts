@@ -20,16 +20,27 @@ export async function patch(
   id: string,
   doc: Record<string, any>
 ) {
-  const response = await client.update({
-    index,
-    id,
-    doc: {
-      ...doc,
-    },
-  });
-  if (response.result !== "updated") {
-    throw new Error(`Failed to update document in Elasticsearch ${id}`);
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await client.update({
+        index,
+        id,
+        doc: {
+          ...doc,
+        },
+      });
+      if (response.result === "updated") {
+        return response;
+      }
+      lastError = new Error(`Failed to update document in Elasticsearch ${id}`);
+    } catch (err) {
+      lastError = err;
+    }
   }
+  throw (
+    lastError || new Error(`Failed to update document in Elasticsearch ${id}`)
+  );
 }
 
 export async function post(
