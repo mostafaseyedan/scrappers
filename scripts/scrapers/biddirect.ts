@@ -1,6 +1,4 @@
 import "dotenv/config";
-import HyperAgent from "@hyperbrowser/agent";
-import { ChatOpenAI } from "@langchain/openai";
 import chalk from "chalk";
 import { z } from "zod";
 import fs from "fs";
@@ -8,7 +6,10 @@ import { execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
 import { post as elasticPost } from "@/lib/elastic";
 import { fireToJs } from "@/lib/dataUtils";
+import { solicitation as solModel, scriptLog as logModel } from "@/app/models";
+import { executeTask, getLatestFolder, initHyperAgent } from "@/scripts/utils";
 
+const BASE_URL = "http://localhost:3000";
 const DEBUG = true;
 const HIDE_STEPS = true;
 const USER = process.env.BIDDIRECT_USER;
@@ -148,6 +149,32 @@ function convertSizeToUnix(sizeStr: any) {
     .replace(" Mb", "MB")
     .replace(" Gb", "GB");
   return size;
+}
+
+async function end() {
+  performance.mark("end");
+  const totalSec = (
+    performance.measure("total-duration", "start", "end").duration / 1000
+  ).toFixed(1);
+  console.log(`\nTotal solicitations processed: ${successCount}`);
+  console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
+
+  await logModel.post(
+    BASE_URL,
+    {
+      message: `Scrapped ${successCount} solicitations from publicpurchase.com. 
+        ${failCount > 0 && `Found ${failCount} failures. `}
+        ${dupCount > 0 && `Found ${dupCount} duplicates. `}`,
+      scriptName: "scrapers/biddirect",
+      successCount: successCount,
+      failCount,
+      junkCount,
+      timeStr: totalSec,
+    },
+    process.env.SERVICE_KEY
+  );
+
+  process.exit(0);
 }
 
 async function executeSolDetails(
@@ -424,21 +451,7 @@ async function run() {
 
   let out, cmd;
 
-  const llm = new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    model: "gpt-4.1-mini",
-    temperature: 0,
-    cache: true,
-  });
-
-  const agent = new HyperAgent({
-    llm,
-    debug: DEBUG,
-    browserProvider: "Local",
-    localConfig: {
-      downloadsPath: ".output/biddirect/tmp/downloads",
-    },
-  });
+  const agent = initHyperAgent({ debug: DEBUG, vendor: "biddirect" });
 
   const latestSummary = await checkLatestSummary();
   let cacheFolder = start.toISOString();
@@ -602,18 +615,20 @@ async function run() {
   await agent.closeAgent();
 }
 
+let dupCount = 0;
+let successCount = 0;
+let failCount = 0;
+let junkCount = 0;
 let totalSolicitations = 0;
 const start = new Date();
 performance.mark("start");
 
 run()
   .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
-  .finally(() => {
-    performance.mark("end");
-    const totalSec = (
-      performance.measure("total-duration", "start", "end").duration / 1000
-    ).toFixed(1);
-    console.log(`Total solicitations processed: ${totalSolicitations}`);
-    console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
-    process.exit(0);
+  .finally(async () => {
+    await end();
   });
+
+process.on("SIGINT", async () => {
+  await end();
+});

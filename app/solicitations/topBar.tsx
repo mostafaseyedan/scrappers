@@ -110,9 +110,6 @@ const TopBar = forwardRef(
             >
               Submitted ({counts.submitted || 0})
             </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__rfps} value="rfps">
-              RFPs ({counts.rfps || 0})
-            </TabsTrigger>
             <TabsTrigger className={styles.topBar_tab__erp} value="erp">
               ERP ({counts.erp || 0})
             </TabsTrigger>

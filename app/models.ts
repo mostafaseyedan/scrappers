@@ -58,15 +58,32 @@ const dbSol: any = {
   }),
 };
 
-const scraping_log: any = {
+const scriptLog: any = {
   schema: z.object({
     message: z.string(),
     scriptName: z.string(),
     lastItemId: z.string().optional(),
     successCount: z.number().default(0),
     failCount: z.number().default(0),
-    timeStr: z.string().datetime(), // hh::mm:ss
+    junkCount: z.number().default(0),
+    timeStr: z.string().default("00:00:00"), // hh:mm:ss
   }),
+  post: async (
+    baseUrl: string,
+    data: z.infer<typeof scriptLog.schema>,
+    token: string
+  ) => {
+    const resp = await fetch(`${baseUrl}/api/scriptLogs`, {
+      method: "POST",
+      headers: {
+        Cookie: `AuthToken=${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await resp.json();
+    if (json.error) throw new Error("Failed to create scraping log");
+    return json;
+  },
 };
 
 const solicitation: any = {
@@ -109,7 +126,7 @@ const solicitation: any = {
     postApi: z.object({
       authorId: z.string(),
       categories: z.array(z.string()).default([]),
-      closingDate: z.string().datetime().optional(),
+      closingDate: z.string().nullable().default(null),
       cnData: z.object({}).default({}),
       cnLiked: z.boolean().default(false),
       cnModified: z.boolean().default(false),
@@ -128,16 +145,16 @@ const solicitation: any = {
       keywords: z.array(z.string()).default([]),
       location: z.string().min(1, "Location is required"),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
-      publicationDate: z.string().optional(),
+      publishDate: z.string().nullable().default(null),
       questionsDueByDate: z.string().optional(),
       rfpType: z.string().optional(),
       site: z.string().default("unknown"),
       siteData: z.any().default({}),
       siteId: z.string().optional(),
-      siteUrl: z.string().url().optional(),
+      siteUrl: z.string().default(""),
       title: z.string().min(1, "Title is required"),
       updated: z.string().datetime(),
-      url: z.string().url().optional(),
+      url: z.string().default(""),
       viewedBy: z.array(z.string()).default([]),
     }),
     postForm: z.object({
@@ -184,10 +201,19 @@ const solicitation: any = {
 
     return json;
   },
-  post: async (data: z.infer<typeof solicitation.schema>) => {
-    const resp = await fetch("/api/solicitations", {
+  post: async (
+    baseUrl: string,
+    data: z.infer<typeof solicitation.schema>,
+    token?: string
+  ) => {
+    const resp = await fetch(`${baseUrl}/api/solicitations`, {
       method: "POST",
       body: JSON.stringify(data),
+      ...(token && {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
     });
     const json = await resp.json();
     if (json.error) throw new Error("Failed to create solicitation");
@@ -287,5 +313,5 @@ export {
   solicitation,
   solicitation_comment,
   solicitation_log,
-  scraping_log,
+  scriptLog,
 };

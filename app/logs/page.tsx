@@ -1,8 +1,42 @@
+"use client";
+
+import { List as CnList } from "@/components/cendien/list";
+
+import styles from "./page.module.scss";
+
 export default function Page() {
   return (
     <>
-      <h2>Logs</h2>
-      <p>Coming soon.</p>
+      <div>
+        <a>Scripts</a>
+        <a>User</a>
+      </div>
+      <CnList
+        className={styles.list}
+        url="/api/scriptLogs"
+        itemTemplate={(item) => (
+          <article className={styles.list_item}>
+            <div className={styles.list_item_created}>
+              {new Date(item.created).toLocaleString()}
+            </div>
+            <div>{item.message}</div>
+            <div className={styles.list_item_timeStr}>
+              <var>{item.timeStr}</var>
+            </div>
+            <div className={styles.list_item_results}>
+              <span className={styles.list_item_results_success}>
+                <label>Success</label> <var>{item.successCount}</var>
+              </span>
+              <span className={styles.list_item_results_fail}>
+                <label>Fail</label> <var>{item.failCount}</var>
+              </span>
+              <span className={styles.list_item_results_junk}>
+                <label>Junk</label> <var>0</var>
+              </span>
+            </div>
+          </article>
+        )}
+      />
     </>
   );
 }

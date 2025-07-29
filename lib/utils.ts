@@ -15,12 +15,27 @@ export function randomString(length: number): string {
   return result;
 }
 
-export function sanitizeDateString(dateString: string): string {
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    throw new Error("Invalid date format");
+export function sanitizeDateString(dateString: string): string | null {
+  if (!dateString) return null;
+
+  let date;
+
+  try {
+    date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.warn(
+        `Failed to parse date string: ${dateString}. Invalid date format`
+      );
+      return null;
+    }
+
+    return date.toISOString();
+  } catch (error) {
+    console.warn(`Failed to parse date string: ${dateString}`, "\n", error);
+    date = null;
   }
-  return date.toISOString();
+
+  return null;
 }
 
 export function sanitizeUniqueCommaValues(
@@ -32,4 +47,16 @@ export function sanitizeUniqueCommaValues(
     .map((value) => value.trim())
     .filter((value) => value.length > 0);
   return Array.from(new Set(sanitized)).sort();
+}
+
+// seconds to time string in format hh:mm:ss
+export function secToTimeStr(seconds: number): string {
+  if (seconds < 0) return "00:00:00";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(secs).padStart(2, "0")}`;
 }

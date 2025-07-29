@@ -1,6 +1,9 @@
 import fs from "fs";
 import { z } from "zod";
 import chalk from "chalk";
+import HyperAgent from "@hyperbrowser/agent";
+import { ChatOpenAI } from "@langchain/openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type ExecuteTaskParams = {
   agent: any;
@@ -11,6 +14,13 @@ type ExecuteTaskParams = {
   outputSchema?: z.ZodTypeAny;
   hideSteps?: boolean;
 };
+
+type InitHyperAgentParams = {
+  debug?: boolean;
+  vendor: string;
+};
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY!);
 
 export function getLatestFolder(folder: string): string {
   fs.mkdirSync(folder, { recursive: true });
@@ -42,7 +52,10 @@ export async function executeTask({
   result =
     fs.existsSync(outputDir + "/output.json") &&
     fs.readFileSync(outputDir + "/output.json", "utf8");
-  if (result) return result;
+  if (result) {
+    console.log(`Cache found ${outputDir}/output.json`);
+    return result;
+  }
 
   result = await agent.executeTask(task, {
     onStep: (step: any) => {
@@ -83,4 +96,61 @@ export async function executeTask({
   fs.writeFileSync(outputDir + "/output.json", result.output);
 
   return result.output;
+}
+
+export function initHyperAgent(options: InitHyperAgentParams) {
+  const llm = new ChatOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    model: "gpt-4.1-mini",
+    temperature: 0,
+    cache: true,
+  });
+
+  const agent = new HyperAgent({
+    llm,
+    debug: options.debug,
+    browserProvider: "Local",
+    localConfig: {
+      args: ["--deny-permission-prompts"],
+      downloadsPath: `.output/${options.vendor}/tmp/downloads`,
+    },
+  });
+
+  return agent;
+}
+
+export async function isItRelated(record: any): Promise<boolean> {
+  const prompt = `
+Given the following bid record, is it related to any of the following categories: IT, IT staffing, software services, or managed services? 
+Respond with yes or no
+
+Record:
+${JSON.stringify(record)}`; // and a short explanation
+
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().toLowerCase();
+
+  return text === "yes";
+}
+
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Timeout after ${ms}ms`));
+    }, ms);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
 }

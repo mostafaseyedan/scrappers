@@ -1,0 +1,37 @@
+.list {
+  border: 1px solid #eee;
+  &_item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+    &_created {
+      color: #c7c7c7;
+      display: block;
+      width: 160px;
+    }
+    &_timeStr {
+      color: #c7c7c7;
+    }
+    &_results {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+      &_success {
+        var {
+          color: green;
+        }
+      }
+      &_fail {
+        var {
+          color: red;
+        }
+      }
+      &_junk {
+        var {
+          color: orange;
+        }
+      }
+    }
+  }
+}

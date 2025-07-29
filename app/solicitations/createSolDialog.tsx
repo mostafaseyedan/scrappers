@@ -81,7 +81,7 @@ const CreateSolDialog = ({
       formValues.externalLinks = [formValues.externalLink];
 
     try {
-      await solModel.post(formValues);
+      await solModel.post("", formValues, "");
     } catch (error) {
       console.error("Failed to create solicitation:", error);
       setFormError("Failed to create solicitation due to server error.");

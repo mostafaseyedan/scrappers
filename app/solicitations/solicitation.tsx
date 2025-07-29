@@ -223,7 +223,13 @@ const Solicitation = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              Viewed By - {sol.viewedBy?.join(", ") || "No one yet"}
+              Viewed By
+              <br />
+              {sol.viewedBy?.length > 0
+                ? sol.viewedBy.map((v: string) => (
+                    <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
+                  ))
+                : "No one yet"}
             </TooltipContent>
           </Tooltip>
         </div>
