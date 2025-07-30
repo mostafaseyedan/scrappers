@@ -140,13 +140,13 @@ const solicitation: any = {
       created: z.string().datetime(),
       description: z.string().optional(),
       documents: z.array(z.string().url()).default([]),
-      externalLinks: z.array(z.string().url()).default([]),
+      externalLinks: z.array(z.string()).default([]),
       issuer: z.string().min(1, "Issuer is required"),
       keywords: z.array(z.string()).default([]),
       location: z.string().min(1, "Location is required"),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
       publishDate: z.string().nullable().default(null),
-      questionsDueByDate: z.string().optional(),
+      questionsDueByDate: z.string().nullable().default(null),
       rfpType: z.string().optional(),
       site: z.string().default("unknown"),
       siteData: z.any().default({}),
@@ -188,10 +188,25 @@ const solicitation: any = {
     const resp = await getDoc(docRef);
     return { id, ...resp.data() };
   },
-  patch: async (id: string, data: z.infer<typeof solicitation.schema>) => {
-    const resp = await fetch(`/api/solicitations/${id}`, {
+  patch: async ({
+    baseUrl = "",
+    id,
+    data,
+    token,
+  }: {
+    baseUrl?: string;
+    id: string;
+    data: z.infer<typeof solicitation.schema>;
+    token?: string;
+  }) => {
+    const resp = await fetch(`${baseUrl}/api/solicitations/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+      ...(token && {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
     });
     const json = await resp.json();
 

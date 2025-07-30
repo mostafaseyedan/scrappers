@@ -4,6 +4,7 @@ import { z } from "zod";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
 import { solicitation as solModel, scriptLog as logModel } from "@/app/models";
 import {
+  endScript,
   executeTask,
   getLatestFolder,
   initHyperAgent,
@@ -101,32 +102,6 @@ function sanitizeSolForApi(rawSolData: Record<string, any>) {
   return newData;
 }
 
-async function end() {
-  performance.mark("end");
-  const totalSec = (
-    performance.measure("total-duration", "start", "end").duration / 1000
-  ).toFixed(1);
-  console.log(`\nTotal solicitations processed: ${successCount}`);
-  console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
-
-  await logModel.post(
-    BASE_URL,
-    {
-      message: `Scrapped ${successCount} solicitations from instantmarkets.com. 
-        ${failCount > 0 ? `Found ${failCount} failures. ` : ""}
-        ${dupCount > 0 ? `Found ${dupCount} duplicates. ` : ""}`,
-      scriptName: "scrapers/instantmarkets",
-      successCount,
-      failCount,
-      junkCount,
-      timeStr: secToTimeStr(Number(totalSec)),
-    },
-    process.env.SERVICE_KEY
-  );
-
-  process.exit(0);
-}
-
 async function run() {
   console.log(`\nExtracting from instantmarkets.com ${start.toLocaleString()}`);
 
@@ -137,7 +112,7 @@ async function run() {
 
   let out, cmd;
 
-  const agent = initHyperAgent({ debug: DEBUG, vendor: "instantmarkets" });
+  const agent = initHyperAgent({ vendor: "instantmarkets" });
 
   let cacheFolder = getLatestFolder(".output/instantmarkets");
   if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
@@ -162,7 +137,7 @@ async function run() {
 
   // Loop through each page of the category
   for (let page = totalPages; page > 0; page--) {
-    console.log(`  Page[${page}/${totalPages}]`);
+    console.log(`\nPage[${page}/${totalPages}]`);
     let categoryPage = await executeTask({
       agent,
       name: `categoryPage/${page}`,
@@ -183,15 +158,15 @@ async function run() {
     for (let solIndex = 0; solIndex < solsLen; solIndex++) {
       const rawSol = categoryPage.solicitations[solIndex];
       console.log(
-        `    p[${page}/${totalPages}] [${solIndex + 1}/${solsLen}] ${
-          rawSol.id
-        } ${rawSol.title}`
+        `\np[${page}/${totalPages}] [${solIndex + 1}/${solsLen}] ${rawSol.id} ${
+          rawSol.title
+        }`
       );
 
       const isIt = await isItRelated(rawSol);
       if (!isIt) {
         junkCount++;
-        console.log(chalk.yellow(`      Not IT-related. Skipping.`));
+        console.log(chalk.yellow(`  Not IT-related. Skipping.`));
         continue;
       }
 
@@ -206,7 +181,7 @@ async function run() {
       ) {
         junkCount++;
         console.log(
-          chalk.yellow(`      Closing date expired. ${closingDate}. Skipping.`)
+          chalk.yellow(`  Closing date expired. ${closingDate}. Skipping.`)
         );
         continue;
       }
@@ -219,7 +194,7 @@ async function run() {
         outputSchema: schemas.solDetailsPage,
         hideSteps: HIDE_STEPS,
       });
-      rawSolDetails = JSON.parse(rawSolDetails);
+      rawSolDetails = JSON.parse(rawSolDetails) || {};
 
       // Check Firestore for existing solicitation
       const existingSol = await solCollection
@@ -230,7 +205,7 @@ async function run() {
       let fireDoc;
       if (!existingSol.empty) {
         fireDoc = existingSol.docs[0];
-        console.log(`      Already exists in Firestore ${fireDoc.id}.`);
+        console.log(`  Already exists in Firestore ${fireDoc.id}.`);
         dupCount++;
       } else {
         const dbSolData = sanitizeSolForApi({
@@ -242,12 +217,14 @@ async function run() {
           dbSolData,
           process.env.SERVICE_KEY
         );
-        console.log(chalk.green(`      Saved. ${newRecord.id}`));
+        console.log(chalk.green(`  Saved. ${newRecord.id}`));
         successCount++;
       }
 
       if (dupCount >= 3) {
-        console.warn(`Skipping page ${page} due to too many duplicates found.`);
+        console.warn(
+          `\nSkipping page ${page} due to too many duplicates found.`
+        );
         dupCount = 0;
         continue;
       }
@@ -265,9 +242,17 @@ performance.mark("start");
 run()
   .catch((error: any) => console.error(chalk.red(`  ${error?.stack || error}`)))
   .finally(async () => {
-    await end();
+    await endScript({
+      baseUrl: BASE_URL,
+      vendor: "instantmarkets",
+      counts: { success: successCount, fail: failCount, junk: junkCount },
+    });
   });
 
 process.on("SIGINT", async () => {
-  await end();
+  await endScript({
+    baseUrl: BASE_URL,
+    vendor: "instantmarkets",
+    counts: { success: successCount, fail: failCount, junk: junkCount },
+  });
 });

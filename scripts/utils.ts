@@ -4,6 +4,18 @@ import chalk from "chalk";
 import HyperAgent from "@hyperbrowser/agent";
 import { ChatOpenAI } from "@langchain/openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { scriptLog as logModel } from "@/app/models";
+import { secToTimeStr } from "@/lib/utils";
+
+type EndScriptParams = {
+  baseUrl?: string;
+  vendor: string;
+  counts: {
+    success: number;
+    fail: number;
+    junk: number;
+  };
+};
 
 type ExecuteTaskParams = {
   agent: any;
@@ -22,17 +34,36 @@ type InitHyperAgentParams = {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY!);
 
-export function getLatestFolder(folder: string): string {
-  fs.mkdirSync(folder, { recursive: true });
-  const folders = fs
-    .readdirSync(folder)
-    .filter(
-      (f) =>
-        f.match(/^\d{4}-\d{2}-\d{2}/) &&
-        fs.statSync(`${folder}/${f}`).isDirectory()
-    );
-  if (folders.length === 0) return "";
-  return folders[folders.length - 1];
+export async function endScript({ baseUrl, vendor, counts }: EndScriptParams) {
+  if (!vendor) throw new Error("Vendor is required for end function");
+
+  performance.mark("end");
+  const totalSec = Number(
+    (
+      performance.measure("total-duration", "start", "end").duration / 1000
+    ).toFixed(0)
+  );
+  console.log(`\nCounts: ${JSON.stringify(counts, null, 2)}`);
+  console.log(
+    `Total time: ${secToTimeStr(totalSec)} ${new Date().toLocaleString()}`
+  );
+
+  await logModel.post(
+    baseUrl,
+    {
+      message: `Scrapped ${counts.success} solicitations from ${vendor}. 
+        ${counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""}
+        ${counts.junk > 0 ? `Found ${counts.junk} duplicates. ` : ""}`,
+      scriptName: `scrapers/${vendor}`,
+      successCount: counts.success,
+      failCount: counts.fail,
+      junkCount: counts.junk,
+      timeStr: secToTimeStr(totalSec),
+    },
+    process.env.SERVICE_KEY
+  );
+
+  process.exit(0);
 }
 
 export async function executeTask({
@@ -98,7 +129,22 @@ export async function executeTask({
   return result.output;
 }
 
+export function getLatestFolder(folder: string): string {
+  fs.mkdirSync(folder, { recursive: true });
+  const folders = fs
+    .readdirSync(folder)
+    .filter(
+      (f) =>
+        f.match(/^\d{4}-\d{2}-\d{2}/) &&
+        fs.statSync(`${folder}/${f}`).isDirectory()
+    );
+  if (folders.length === 0) return "";
+  return folders[folders.length - 1];
+}
+
 export function initHyperAgent(options: InitHyperAgentParams) {
+  if (options.debug === undefined) options.debug = false;
+
   const llm = new ChatOpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     model: "gpt-4.1-mini",

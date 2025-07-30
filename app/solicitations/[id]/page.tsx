@@ -76,7 +76,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         const viewedBy = sol.viewedBy || [];
         if (!viewedBy.includes(user?.uid)) {
           viewedBy.push(user?.uid);
-          await solModel.patch(sol.id, { viewedBy: viewedBy });
+          await solModel.patch({ id: sol.id, data: { viewedBy: viewedBy } });
         }
       }
     })();
@@ -263,7 +263,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 <Select
                   value={cnStatus}
                   onValueChange={async (value) => {
-                    await solModel.patch(sol.id, { cnStatus: value });
+                    await solModel.patch({
+                      id: sol.id,
+                      data: { cnStatus: value },
+                    });
                     setCnStatus(value);
                   }}
                 >

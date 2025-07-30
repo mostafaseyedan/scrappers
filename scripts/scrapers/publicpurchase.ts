@@ -4,7 +4,12 @@ import { z } from "zod";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
 import { solicitation as solModel, scriptLog as logModel } from "@/app/models";
 import { cnStatuses } from "@/app/config";
-import { executeTask, getLatestFolder, initHyperAgent } from "@/scripts/utils";
+import {
+  endScript,
+  executeTask,
+  getLatestFolder,
+  initHyperAgent,
+} from "@/scripts/utils";
 import { sanitizeDateString } from "@/lib/utils";
 
 const BASE_URL = "http://localhost:3000";
@@ -161,32 +166,6 @@ function cleanUpCategorySummary(
   return cleanedUpSols;
 }
 
-async function end() {
-  performance.mark("end");
-  const totalSec = (
-    performance.measure("total-duration", "start", "end").duration / 1000
-  ).toFixed(1);
-  console.log(`\nTotal solicitations processed: ${successCount}`);
-  console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
-
-  await logModel.post(
-    BASE_URL,
-    {
-      message: `Scrapped ${successCount} solicitations from publicpurchase.com. 
-        ${failCount > 0 && `Found ${failCount} failures. `}
-        ${dupCount > 0 && `Found ${dupCount} duplicates. `}`,
-      scriptName: "scrapers/publicpurchase",
-      successCount: successCount,
-      failCount,
-      junkCount,
-      timeStr: totalSec,
-    },
-    process.env.SERVICE_KEY
-  );
-
-  process.exit(0);
-}
-
 function sanitizeSolForDb(rawSolData: Record<string, any>) {
   const externalLinks = [];
 
@@ -258,7 +237,9 @@ async function run() {
     for (let i = 0; i < cleanedUpSols.length; i++) {
       const rawSol = cleanedUpSols[i];
       console.log(
-        `    [${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${rawSol.title}`
+        `\n    [${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${
+          rawSol.title
+        }`
       );
 
       // Check Firestore for existing solicitation
@@ -305,6 +286,8 @@ async function run() {
       }
     }
   }
+
+  await agent.closeAgent();
 }
 
 let dupCount = 0;
@@ -315,11 +298,23 @@ const start = new Date();
 performance.mark("start");
 
 run()
-  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
+  .catch((error: any) => console.error(chalk.red(`  ${error?.stack || error}`)))
   .finally(async () => {
-    await end();
+    await endScript({
+      baseUrl: BASE_URL,
+      vendor: "publicpurchase",
+      counts: {
+        success: successCount,
+        fail: failCount,
+        junk: junkCount,
+      },
+    });
   });
 
 process.on("SIGINT", async () => {
-  await end();
+  await endScript({
+    baseUrl: BASE_URL,
+    vendor: "publicpurchase",
+    counts: { success: successCount, fail: failCount, junk: junkCount },
+  });
 });

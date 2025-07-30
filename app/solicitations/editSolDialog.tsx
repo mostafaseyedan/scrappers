@@ -69,7 +69,7 @@ const EditSolDialog = ({
     formValues.keywords = [...new Set(formValues.keywords)];
     formValues.keywords = formValues.keywords.filter((kw: string) => kw);
 
-    const resp = await solModel.patch(solId, formValues);
+    const resp = await solModel.patch({ id: solId, data: formValues });
 
     if (resp.error) {
       toast.error("Failed to update solicitation");

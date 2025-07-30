@@ -72,7 +72,10 @@ const SolActions = ({
             aria-label="Save solicitation"
             onClick={async (e) => {
               e.stopPropagation();
-              await solModel.patch(sol.id, { cnLiked: !sol.cnLiked });
+              await solModel.patch({
+                id: sol.id,
+                data: { cnLiked: !sol.cnLiked },
+              });
               if (refreshSols) await refreshSols();
             }}
           >

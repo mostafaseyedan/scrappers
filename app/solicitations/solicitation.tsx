@@ -151,7 +151,7 @@ const Solicitation = ({
           <Select
             value={cnStatus}
             onValueChange={async (value) => {
-              await solModel.patch(sol.id, { cnStatus: value });
+              await solModel.patch({ id: sol.id, data: { cnStatus: value } });
               setCnStatus(value);
               await refreshSols({ list: false });
             }}
