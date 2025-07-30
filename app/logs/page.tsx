@@ -25,13 +25,16 @@ export default function Page() {
             </div>
             <div className={styles.list_item_results}>
               <span className={styles.list_item_results_success}>
-                <label>Success</label> <var>{item.successCount}</var>
+                <label>Success</label> <var>{item.successCount || 0}</var>
               </span>
               <span className={styles.list_item_results_fail}>
-                <label>Fail</label> <var>{item.failCount}</var>
+                <label>Fail</label> <var>{item.failCount || 0}</var>
               </span>
               <span className={styles.list_item_results_junk}>
-                <label>Junk</label> <var>0</var>
+                <label>Junk</label> <var>{item.junkCount || 0}</var>
+              </span>
+              <span className={styles.list_item_results_duplicates}>
+                <label>Dups</label> <var>{item.dupCount || 0}</var>
               </span>
             </div>
           </article>

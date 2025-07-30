@@ -2,7 +2,7 @@ import "dotenv/config";
 import chalk from "chalk";
 import { z } from "zod";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
-import { solicitation as solModel, scriptLog as logModel } from "@/app/models";
+import { solicitation as solModel } from "@/app/models";
 import {
   endScript,
   executeTask,
@@ -11,8 +11,9 @@ import {
   isItRelated,
   withTimeout,
 } from "@/scripts/utils";
-import { sanitizeDateString, secToTimeStr } from "@/lib/utils";
+import { sanitizeDateString } from "@/lib/utils";
 
+const VENDOR = "instantmarkets";
 const BASE_URL = "http://localhost:3000";
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -109,10 +110,7 @@ async function run() {
   const storage = initStorage();
   const bucket = storage.bucket();
   const solCollection = db.collection("solicitations");
-
-  let out, cmd;
-
-  const agent = initHyperAgent({ vendor: "instantmarkets" });
+  const agent = initHyperAgent({ vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/instantmarkets");
   if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
@@ -133,7 +131,7 @@ async function run() {
   const total = categoryTotal.total;
   const totalPages = Math.ceil(total / 10);
 
-  console.log(`  ${total} solcitations. ${totalPages} pages.`);
+  console.log(`  ${total} solicitations. ${totalPages} pages.`);
 
   // Loop through each page of the category
   for (let page = totalPages; page > 0; page--) {
@@ -147,7 +145,7 @@ async function run() {
       hideSteps: HIDE_STEPS,
     });
     if (!categoryPage) {
-      console.warn(`Failed to fetch category page ${page}`);
+      console.error(chalk.red(`Failed to fetch category page ${page}`));
       continue;
     }
     categoryPage = JSON.parse(categoryPage);
@@ -205,7 +203,7 @@ async function run() {
       let fireDoc;
       if (!existingSol.empty) {
         fireDoc = existingSol.docs[0];
-        console.log(`  Already exists in Firestore ${fireDoc.id}.`);
+        console.log(chalk.grey(`  Already exists in Firestore ${fireDoc.id}.`));
         dupCount++;
       } else {
         const dbSolData = sanitizeSolForApi({
@@ -223,7 +221,9 @@ async function run() {
 
       if (dupCount >= 3) {
         console.warn(
-          `\nSkipping page ${page} due to too many duplicates found.`
+          chalk.yellow(
+            `\nSkipping page ${page} due to too many duplicates found.`
+          )
         );
         dupCount = 0;
         continue;
@@ -244,15 +244,25 @@ run()
   .finally(async () => {
     await endScript({
       baseUrl: BASE_URL,
-      vendor: "instantmarkets",
-      counts: { success: successCount, fail: failCount, junk: junkCount },
+      vendor: VENDOR,
+      counts: {
+        success: successCount,
+        fail: failCount,
+        junk: junkCount,
+        duplicates: dupCount,
+      },
     });
   });
 
 process.on("SIGINT", async () => {
   await endScript({
     baseUrl: BASE_URL,
-    vendor: "instantmarkets",
-    counts: { success: successCount, fail: failCount, junk: junkCount },
+    vendor: VENDOR,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      junk: junkCount,
+      duplicates: dupCount,
+    },
   });
 });

@@ -63,6 +63,7 @@ const scriptLog: any = {
     message: z.string(),
     scriptName: z.string(),
     lastItemId: z.string().optional(),
+    dupCount: z.number().default(0),
     successCount: z.number().default(0),
     failCount: z.number().default(0),
     junkCount: z.number().default(0),
@@ -97,15 +98,16 @@ const solicitation: any = {
       cnStatus: z
         .enum(Object.keys(cnStatuses) as [string, ...string[]])
         .default("new"),
+      cnType: z.string().default(""),
       comments: z.array(z.object({})).default([]).describe("[submodel]"),
       commentsCount: z.number().default(0),
       contactEmail: z.string(),
       contactName: z.string(),
       contactNote: z.string(),
       contactPhone: z.string(),
-      created: z.string().datetime(),
+      created: z.string().datetime(), // system
       description: z.string(),
-      documents: z.array(z.string().url()).default([]),
+      documents: z.array(z.string().url()).default([]), // WARNING: do not change this structure
       externalLinks: z.array(z.string().url()).default([]),
       issuer: z.string(),
       keywords: z.array(z.string()).default([]),
@@ -119,7 +121,7 @@ const solicitation: any = {
       siteId: z.string(),
       siteUrl: z.string().url(),
       title: z.string(),
-      updated: z.string().datetime(),
+      updated: z.string().datetime(), // system
       url: z.string().url(),
       viewedBy: z.array(z.string()).default([]),
     }),

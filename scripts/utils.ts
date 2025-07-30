@@ -11,6 +11,7 @@ type EndScriptParams = {
   baseUrl?: string;
   vendor: string;
   counts: {
+    duplicates: number;
     success: number;
     fail: number;
     junk: number;
@@ -53,8 +54,11 @@ export async function endScript({ baseUrl, vendor, counts }: EndScriptParams) {
     {
       message: `Scrapped ${counts.success} solicitations from ${vendor}. 
         ${counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""}
-        ${counts.junk > 0 ? `Found ${counts.junk} duplicates. ` : ""}`,
+        ${
+          counts.duplicates > 0 ? `Found ${counts.duplicates} duplicates. ` : ""
+        }`,
       scriptName: `scrapers/${vendor}`,
+      dupCount: counts.duplicates,
       successCount: counts.success,
       failCount: counts.fail,
       junkCount: counts.junk,

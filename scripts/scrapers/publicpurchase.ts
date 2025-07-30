@@ -12,6 +12,7 @@ import {
 } from "@/scripts/utils";
 import { sanitizeDateString } from "@/lib/utils";
 
+const VENDOR = "publicpurchase";
 const BASE_URL = "http://localhost:3000";
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -204,7 +205,7 @@ async function run() {
 
   let out, cmd;
 
-  const agent = initHyperAgent({ debug: DEBUG, vendor: "publicpurchase" });
+  const agent = initHyperAgent({ debug: DEBUG, vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/publicpurchase");
   if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
@@ -215,7 +216,7 @@ async function run() {
     keyof typeof interestedCategories
   >) {
     const categoryName = interestedCategories[categoryId];
-    console.log(`\n  Processing category ${categoryId} ${categoryName}`);
+    console.log(`\nProcessing category ${categoryId} ${categoryName}`);
     let categorySummary = await executeTask({
       agent,
       name: "categorySummary",
@@ -237,9 +238,7 @@ async function run() {
     for (let i = 0; i < cleanedUpSols.length; i++) {
       const rawSol = cleanedUpSols[i];
       console.log(
-        `\n    [${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${
-          rawSol.title
-        }`
+        `\n[${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${rawSol.title}`
       );
 
       // Check Firestore for existing solicitation
@@ -247,13 +246,15 @@ async function run() {
         .where("siteId", "==", rawSol.id)
         .get();
       if (!existingSol.empty) {
-        console.log(`      Already exists in Firestore. Skipping.`);
+        console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
         dupCount++;
         continue;
       }
 
       if (dupCount >= 10) {
-        throw new Error("Stopping script due to too many duplicates found.");
+        throw new Error(
+          chalk.yellow("\nStopping script due to too many duplicates found.")
+        );
       }
 
       // Go into each solicitation details page and grab more details
@@ -272,7 +273,7 @@ async function run() {
       let fireDoc;
       if (!existingSol.empty) {
         fireDoc = existingSol.docs[0];
-        console.log(`      Already exists in Firestore ${fireDoc.id}.`);
+        console.log(chalk.grey(`  Already exists in Firestore ${fireDoc.id}.`));
         dupCount++;
       } else {
         const dbSolData = sanitizeSolForDb({ ...rawSol, ...solDetails });
@@ -281,7 +282,7 @@ async function run() {
           dbSolData,
           process.env.SERVICE_KEY
         );
-        console.log(chalk.green(`      Saved. ${newRecord.id}`));
+        console.log(chalk.green(chalk.grey(`  Saved. ${newRecord.id}`)));
         successCount++;
       }
     }
@@ -302,8 +303,9 @@ run()
   .finally(async () => {
     await endScript({
       baseUrl: BASE_URL,
-      vendor: "publicpurchase",
+      vendor: VENDOR,
       counts: {
+        duplicates: dupCount,
         success: successCount,
         fail: failCount,
         junk: junkCount,
@@ -314,7 +316,12 @@ run()
 process.on("SIGINT", async () => {
   await endScript({
     baseUrl: BASE_URL,
-    vendor: "publicpurchase",
-    counts: { success: successCount, fail: failCount, junk: junkCount },
+    vendor: VENDOR,
+    counts: {
+      duplicates: dupCount,
+      success: successCount,
+      fail: failCount,
+      junk: junkCount,
+    },
   });
 });

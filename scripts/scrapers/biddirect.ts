@@ -14,6 +14,7 @@ import {
 } from "@/scripts/utils";
 import { sanitizeDateString } from "@/lib/utils";
 
+const VENDOR = "biddirect";
 const BASE_URL = "http://localhost:3000";
 const DEBUG = true;
 const HIDE_STEPS = true;
@@ -275,7 +276,7 @@ async function run() {
 
   let out, cmd;
 
-  const agent = initHyperAgent({ vendor: "biddirect" });
+  const agent = initHyperAgent({ vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/publicpurchase");
   if (cacheFolder) console.log(`\nPrevious session found: ${cacheFolder}`);
@@ -308,7 +309,7 @@ async function run() {
     pageSummary = JSON.parse(pageSummary);
 
     if (pageSummary.solicitations.length === 0) {
-      console.log(`  No solicitations found on page ${page}`);
+      console.error(chalk.red(`  No solicitations found on page ${page}`));
       continue;
     }
 
@@ -369,7 +370,7 @@ async function run() {
         .where("siteId", "==", rawSol.id)
         .get();
       if (!existingSol.empty) {
-        console.log(`  Already exists in Firestore. Skipping.`);
+        console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
         dupCount++;
         continue;
       }
@@ -394,7 +395,7 @@ async function run() {
       });
 
       if (fileUrls.length === 0) {
-        console.log(`  No files found for ${rawSol.id}`);
+        console.log(chalk.grey(`  No files found for ${rawSol.id}`));
         continue;
       }
 
@@ -414,9 +415,9 @@ async function run() {
       successCount++;
 
       if (dupCount >= 10) {
-        console.warn(
+        console.warn(chalk.yellow
           `\nSkipping page ${page} due to too many duplicates found.`
-        );
+        ));
         dupCount = 0;
         continue;
       }
@@ -438,15 +439,25 @@ run()
   .finally(async () => {
     await endScript({
       baseUrl: BASE_URL,
-      vendor: "biddirect",
-      counts: { success: successCount, fail: failCount, junk: junkCount },
+      vendor: VENDOR,
+      counts: {
+        success: successCount,
+        fail: failCount,
+        junk: junkCount,
+        duplicates: dupCount,
+      },
     });
   });
 
 process.on("SIGINT", async () => {
   await endScript({
     baseUrl: BASE_URL,
-    vendor: "biddirect",
-    counts: { success: successCount, fail: failCount, junk: junkCount },
+    vendor: VENDOR,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      junk: junkCount,
+      duplicates: dupCount,
+    },
   });
 });

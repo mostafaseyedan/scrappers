@@ -1,25 +1,26 @@
 import "dotenv/config";
-import HyperAgent from "@hyperbrowser/agent";
-import { ChatOpenAI } from "@langchain/openai";
 import chalk from "chalk";
 import { z } from "zod";
-import fs from "fs";
-import { exec, execSync } from "child_process";
 import { initDb, initStorage } from "@/lib/firebaseAdmin";
-import { dbSol as solModel } from "@/app/models";
-import { cnStatuses } from "@/app/config";
-import { executeTask, getLatestFolder } from "@/scripts/utils";
+import { solicitation as solModel } from "@/app/models";
+import {
+  endScript,
+  executeTask,
+  getLatestFolder,
+  initHyperAgent,
+  isItRelated,
+} from "@/scripts/utils";
 import jsdom from "jsdom";
-import { init as elasticInit } from "@/lib/elastic";
-import { fireToJs } from "@/lib/dataUtils";
+import { sanitizeDateString } from "@/lib/utils";
 
+const BASE_URL = "http://localhost:3000";
+const VENDOR = "vendorregistry";
 const DEBUG = true;
 const HIDE_STEPS = false;
 const USER = process.env.VENDORREGISTRY_USER;
 const PASS = process.env.VENDORREGISTRY_PASS;
 
 const { JSDOM } = jsdom;
-const elasticClient = elasticInit();
 
 const tasks = {
   categorySummary: () =>
@@ -66,7 +67,7 @@ const schemas = {
   }),
 };
 
-function sanitizeSolForDb(rawSolData: Record<string, any>) {
+function sanitizeSolForApi(rawSolData: Record<string, any>) {
   const externalLinks = [];
 
   if (rawSolData.externalLink?.match(/^http/))
@@ -75,15 +76,9 @@ function sanitizeSolForDb(rawSolData: Record<string, any>) {
     externalLinks.push(rawSolData.vendorLink);
 
   const newData = {
-    closingDate: rawSolData.closingDate?.match(/^\d{2}\/\d{2}\/\d{4}/)
-      ? new Date(rawSolData.closingDate)
-      : "",
-    publishDate: rawSolData.publishDate?.match(/^\d{2}\/\d{2}\/\d{4}/)
-      ? new Date(rawSolData.publishDate)
-      : "",
+    closingDate: sanitizeDateString(rawSolData.closingDate),
+    publishDate: sanitizeDateString(rawSolData.publishDate),
     cnStatus: "new",
-    created: new Date(),
-    updated: new Date(),
     description: rawSolData.description || "",
     externalLinks,
     issuer: rawSolData.issuer || "",
@@ -96,12 +91,8 @@ function sanitizeSolForDb(rawSolData: Record<string, any>) {
     url: rawSolData.url || "",
   };
 
-  return solModel.schema.parse(newData);
+  return newData;
 }
-
-let totalSolicitations = 0;
-const start = new Date();
-performance.mark("start");
 
 async function run() {
   console.log(`\nExtracting from vendorregistry.com ${start.toLocaleString()}`);
@@ -110,28 +101,14 @@ async function run() {
   const storage = initStorage();
   const bucket = storage.bucket();
   const solCollection = db.collection("solicitations");
-
-  let out, cmd;
-
-  const llm = new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    model: "gpt-4.1-mini",
-    temperature: 0,
-    cache: true,
-  });
-
-  const agent = new HyperAgent({
-    llm,
-    debug: DEBUG,
-    browserProvider: "Local",
-    localConfig: {
-      downloadsPath: ".output/vendorregistry/tmp/downloads",
-    },
-  });
+  const agent = initHyperAgent({ vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/vendorregistry");
-  if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
-  else cacheFolder = start.toISOString();
+  if (cacheFolder) console.log("Previous session found:", cacheFolder);
+  else {
+    cacheFolder = start.toISOString();
+    console.log("New cache folder created:", cacheFolder);
+  }
 
   let categorySummary = await executeTask({
     agent,
@@ -147,7 +124,7 @@ async function run() {
   for (let i = 0; i < max; i++) {
     const rawSol = categorySummary.solicitations[i];
     console.log(
-      `    [${i + 1}/${categorySummary.solicitations.length}] ${rawSol.id} - ${
+      `\n[${i + 1}/${categorySummary.solicitations.length}] ${rawSol.id} - ${
         rawSol.title
       }`
     );
@@ -156,6 +133,22 @@ async function run() {
     const existingSol = await solCollection
       .where("siteId", "==", rawSol.id)
       .get();
+
+    // Save to Firestore
+    let fireDoc;
+    if (!existingSol.empty) {
+      fireDoc = existingSol.docs[0];
+      console.log(chalk.grey(`  Already exists in Firestore. ${fireDoc.id}`));
+      dupCount++;
+      continue;
+    }
+
+    const isIt = await isItRelated(rawSol);
+    if (!isIt) {
+      junkCount++;
+      console.log(chalk.yellow(`  Not IT-related. Skipping.`));
+      continue;
+    }
 
     const respSolDetails = await fetch(
       `https://vrapp.vendorregistry.com/Bids/View/Bid/${rawSol.id}?isBuyerAction=False`
@@ -183,38 +176,48 @@ async function run() {
       }
     });
 
-    // Save to Firestore
-    let fireDoc;
-    if (!existingSol.empty) {
-      console.log("      Already exists in Firestore.");
-      fireDoc = existingSol.docs[0];
-    } else {
-      const dbSolData = sanitizeSolForDb({ ...rawSol, ...rawSolDetails });
-      const newDoc = await solCollection.add(dbSolData);
-      console.log(`      Saved to Firestore ${newDoc.id}`);
-      fireDoc = await newDoc.get();
-    }
-
-    // Save to Elasticsearch
-    elasticClient.index({
-      index: "solicitations",
-      id: fireDoc.id,
-      body: fireToJs({ id: fireDoc.id, ...fireDoc.data() }),
-    });
-    console.log(`      Saved to Elasticsearch ${fireDoc.id}`);
-
-    totalSolicitations++;
+    const dbSolData = sanitizeSolForApi({ ...rawSol, ...rawSolDetails });
+    const newRecord = await solModel.post(
+      BASE_URL,
+      dbSolData,
+      process.env.SERVICE_KEY
+    );
+    console.log(chalk.green(`  Saved. ${newRecord.id}`));
+    successCount++;
   }
 }
 
+let dupCount = 0;
+let failCount = 0;
+let successCount = 0;
+let junkCount = 0;
+const start = new Date();
+performance.mark("start");
+
 run()
   .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
-  .finally(() => {
-    performance.mark("end");
-    const totalSec = (
-      performance.measure("total-duration", "start", "end").duration / 1000
-    ).toFixed(1);
-    console.log(`\nTotal solicitations processed: ${totalSolicitations}`);
-    console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
-    process.exit(0);
+  .finally(async () => {
+    await endScript({
+      baseUrl: BASE_URL,
+      vendor: VENDOR,
+      counts: {
+        success: successCount,
+        fail: failCount,
+        junk: junkCount,
+        duplicates: dupCount,
+      },
+    });
   });
+
+process.on("SIGINT", async () => {
+  await endScript({
+    baseUrl: BASE_URL,
+    vendor: VENDOR,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      junk: junkCount,
+      duplicates: dupCount,
+    },
+  });
+});
