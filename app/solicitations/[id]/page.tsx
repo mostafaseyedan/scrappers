@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import {
   solicitation as solModel,
   solicitation_comment as solCommentModel,
+  solicitation_log as solLogModel,
 } from "@/app/models";
 import { cnStatuses } from "@/app/config";
 import { SolActions } from "../solActions";
@@ -37,6 +38,7 @@ function isWithinAWeek(date: Date): boolean {
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
+  const [logs, setLogs] = useState<Record<string, any>[]>([]);
   const [comments, setComments] = useState<Record<string, any>[]>([]);
   const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
   const [showEditSol, setShowEditSol] = useState(false);
@@ -45,15 +47,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const user = useContext(UserContext)?.user;
 
   async function refresh() {
-    const docRef = doc(db, "solicitations", id);
-    const resp = await getDoc(docRef);
+    const dbSol = await solModel.getById(id);
 
     // Grab comments
     const respComments = await solCommentModel.get(id);
     if (respComments.results?.length) setComments(respComments.results);
 
-    setSol({ id, ...resp.data() });
-    setCnStatus(resp.data()?.cnStatus || "new");
+    // Grab logs
+    const respLogs = await solLogModel.get({ solId: id });
+    if (respLogs.results?.length) setLogs(respLogs.results);
+
+    setSol(dbSol);
+    setCnStatus(dbSol?.cnStatus || "new");
   }
 
   useEffect(() => {
@@ -68,16 +73,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return () => {
       window.removeEventListener("focus", refresh);
     };
-  }, [id, comments.length]);
+  }, [id, comments.length, logs.length]);
 
   useEffect(() => {
     (async () => {
-      if (sol) {
+      if (sol && user?.uid) {
         const viewedBy = sol.viewedBy || [];
-        if (!viewedBy.includes(user?.uid)) {
-          viewedBy.push(user?.uid);
+        if (!viewedBy.includes(user.uid)) {
+          viewedBy.push(user.uid);
           await solModel.patch({ id: sol.id, data: { viewedBy: viewedBy } });
         }
+
+        await solLogModel.post({
+          solId: sol.id,
+          data: {
+            solId: sol.id,
+            message: `Viewed by ${user.uid}`,
+            actionType: "view",
+            actionUserId: user.uid,
+          },
+        });
       }
     })();
   }, [sol]);
@@ -239,7 +254,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 </TabsContent>
 
                 <TabsContent value="logs">
-                  <p>Coming soon</p>
+                  {logs.length ? (
+                    logs.map((log) => (
+                      <div key={log.id}>
+                        <pre>{JSON.stringify(log, null, 2)}</pre>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No logs available</p>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="notes">

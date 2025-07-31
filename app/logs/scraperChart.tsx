@@ -1,7 +1,7 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { CartesianGrid, LabelList, Line, LineChart, XAxis } from "recharts";
+import { stat as StatModel } from "@/app/models";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -16,37 +16,111 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
+import { format as $d, addDays, subDays } from "date-fns";
 
 import styles from "./scraperChart.module.scss";
 
 export const description = "A line chart with a label";
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
+const chartConfig = {} satisfies ChartConfig;
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
+function generateChartData(
+  statData: Record<string, any>[],
+  startDate: Date,
+  endDate: Date
+) {
+  let data = [];
+  let dailyStats: Record<string, Record<string, number>> = {};
+  const vendors = new Set<string>();
+
+  for (const stat of statData) {
+    if (stat.periodType === "day") {
+      const [, vendor, dateStr] = stat.key.split("/");
+      vendors.add(vendor);
+
+      if (!dailyStats[dateStr]) {
+        dailyStats[dateStr] = {};
+      }
+
+      if (!dailyStats[dateStr][vendor]) {
+        dailyStats[dateStr][vendor] = 0;
+      }
+
+      dailyStats[dateStr][vendor] += stat.value;
+    }
+  }
+
+  for (let day = 0; day < 7; day++) {
+    const dayStr = $d(addDays(startDate, day), "yyyy-MM-dd");
+    const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
+      acc[vendor] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    if (!dailyStats[dayStr]) {
+      dailyStats[dayStr] = {};
+    }
+
+    dailyStats[dayStr] = {
+      ...emptyVendorStats,
+      ...dailyStats[dayStr],
+    };
+  }
+
+  for (const [dateStr, vendorData] of Object.entries(dailyStats)) {
+    const dayTotal = Object.values(vendorData).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    data.push({
+      date: `${$d(dateStr, "M/dd")} (${dayTotal})`,
+      ...vendorData,
+    });
+  }
+
+  data.sort((a, b) => (a.date > b.date ? 1 : -1));
+
+  return { data, vendors: Array.from(vendors) };
+}
 
 const ScraperChart = () => {
+  const [chartData, setChartData] = useState<Record<string, any>[]>([]);
+  const [vendors, setVendors] = useState<string[]>([]);
+
+  async function refresh() {
+    const startDate = subDays(new Date(), 6);
+    const endDate = addDays(new Date(), 1);
+    const statData = await StatModel.get({
+      sort: "startDate desc",
+      filters: {
+        startDate: `> ${$d(startDate, "yyyy-MM-dd")} AND < ${$d(
+          endDate,
+          "yyyy-MM-dd"
+        )}`,
+      },
+    });
+
+    if (statData.results?.length) {
+      const { data, vendors } = generateChartData(
+        statData.results,
+        startDate,
+        endDate
+      );
+      setChartData(data);
+      setVendors(vendors);
+    }
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
   return (
     <Card className={styles.scraperChart}>
       <CardHeader>
         <CardTitle>Solicitations Success Count</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>last 7 days</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
@@ -64,65 +138,34 @@ const ScraperChart = () => {
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
+              dataKey="date"
+              tickLine={true}
+              axisLine={true}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="line" />}
             />
-            <Line
-              dataKey="desktop"
-              type="natural"
-              stroke="var(--color-desktop)"
-              strokeWidth={2}
-              dot={{
-                fill: "var(--color-desktop)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            >
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
+            {vendors.map((vendor, i) => (
+              <Line
+                key={vendor}
+                dataKey={vendor}
+                type="natural"
+                stroke={`var(--chart-${i + 1})`}
+                strokeWidth={2}
+                dot={{
+                  fill: `var(--chart-${i + 1})`,
+                }}
+                activeDot={{
+                  r: 6,
+                }}
               />
-            </Line>
-            <Line
-              dataKey="mobile"
-              type="natural"
-              stroke="var(--color-mobile)"
-              strokeWidth={2}
-              dot={{
-                fill: "var(--color-mobile)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            >
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
-              />
-            </Line>
+            ))}
           </LineChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
+      <CardFooter className="flex-col items-start gap-2 text-sm"></CardFooter>
     </Card>
   );
 };

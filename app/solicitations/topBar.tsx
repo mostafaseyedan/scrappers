@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { solicitation as solModel } from "../models";
+import { solicitation as solModel } from "@/app/models";
 
 import styles from "./topBar.module.scss";
 

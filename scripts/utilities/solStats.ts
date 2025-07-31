@@ -13,12 +13,13 @@ async function run() {
   const dailyStats: Record<string, any> = {};
 
   // Get all logs for the last 3 months
-  const logs = await scriptLogModel.get({
+  const respLogs = await scriptLogModel.get({
     limit: 0,
     filters: {
       created,
     },
   });
+  const logs = respLogs.results?.length ? respLogs.results : [];
 
   console.log(
     `${logs.length} logs found from ${$d(startDate, "yyyy-MM-dd")} to ${$d(
@@ -43,8 +44,8 @@ async function run() {
 
     dailyStats[dateStr][vendor].success += log.successCount || 0;
   }
-  console.log("Daily stats:", dailyStats);
 
+  console.log("\nDaily stats:", dailyStats);
   for (const [dateStr, successCounts] of Object.entries(dailyStats)) {
     for (const [vendor, data] of Object.entries(successCounts)) {
       const statData = data as { success: number };

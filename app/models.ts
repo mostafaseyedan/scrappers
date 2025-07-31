@@ -136,9 +136,10 @@ const defaultCalls = {
     const finalLimit = limit || 20;
     const finalSort = sort || "created desc";
     const finalFilters = filters || {};
-    let results: Record<string, any>[] = [];
+    let results = {};
     const colRef = fCollection(db, collection);
     let q = query(colRef);
+    let records: Record<string, any>[] = [];
 
     if (finalLimit) {
       q = query(q, fLimit(finalLimit));
@@ -193,10 +194,14 @@ const defaultCalls = {
 
     const docs = await getDocs(q);
     docs.forEach((doc) => {
-      results.push({ id: doc.id, ...normalizeDoc(doc) });
+      records.push({ id: doc.id, ...normalizeDoc(doc) });
     });
+    results = {
+      results: records,
+      total: docs.size,
+    };
 
-    return results;
+    return { ...results };
   },
   getById: async ({ collection, id }: GetByIdParams) => {
     const docRef = doc(db, collection, id);
@@ -380,7 +385,7 @@ const solicitation: any = {
     }),
   },
   count: async (filter: Record<string, any> = {}) => {
-    const colRef = collection(db, "solicitations");
+    const colRef = fCollection(db, "solicitations");
     let queryRef: any = colRef;
 
     Object.entries(filter).forEach(([key, value]) => {
@@ -524,11 +529,47 @@ const solicitation_comment: any = {
 };
 
 const solicitation_log: any = {
-  schema: z.object({
-    message: z.string(),
-    actionKey: z.string(),
-    userId: z.string(),
-  }),
+  schema: {
+    db: z.object({
+      message: z.string(),
+      actionUserId: z.string(),
+      actionKey: z
+        .enum(["", "create", "comment", "update", "delete", "view"])
+        .default(""),
+      actionData: z.object({}).default({}),
+    }),
+  },
+  get: async ({
+    solId,
+    filters,
+    limit,
+    sort,
+    startAfter,
+  }: {
+    solId: string;
+    filters?: Record<string, any>;
+    limit?: number;
+    sort?: string;
+    startAfter?: string;
+  }) =>
+    await defaultCalls.get({
+      collection: `solicitations/${solId}/logs`,
+      filters,
+      limit,
+      sort,
+      startAfter,
+    }),
+  post: async ({
+    solId,
+    data,
+  }: {
+    solId: string;
+    data: z.infer<typeof solicitation_log.schema.db>;
+  }) =>
+    await defaultCalls.post({
+      collection: `solicitations/${solId}/logs`,
+      data,
+    }),
 };
 
 const stat: any = {
@@ -542,8 +583,10 @@ const stat: any = {
       endDate: z.date().optional(),
     }),
   },
-  getByKey: ({ collection = "stats", key }: GetByKeyParams) =>
-    defaultCalls.getByKey({
+  get: async ({ collection = "stats", ...options }: GetParams) =>
+    await defaultCalls.get({ collection, ...options }),
+  getByKey: async ({ collection = "stats", key }: GetByKeyParams) =>
+    await defaultCalls.getByKey({
       collection,
       key,
     }),

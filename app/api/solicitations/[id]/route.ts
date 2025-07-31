@@ -3,6 +3,7 @@ import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
 import { remove as elasticRemove, patch as elasticPatch } from "@/lib/elastic";
 import { checkSession } from "@/lib/serverUtils";
+import { solicitation_log as solLogModel } from "@/app/models";
 
 export async function DELETE(
   req: NextRequest,
@@ -40,6 +41,12 @@ export async function GET(
   try {
     if (!user) throw new Error("Unauthenticated");
     const doc = await getById("solicitations", id);
+    const test = await solLogModel.post({
+      solId: id,
+      actionType: "view",
+      userId: user.uid,
+    });
+    console.log({ test });
     results = doc;
   } catch (error) {
     console.error(`Failed to get solicitation ${id}`, error);

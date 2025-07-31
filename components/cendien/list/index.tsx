@@ -22,7 +22,6 @@ const List = ({
   async function refresh() {
     const results = await fetch(url);
     const json = await results.json();
-    console.log({ json });
     if (json.error) return console.error(json.error);
     if (json.results) {
       setItems(json.results);
