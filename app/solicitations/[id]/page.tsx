@@ -53,10 +53,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     const respComments = await solCommentModel.get(id);
     if (respComments.results?.length) setComments(respComments.results);
 
-    // Grab logs
-    const respLogs = await solLogModel.get({ solId: id });
-    if (respLogs.results?.length) setLogs(respLogs.results);
-
     setSol(dbSol);
     setCnStatus(dbSol?.cnStatus || "new");
   }
@@ -73,7 +69,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return () => {
       window.removeEventListener("focus", refresh);
     };
-  }, [id, comments.length, logs.length]);
+  }, [id, comments.length]);
 
   useEffect(() => {
     (async () => {
@@ -93,6 +89,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             actionUserId: user.uid,
           },
         });
+
+        // Grab logs
+        const respLogs = await solLogModel.get({ solId: id });
+        if (respLogs.results?.length) setLogs(respLogs.results);
       }
     })();
   }, [sol]);
