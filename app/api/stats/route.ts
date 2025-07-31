@@ -5,6 +5,9 @@ import {
   parseQueryString,
   post as firePost,
 } from "@/lib/firebaseAdmin";
+import { stat as statModel } from "@/app/models";
+
+const COLLECTION = "stats";
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);
@@ -15,13 +18,13 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
-    const records = await fireGet("scriptLogs", queryOptions);
+    const records = await fireGet(COLLECTION, queryOptions);
     results = {
       count: records.length,
       results: records,
     };
   } catch (error) {
-    console.error(`Failed to get script logs`, error);
+    console.error(`Failed to get ${COLLECTION}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     results = { error: errorMessage };
     status = 500;
@@ -44,11 +47,12 @@ export async function POST(req: NextRequest) {
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;
 
-    const fireDoc = await firePost("scriptLogs", bodyJson, user);
+    const parsedData = statModel.schema.db.parse(bodyJson);
+    const fireDoc = await firePost(COLLECTION, parsedData, user);
 
     results = fireDoc;
   } catch (error) {
-    console.error(`Failed to create script log`, error);
+    console.error(`Failed to create ${COLLECTION}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     results = { error: errorMessage };
     status = 500;

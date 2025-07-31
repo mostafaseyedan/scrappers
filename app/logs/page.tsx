@@ -1,6 +1,7 @@
 "use client";
 
 import { List as CnList } from "@/components/cendien/list";
+import { ScraperChart } from "./scraperChart";
 
 import styles from "./page.module.scss";
 
@@ -11,6 +12,7 @@ export default function Page() {
         <a>Scripts</a>
         <a>User</a>
       </div>
+      <ScraperChart />
       <CnList
         className={styles.list}
         url="/api/scriptLogs"
