@@ -60,10 +60,8 @@ const CreateSolDialog = ({
     }
 
     try {
-      if (formValues.publicationDate)
-        formValues.publicationDate = sanitizeDateString(
-          formValues.publicationDate
-        );
+      if (formValues.publishDate)
+        formValues.publishDate = sanitizeDateString(formValues.publishDate);
     } catch (error) {
       console.error("Failed to create solicitation:", error);
       setFormError(
@@ -169,7 +167,7 @@ const CreateSolDialog = ({
                 }}
               />
               <FormField
-                name="publicationDate"
+                name="publishDate"
                 render={({ field }) => {
                   return (
                     <FormItem>
@@ -235,7 +233,7 @@ const CreateSolDialog = ({
                   <FormItem>
                     <FormLabel>Categories</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="category1, category2" />
+                      <Input {...field} placeholder="category 1, category 2" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -265,7 +263,7 @@ const CreateSolDialog = ({
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="keyword1, keyword2, keyword3"
+                        placeholder="keyword 1, keyword 2, keyword 3"
                       />
                     </FormControl>
                     <FormMessage />

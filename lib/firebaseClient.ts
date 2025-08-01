@@ -13,7 +13,7 @@ export const db = getFirestore(app);
 
 // Normalize a Firestore document snapshot to JSON
 export function normalizeDoc(
-  doc: { data: () => any },
+  doc: { data: () => any; id: string },
   options: Record<string, any> = { hidePrivate: true, schema: {} }
 ) {
   const docData = doc.data() || {};

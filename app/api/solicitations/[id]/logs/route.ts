@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { get, getById, patch, post } from "@/lib/firebaseAdmin";
-import { patch as elasticPatch } from "@/lib/elastic";
+import { get, getById, post } from "@/lib/firebaseAdmin";
 import { checkSession } from "@/lib/serverUtils";
 
 const COLLECTION = "solicitations";

@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useState, Dispatch, SetStateAction, useEffect } from "react";
 import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
-import { cnStatuses } from "../config";
+import { cnStatuses, cnTypes } from "../config";
 import { format as fnFormat } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,10 +56,15 @@ const Solicitation = ({
 }: SolicitationProps) => {
   const [expanded, setExpanded] = useState(false);
   const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
+  const [cnType, setCnType] = useState(sol.cnType || "-");
 
   useEffect(() => {
     setCnStatus(sol.cnStatus);
   }, [sol.cnStatus]);
+
+  useEffect(() => {
+    setCnType(sol.cnType);
+  }, [sol.cnType]);
 
   return (
     <div
@@ -101,9 +106,9 @@ const Solicitation = ({
           </div>
           <div>
             <label>Published</label>
-            <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-              {sol.publicationDate &&
-                fnFormat(new Date(sol.publicationDate), "M/d/y haaa")}
+            <span className={isWithinAWeek(sol.publishDate) ? "red" : ""}>
+              {sol.publishDate &&
+                fnFormat(new Date(sol.publishDate), "M/d/y haaa")}
             </span>
           </div>
           <div>
@@ -111,6 +116,64 @@ const Solicitation = ({
             <span>
               {sol.created && fnFormat(new Date(sol.created), "M/d/y h:mmaaa")}
             </span>
+          </div>
+          <div className={styles.sol_iconCounts}>
+            {Boolean(sol.keywords?.length) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant={"ghost"} aria-label="Tags">
+                    {sol.keywords.length || 0} <Tag />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {sol.keywords.length || 0} Tags - {sol.keywords.join(", ")}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={"ghost"}
+                  aria-label="Comments"
+                  onClick={() => {
+                    if (onClickComment) {
+                      onClickComment(sol.id);
+                    }
+                  }}
+                >
+                  {sol.commentsCount} <MessageCircle />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Comments</TooltipContent>
+            </Tooltip>
+            {sol.cnNotes && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant={"ghost"} aria-label="Notes">
+                    <StickyNote />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Notes - {sol.cnNotes.substr(0, 250)}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={"ghost"} aria-label="Views">
+                  {sol.viewedBy?.length || 0} <Eye />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Viewed By
+                <br />
+                {sol.viewedBy?.length > 0
+                  ? sol.viewedBy.map((v: string) => (
+                      <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
+                    ))
+                  : "No one yet"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
         <div
@@ -147,7 +210,7 @@ const Solicitation = ({
         </div>
       </div>
       <div className={styles.sol_statusCol}>
-        <div className={styles.sol_ourStatus} data-status={cnStatus}>
+        <div className={styles.sol_cnStatus} data-status={cnStatus}>
           <Select
             value={cnStatus}
             onValueChange={async (value) => {
@@ -175,63 +238,39 @@ const Solicitation = ({
             </SelectContent>
           </Select>
         </div>
-        <div className={styles.sol_iconCounts}>
-          {Boolean(sol.keywords?.length) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={"ghost"} aria-label="Tags">
-                  {sol.keywords.length || 0} <Tag />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {sol.keywords.length || 0} Tags - {sol.keywords.join(", ")}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={"ghost"}
-                aria-label="Comments"
-                onClick={() => {
-                  if (onClickComment) {
-                    onClickComment(sol.id);
-                  }
-                }}
-              >
-                {sol.commentsCount} <MessageCircle />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Comments</TooltipContent>
-          </Tooltip>
-          {sol.cnNotes && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={"ghost"} aria-label="Notes">
-                  <StickyNote />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Notes - {sol.cnNotes.substr(0, 250)}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant={"ghost"} aria-label="Views">
-                {sol.viewedBy?.length || 0} <Eye />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Viewed By
-              <br />
-              {sol.viewedBy?.length > 0
-                ? sol.viewedBy.map((v: string) => (
-                    <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
-                  ))
-                : "No one yet"}
-            </TooltipContent>
-          </Tooltip>
+        <div className={styles.sol_cnType}>
+          <Select
+            value={cnType}
+            onValueChange={async (value) => {
+              await solModel.patch({ id: sol.id, data: { cnType: value } });
+              setCnType(value);
+              await refreshSols({ list: false });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="-" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectGroup>
+                <SelectItem
+                  key={"default"}
+                  value={"-"}
+                  className={styles[`sol_typeItem_default`]}
+                >
+                  -
+                </SelectItem>
+                {cnTypes.map((type) => (
+                  <SelectItem
+                    key={type.key}
+                    value={type.key}
+                    className={styles[`sol_typeItem_${type.key}`]}
+                  >
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

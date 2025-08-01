@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q") || "";
   const limit = parseInt(searchParams.get("limit") || "20", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);
-  const sort = searchParams.get("sort") || "publicationDate desc";
+  const sort = searchParams.get("sort") || "publishDate desc";
 
   const must: any[] = [];
   const filterArr: any[] = [];

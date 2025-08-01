@@ -130,10 +130,10 @@ export default function Page() {
       await debouncedSearchSols({ filter, limit, page, q, sort });
     })();
 
-    window.addEventListener("focus", () => refreshSols());
+    // window.addEventListener("focus", () => refreshSols());
 
     return () => {
-      window.removeEventListener("focus", () => refreshSols());
+      // window.removeEventListener("focus", () => refreshSols());
     };
   }, [debouncedSearchSols, filter, q]);
 

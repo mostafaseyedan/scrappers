@@ -9,10 +9,11 @@ import {
 import { cnStatuses } from "./config";
 import queryString from "query-string";
 
+/*
 type CountParams = {
   collection: string;
   filters?: Record<string, any>;
-};
+}; */
 
 type GetParams = {
   collection: string;
@@ -119,7 +120,7 @@ const dbSol: any = {
     keywords: z.array(z.string()).default([]),
     location: z.string(),
     logs: z.array(z.any()).default([]).describe("[submodel]"),
-    publicationDate: z.date().optional(),
+    publishDate: z.date().optional(),
     questionsDueByDate: z.date().optional(),
     rfpType: z.string().optional(),
     site: z.string(),
@@ -282,7 +283,7 @@ const defaultClientCalls = {
 }; */
 
 const defaultCalls = {
-  count: async ({ collection, filters }: CountParams) => {},
+  count: async () => {},
   get: async ({
     collection,
     page,
@@ -356,6 +357,10 @@ const defaultCalls = {
     return json;
   },
   post: async ({ collection, data, schema, token, baseUrl }: PostParams) => {
+    if (schema?.parse) {
+      data = schema.parse(data);
+    }
+
     const resp = await fetch(`${baseUrl || ""}/api/${collection}`, {
       method: "POST",
       headers: {
@@ -536,7 +541,7 @@ const solicitation: any = {
       keywords: z.array(z.string()).default([]),
       location: z.string(),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
-      publicationDate: z.string().datetime(),
+      publishDate: z.string().datetime(),
       questionsDueByDate: z.coerce.string(),
       rfpType: z.coerce.string(),
       site: z.string(),
@@ -592,7 +597,7 @@ const solicitation: any = {
       issuer: z.string().min(1, "Issuer is required"),
       keywords: z.string().optional(),
       location: z.string().min(1, "Location is required"),
-      publicationDate: z.string().optional(),
+      publishDate: z.string().optional(),
       title: z.string().min(1, "Title is required"),
     }),
   },

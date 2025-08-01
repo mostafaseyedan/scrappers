@@ -11,7 +11,10 @@ const ALLOWED_KEYS = {
 export async function checkSession(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
   const getCookies = await cookies();
-  const tokens = await getTokens(getCookies, authConfig);
+  const tokens = (await getTokens(getCookies, authConfig)) as {
+    accessToken?: string;
+    decodedToken?: Record<string, any>;
+  };
   const cookieToken = getCookies.get("AuthToken")?.value;
   const authToken =
     authHeader?.startsWith("Bearer ") && authHeader.substring(7);

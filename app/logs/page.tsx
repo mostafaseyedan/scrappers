@@ -8,10 +8,6 @@ import styles from "./page.module.scss";
 export default function Page() {
   return (
     <>
-      <div>
-        <a>Scripts</a>
-        <a>User</a>
-      </div>
       <ScraperChart />
       <CnList
         className={styles.list}

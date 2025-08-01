@@ -43,6 +43,7 @@ export async function GET(
   try {
     if (!user) throw new Error("Unauthenticated");
     const doc = await getById(COLLECTION, id);
+    /* Get rid of this. This is a little too noisy.
     await solLogModel.post({
       solId: id,
       baseUrl: process.env.BASE_URL,
@@ -50,9 +51,9 @@ export async function GET(
       data: {
         solId: id,
         actionType: "view",
-        userId: user.uid,
+        actionUserId: user.uid,
       },
-    });
+    }); */
     results = doc;
   } catch (error) {
     console.error(`Failed to get from ${COLLECTION} ${id}`, error);
@@ -80,6 +81,18 @@ export async function PATCH(
     await getById(COLLECTION, id);
     const updatedDoc = await patch(COLLECTION, id, updateData);
     await elasticPatch(COLLECTION, id, fireToJs(updateData));
+    await solLogModel.post({
+      solId: id,
+      baseUrl: process.env.BASE_URL,
+      token: process.env.SERVICE_KEY,
+      data: {
+        solId: id,
+        actionType: "update",
+        actionData: updateData,
+        actionUserId: user.uid,
+      },
+    });
+
     results = updatedDoc;
   } catch (error) {
     console.error(`Failed to update in ${COLLECTION} ${id}`, error);

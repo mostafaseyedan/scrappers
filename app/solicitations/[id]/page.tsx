@@ -1,8 +1,6 @@
 "use client";
 
-import { db } from "@/lib/firebaseClient";
 import { use, useContext, useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
 import {
   Select,
   SelectContent,
@@ -17,7 +15,7 @@ import {
   solicitation_comment as solCommentModel,
   solicitation_log as solLogModel,
 } from "@/app/models";
-import { cnStatuses } from "@/app/config";
+import { cnStatuses, cnTypes } from "@/app/config";
 import { SolActions } from "../solActions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -25,6 +23,7 @@ import { EditSolDialog } from "@/app/solicitations/editSolDialog";
 import { CreateCommentDialog } from "@/app/solicitations/createCommentDialog";
 import Link from "next/link";
 import { UserContext } from "@/app/userContext";
+import { format as $d } from "date-fns";
 
 import styles from "./page.module.scss";
 
@@ -41,6 +40,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [logs, setLogs] = useState<Record<string, any>[]>([]);
   const [comments, setComments] = useState<Record<string, any>[]>([]);
   const [cnStatus, setCnStatus] = useState<string>(sol?.cnStatus || "new");
+  const [cnType, setCnType] = useState<string>(sol?.cnType || "-");
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
 
@@ -59,6 +59,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
     setSol(dbSol);
     setCnStatus(dbSol?.cnStatus || "new");
+    setCnType(dbSol?.cnType || "-");
   }
 
   useEffect(() => {
@@ -250,8 +251,20 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 <TabsContent value="logs">
                   {logs.length ? (
                     logs.map((log) => (
-                      <div key={log.id}>
-                        <pre>{JSON.stringify(log, null, 2)}</pre>
+                      <div className={styles.sol_logsContent_log} key={log.id}>
+                        <span className={styles.sol_logsContent_log_created}>
+                          {$d(log.created, "M/dd/yyyy h:mm a")}
+                        </span>
+                        <div>
+                          {log.actionUserId} {log.actionType}ed this
+                          solicitation.
+                          {Object.values(log.actionData || {}).length > 0 && (
+                            <pre>{JSON.stringify(log.actionData)}</pre>
+                          )}
+                        </div>
+                        <span className={styles.sol_logsContent_log_actionType}>
+                          {log.actionType}
+                        </span>
                       </div>
                     ))
                   ) : (
@@ -306,22 +319,55 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   </SelectContent>
                 </Select>
               </div>
+              <label>Type</label>
+              <div className={styles.sol_cnType}>
+                <Select
+                  value={cnType}
+                  onValueChange={async (value) => {
+                    await solModel.patch({
+                      id: sol.id,
+                      data: { cnType: value },
+                    });
+                    setCnType(value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="-" />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectGroup>
+                      <SelectItem
+                        key={"default"}
+                        value={"-"}
+                        className={styles[`sol_typeItem_default`]}
+                      >
+                        -
+                      </SelectItem>
+                      {cnTypes.map((type) => (
+                        <SelectItem
+                          key={type.key}
+                          value={type.key}
+                          className={styles[`sol_typeItem_${type.key}`]}
+                        >
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
               <label>Status</label>
               <span>Active</span>
               <label>Closing Date</label>
               <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-                {sol.closingDate?.seconds &&
-                  sol.closingDate.toDate().toLocaleString()}
+                {sol.closingDate && $d(sol.closingDate, "M/dd/yyyy h:mm a")}
               </span>
               <label>Published Date</label>
-              <span className={isWithinAWeek(sol.publicationDate) ? "red" : ""}>
-                {sol.publicationDate?.seconds &&
-                  sol.publicationDate.toDate().toLocaleString()}
+              <span className={isWithinAWeek(sol.publishDate) ? "red" : ""}>
+                {sol.publishDate && $d(sol.publishDate, "M/dd/yyyy h:mm a")}
               </span>
               <label>Extracted Date</label>
-              <span>
-                {sol.created?.seconds && sol.created.toDate().toLocaleString()}
-              </span>
+              <span>{sol.created && $d(sol.created, "M/dd/yyyy h:mm a")}</span>
             </div>
 
             <EditSolDialog

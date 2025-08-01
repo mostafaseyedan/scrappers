@@ -6,6 +6,52 @@
   display: flex;
   padding: 5px 10px 0 10px;
 
+  &_cnStatus {
+    margin-bottom: 5px;
+    > button {
+      margin-left: auto;
+    }
+    &[data-status="submitted"],
+    &[data-status="awarded"] {
+      > button {
+        @extend .sol_statusItem_submitted;
+        border-color: map.get(variables.$statusColors, "submitted");
+      }
+    }
+    &[data-status="rfps"],
+    &[data-status="monitor"] {
+      > button {
+        @extend .sol_statusItem_rfps;
+        border-color: map.get(variables.$statusColors, "rfps");
+      }
+    }
+    &[data-status="erp"] {
+      > button {
+        @extend .sol_statusItem_erp;
+        border-color: map.get(variables.$statusColors, "erp");
+      }
+    }
+    &[data-status="notWon"] {
+      > button {
+        @extend .sol_statusItem_notWon;
+        border-color: map.get(variables.$statusColors, "notWon");
+      }
+    }
+    &[data-status="notPursuing"] {
+      > button {
+        @extend .sol_statusItem_notPursuing;
+        border-color: map.get(variables.$statusColors, "notPursuing");
+      }
+    }
+  }
+
+  &_cnType {
+    margin-bottom: 5px;
+    > button {
+      margin-left: auto;
+    }
+  }
+
   &_contentCol {
     flex: 1 1 100%;
 
@@ -61,47 +107,12 @@
   }
 
   &_iconCounts {
-    color: gray;
+    color: #c7c7c7;
     display: flex;
     justify-content: flex-end;
-  }
-
-  &_ourStatus {
-    margin-bottom: 5px;
-    > button {
-      margin-left: auto;
-    }
-    &[data-status="submitted"],
-    &[data-status="awarded"] {
-      > button {
-        @extend .sol_statusItem_submitted;
-        border-color: map.get(variables.$statusColors, "submitted");
-      }
-    }
-    &[data-status="rfps"],
-    &[data-status="monitor"] {
-      > button {
-        @extend .sol_statusItem_rfps;
-        border-color: map.get(variables.$statusColors, "rfps");
-      }
-    }
-    &[data-status="erp"] {
-      > button {
-        @extend .sol_statusItem_erp;
-        border-color: map.get(variables.$statusColors, "erp");
-      }
-    }
-    &[data-status="notWon"] {
-      > button {
-        @extend .sol_statusItem_notWon;
-        border-color: map.get(variables.$statusColors, "notWon");
-      }
-    }
-    &[data-status="notPursuing"] {
-      > button {
-        @extend .sol_statusItem_notPursuing;
-        border-color: map.get(variables.$statusColors, "notPursuing");
-      }
+    button {
+      padding: 0 10px;
+      height: auto;
     }
   }
 

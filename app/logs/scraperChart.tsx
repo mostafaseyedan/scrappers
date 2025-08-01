@@ -30,9 +30,12 @@ function generateChartData(
   startDate: Date,
   endDate: Date
 ) {
-  let data = [];
-  let dailyStats: Record<string, Record<string, number>> = {};
+  const data = [];
+  const dailyStats: Record<string, Record<string, number>> = {};
   const vendors = new Set<string>();
+
+  // TODO: remove
+  console.log("ignore", endDate);
 
   for (const stat of statData) {
     if (stat.periodType === "day") {
