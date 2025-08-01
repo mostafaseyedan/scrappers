@@ -57,6 +57,8 @@ env:
     secret: DEV_OPENAI_API_KEY
   - variable: MOHAMMAD_KEY
     secret: DEV_MOHAMMAD_KEY
+  - variable: SERVICE_KEY
+    secret: DEV_SERVICE_KEY
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
     value: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
   - variable: USE_SECURE_COOKIE
