@@ -22,10 +22,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     }
 
     const updatedData = JSON.parse(solJson);
-    const resp = await solModel.put(id, updatedData).catch((error: unknown) => {
-      console.error("Failed to update solicitation", error);
-      setSubmitError("Failed to update solicitation");
-    });
+    const resp = await solModel
+      .put({ id, data: updatedData })
+      .catch((error: unknown) => {
+        console.error("Failed to update solicitation", error);
+        setSubmitError("Failed to update solicitation");
+      });
 
     if (resp.error) {
       setSubmitError(resp.error);
@@ -57,7 +59,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       document.title = `Edit ${id} | Cendien Recon`;
 
       if (!sol) {
-        const sol = await solModel.getById(id);
+        const sol = await solModel.getById({ id });
         setSol(fireToJs(sol));
         setSolJson(JSON.stringify(fireToJs(sol), null, 2));
       }

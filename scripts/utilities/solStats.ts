@@ -14,10 +14,12 @@ async function run() {
 
   // Get all logs for the last 3 months
   const respLogs = await scriptLogModel.get({
+    baseUrl: "http://localhost:3000",
     limit: 0,
     filters: {
       created,
     },
+    token: process.env.SERVICE_KEY,
   });
   const logs = respLogs.results?.length ? respLogs.results : [];
 
@@ -66,7 +68,12 @@ async function run() {
           1
         ),
       };
-      const checkStat = await statModel.upsertByKey({ key, data: newData });
+      const checkStat = await statModel.upsertByKey({
+        baseUrl: "http://localhost:3000",
+        key,
+        data: newData,
+        token: process.env.SERVICE_KEY,
+      });
       console.log(`${checkStat.key}: ${checkStat.value}`);
     }
   }

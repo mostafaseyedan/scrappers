@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
-import { remove as elasticRemove, patch as elasticPatch } from "@/lib/elastic";
 import { checkSession } from "@/lib/serverUtils";
-import { solicitation_log as solLogModel } from "@/app/models";
 
-const COLLECTION = "solicitations";
+const COLLECTION = "stats";
 
 export async function DELETE(
   req: NextRequest,
@@ -19,7 +17,6 @@ export async function DELETE(
   try {
     if (!user) throw new Error("Unauthenticated");
     await fireRemove(COLLECTION, id);
-    await elasticRemove(COLLECTION, id);
     results = { success: id };
   } catch (error) {
     console.error(`Failed to delete from ${COLLECTION} ${id}`, error);
@@ -42,18 +39,7 @@ export async function GET(
 
   try {
     if (!user) throw new Error("Unauthenticated");
-    const doc = await getById(COLLECTION, id);
-    await solLogModel.post({
-      solId: id,
-      baseUrl: process.env.BASE_URL,
-      token: process.env.SERVICE_KEY,
-      data: {
-        solId: id,
-        actionType: "view",
-        userId: user.uid,
-      },
-    });
-    results = doc;
+    results = await getById(COLLECTION, id);
   } catch (error) {
     console.error(`Failed to get from ${COLLECTION} ${id}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -79,7 +65,6 @@ export async function PATCH(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
     const updatedDoc = await patch(COLLECTION, id, updateData);
-    await elasticPatch(COLLECTION, id, fireToJs(updateData));
     results = updatedDoc;
   } catch (error) {
     console.error(`Failed to update in ${COLLECTION} ${id}`, error);
@@ -106,7 +91,6 @@ export async function PUT(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
     const updatedDoc = await put(COLLECTION, id, updateData);
-    await elasticPatch(COLLECTION, id, fireToJs(updateData));
     results = updatedDoc.data();
   } catch (error) {
     console.error(`Failed to update in ${COLLECTION} ${id}`, error);

@@ -41,7 +41,7 @@ const EditSolDialog = ({
   useEffect(() => {
     (async () => {
       if (solId) {
-        const sol = await solModel.getById(solId);
+        const sol = await solModel.getById({ id: solId });
         form.reset({
           title: sol.title ?? "",
           issuer: sol.issuer ?? "",

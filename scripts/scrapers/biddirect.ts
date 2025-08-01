@@ -266,17 +266,11 @@ async function processDownloads({
   return fileUrls;
 }
 
-async function run() {
+async function run(agent: any) {
   console.log(`\nExtracting from bidnetdirect.com ${start.toLocaleString()}`);
 
-  const db = initDb();
   const storage = initStorage();
   const bucket = storage.bucket();
-  const solCollection = db.collection("solicitations");
-
-  let out, cmd;
-
-  const agent = initHyperAgent({ vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/publicpurchase");
   if (cacheFolder) console.log(`\nPrevious session found: ${cacheFolder}`);
@@ -294,7 +288,7 @@ async function run() {
   latestSummary = JSON.parse(latestSummary);
 
   // Loop through all pages
-  const lastPage = latestSummary.lastPage || 0;
+  const lastPage = latestSummary.lastPage || 1;
   for (let page = lastPage; page <= latestSummary.pages; page++) {
     console.log(`\nGet solicitations for page ${page}`);
 
@@ -366,10 +360,12 @@ async function run() {
       rawSolDetails = JSON.parse(rawSolDetails) || {};
 
       // Check Firestore for existing solicitation
-      const existingSol = await solCollection
-        .where("siteId", "==", rawSol.id)
-        .get();
-      if (!existingSol.empty) {
+      const respCheckExist = await solModel.get({
+        baseUrl: BASE_URL,
+        filters: { siteId: rawSol.id },
+        token: process.env.SERVICE_KEY,
+      });
+      if (respCheckExist.results?.length) {
         console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
         dupCount++;
         continue;
@@ -380,11 +376,11 @@ async function run() {
         ...rawSol,
         ...(rawSol.title === rawSolDetails.title ? rawSolDetails : {}),
       });
-      const newRecord = await solModel.post(
-        BASE_URL,
-        dbSolData,
-        process.env.SERVICE_KEY
-      );
+      const newRecord = await solModel.post({
+        baseUrl: BASE_URL,
+        data: dbSolData,
+        token: process.env.SERVICE_KEY,
+      });
       console.log(chalk.green(`  Saved. ${newRecord.id}`));
 
       // Process downloads
@@ -399,13 +395,12 @@ async function run() {
         continue;
       }
 
-      const test = await solModel.patch({
+      await solModel.patch({
         baseUrl: BASE_URL,
         id: newRecord.id,
         data: { documents: fileUrls },
         token: process.env.SERVICE_KEY,
       });
-      console.log({ test });
       console.log(
         chalk.green(
           `  ${fileUrls.length} documents updated in Firestore for ${newRecord.id}`
@@ -415,9 +410,9 @@ async function run() {
       successCount++;
 
       if (dupCount >= 10) {
-        console.warn(chalk.yellow
-          `\nSkipping page ${page} due to too many duplicates found.`
-        ));
+        console.warn(
+          chalk.yellow`\nSkipping page ${page} due to too many duplicates found.`
+        );
         dupCount = 0;
         continue;
       }
@@ -427,6 +422,7 @@ async function run() {
   await agent.closeAgent();
 }
 
+const agent = initHyperAgent({ debug: DEBUG, vendor: VENDOR });
 let dupCount = 0;
 let successCount = 0;
 let failCount = 0;
@@ -434,30 +430,20 @@ let junkCount = 0;
 const start = new Date();
 performance.mark("start");
 
-run()
-  .catch((error: any) => console.error(chalk.red(`  ${error?.stack || error}`)))
-  .finally(async () => {
-    await endScript({
-      baseUrl: BASE_URL,
-      vendor: VENDOR,
-      counts: {
-        success: successCount,
-        fail: failCount,
-        junk: junkCount,
-        duplicates: dupCount,
-      },
-    });
-  });
+const endScriptOptions = {
+  agent,
+  baseUrl: BASE_URL,
+  vendor: VENDOR,
+  counts: {
+    success: successCount,
+    fail: failCount,
+    junk: junkCount,
+    duplicates: dupCount,
+  },
+};
 
-process.on("SIGINT", async () => {
-  await endScript({
-    baseUrl: BASE_URL,
-    vendor: VENDOR,
-    counts: {
-      success: successCount,
-      fail: failCount,
-      junk: junkCount,
-      duplicates: dupCount,
-    },
-  });
-});
+run(agent)
+  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
+  .finally(() => endScript(endScriptOptions));
+
+process.on("SIGINT", () => endScript(endScriptOptions));

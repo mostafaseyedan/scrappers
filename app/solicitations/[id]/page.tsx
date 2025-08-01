@@ -47,7 +47,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const user = useContext(UserContext)?.user;
 
   async function refresh() {
-    const dbSol = await solModel.getById(id);
+    if (!id) {
+      return console.warn("ID missing for page refresh");
+    }
+
+    const dbSol = await solModel.getById({ id });
 
     // Grab comments
     const respComments = await solCommentModel.get(id);
@@ -61,7 +65,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     (async () => {
       document.title = `${id} | Cendien Recon`;
 
-      await refresh();
+      if (id) await refresh();
     })();
 
     window.addEventListener("focus", refresh);
@@ -79,16 +83,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           viewedBy.push(user.uid);
           await solModel.patch({ id: sol.id, data: { viewedBy: viewedBy } });
         }
-
-        await solLogModel.post({
-          solId: sol.id,
-          data: {
-            solId: sol.id,
-            message: `Viewed by ${user.uid}`,
-            actionType: "view",
-            actionUserId: user.uid,
-          },
-        });
 
         // Grab logs
         const respLogs = await solLogModel.get({ solId: id });

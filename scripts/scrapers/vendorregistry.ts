@@ -1,7 +1,7 @@
 import "dotenv/config";
 import chalk from "chalk";
 import { z } from "zod";
-import { initDb, initStorage } from "@/lib/firebaseAdmin";
+import { initStorage } from "@/lib/firebaseAdmin";
 import { solicitation as solModel } from "@/app/models";
 import {
   endScript,
@@ -94,14 +94,11 @@ function sanitizeSolForApi(rawSolData: Record<string, any>) {
   return newData;
 }
 
-async function run() {
+async function run(agent: any) {
   console.log(`\nExtracting from vendorregistry.com ${start.toLocaleString()}`);
 
-  const db = initDb();
   const storage = initStorage();
   const bucket = storage.bucket();
-  const solCollection = db.collection("solicitations");
-  const agent = initHyperAgent({ vendor: VENDOR });
 
   let cacheFolder = getLatestFolder(".output/vendorregistry");
   if (cacheFolder) console.log("Previous session found:", cacheFolder);
@@ -130,14 +127,16 @@ async function run() {
     );
 
     // Check Firestore for existing solicitation
-    const existingSol = await solCollection
-      .where("siteId", "==", rawSol.id)
-      .get();
+    const respCheckExist = await solModel.get({
+      baseUrl: BASE_URL,
+      filters: { siteId: rawSol.id },
+      token: process.env.SERVICE_KEY,
+    });
 
     // Save to Firestore
     let fireDoc;
-    if (!existingSol.empty) {
-      fireDoc = existingSol.docs[0];
+    if (respCheckExist.results?.length) {
+      fireDoc = respCheckExist.results[0];
       console.log(chalk.grey(`  Already exists in Firestore. ${fireDoc.id}`));
       dupCount++;
       continue;
@@ -177,16 +176,17 @@ async function run() {
     });
 
     const dbSolData = sanitizeSolForApi({ ...rawSol, ...rawSolDetails });
-    const newRecord = await solModel.post(
-      BASE_URL,
-      dbSolData,
-      process.env.SERVICE_KEY
-    );
+    const newRecord = await solModel.post({
+      baseUrl: BASE_URL,
+      data: dbSolData,
+      token: process.env.SERVICE_KEY,
+    });
     console.log(chalk.green(`  Saved. ${newRecord.id}`));
     successCount++;
   }
 }
 
+const agent = initHyperAgent({ debug: DEBUG, vendor: VENDOR });
 let dupCount = 0;
 let failCount = 0;
 let successCount = 0;
@@ -194,30 +194,20 @@ let junkCount = 0;
 const start = new Date();
 performance.mark("start");
 
-run()
-  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
-  .finally(async () => {
-    await endScript({
-      baseUrl: BASE_URL,
-      vendor: VENDOR,
-      counts: {
-        success: successCount,
-        fail: failCount,
-        junk: junkCount,
-        duplicates: dupCount,
-      },
-    });
-  });
+const endScriptOptions = {
+  agent,
+  baseUrl: BASE_URL,
+  vendor: VENDOR,
+  counts: {
+    success: successCount,
+    fail: failCount,
+    junk: junkCount,
+    duplicates: dupCount,
+  },
+};
 
-process.on("SIGINT", async () => {
-  await endScript({
-    baseUrl: BASE_URL,
-    vendor: VENDOR,
-    counts: {
-      success: successCount,
-      fail: failCount,
-      junk: junkCount,
-      duplicates: dupCount,
-    },
-  });
-});
+run(agent)
+  .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
+  .finally(() => endScript(endScriptOptions));
+
+process.on("SIGINT", () => endScript(endScriptOptions));

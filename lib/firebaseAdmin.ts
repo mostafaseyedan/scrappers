@@ -103,19 +103,11 @@ export function parseQueryValue(value: string) {
 export async function get(dbPath: string, options: GetOptions = {}) {
   const limit = parseInt(options?.limit as string) || 20;
   const page = parseInt(options?.page as string) || 1;
-  const sort = options?.sort || "created desc";
+  const sort = options?.sort ?? "created desc";
   const filters = options?.filters || {};
   const collectionRef = client.collection(dbPath);
   let queryChain: FirebaseFirestore.Query = collectionRef;
   const normalizedDocs: Record<string, any>[] = [];
-
-  if (sort) {
-    const [field, direction] = sort.split(" ");
-    queryChain = queryChain.orderBy(
-      field,
-      (direction || "asc") as OrderByDirection
-    );
-  }
 
   if (limit) {
     queryChain = queryChain.limit(limit);
@@ -163,6 +155,15 @@ export async function get(dbPath: string, options: GetOptions = {}) {
       filterItem.field,
       filterItem.operator,
       filterItem.value
+    );
+  }
+
+  // Sorting is not allowed with filter items
+  if (sort && rawFilterItems.length === 0) {
+    const [field, direction] = sort.split(" ");
+    queryChain = queryChain.orderBy(
+      field,
+      (direction || "asc") as OrderByDirection
     );
   }
 

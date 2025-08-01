@@ -156,7 +156,7 @@ const SolActions = ({
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
-                      await solModel.remove(sol.id);
+                      await solModel.remove({ id: sol.id });
                       if (refreshSols) await refreshSols();
                     }}
                   >

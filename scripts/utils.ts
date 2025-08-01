@@ -8,6 +8,7 @@ import { scriptLog as logModel } from "@/app/models";
 import { secToTimeStr } from "@/lib/utils";
 
 type EndScriptParams = {
+  agent: any;
   baseUrl?: string;
   vendor: string;
   counts: {
@@ -35,7 +36,12 @@ type InitHyperAgentParams = {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY!);
 
-export async function endScript({ baseUrl, vendor, counts }: EndScriptParams) {
+export async function endScript({
+  agent,
+  baseUrl,
+  vendor,
+  counts,
+}: EndScriptParams) {
   if (!vendor) throw new Error("Vendor is required for end function");
 
   performance.mark("end");
@@ -49,9 +55,9 @@ export async function endScript({ baseUrl, vendor, counts }: EndScriptParams) {
     `Total time: ${secToTimeStr(totalSec)} ${new Date().toLocaleString()}`
   );
 
-  await logModel.post(
+  await logModel.post({
     baseUrl,
-    {
+    data: {
       message: `Scrapped ${counts.success} solicitations from ${vendor}. 
         ${counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""}
         ${
@@ -64,10 +70,12 @@ export async function endScript({ baseUrl, vendor, counts }: EndScriptParams) {
       junkCount: counts.junk,
       timeStr: secToTimeStr(totalSec),
     },
-    process.env.SERVICE_KEY
-  );
+    token: process.env.SERVICE_KEY,
+  });
 
-  process.exit(0);
+  await agent.closeAgent();
+
+  await process.exit(0);
 }
 
 export async function executeTask({

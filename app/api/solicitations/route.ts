@@ -1,11 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation as solModel } from "@/app/models";
-import { get as fireGet, post as firePost } from "@/lib/firebaseAdmin";
+import {
+  get as fireGet,
+  post as firePost,
+  parseQueryString,
+} from "@/lib/firebaseAdmin";
 import { post as elasticPost } from "@/lib/elastic";
 import { fireToJs } from "@/lib/dataUtils";
 
 const COLLECTION = "solicitations";
+
+export async function GET(req: NextRequest) {
+  const user = await checkSession(req);
+  const queryOptions = parseQueryString(req.url);
+  let results = {};
+  let status = 200;
+
+  try {
+    if (!user) throw new Error("Unauthenticated");
+
+    const records = await fireGet(COLLECTION, queryOptions);
+    results = {
+      count: records.length,
+      results: records,
+    };
+  } catch (error) {
+    console.error(`Failed to get ${COLLECTION}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    results = { error: errorMessage };
+    status = 500;
+  }
+
+  return NextResponse.json({ ...results }, { status });
+}
 
 export async function POST(req: NextRequest) {
   const { body } = req;
