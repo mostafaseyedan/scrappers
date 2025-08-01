@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { solicitation as solModel } from "../models";
+import { solicitation as solModel } from "@/app/models";
 
 import styles from "./topBar.module.scss";
 
@@ -61,11 +61,13 @@ const TopBar = forwardRef(
     async function refresh() {
       const counts = {
         new: await solModel.count({ cnStatus: "new" }),
+        researching: await solModel.count({ cnStatus: "researching" }),
+        pursuing: await solModel.count({ cnStatus: "pursuing" }),
+        preApproval: await solModel.count({ cnStatus: "preApproval" }),
         submitted: await solModel.count({ cnStatus: "submitted" }),
-        rfps: await solModel.count({ cnStatus: "rfp" }),
-        erp: await solModel.count({ cnStatus: "erp" }),
-        awarded: await solModel.count({ cnStatus: "awarded" }),
+        negotiation: await solModel.count({ cnStatus: "negotiation" }),
         monitor: await solModel.count({ cnStatus: "monitor" }),
+        awarded: await solModel.count({ cnStatus: "awarded" }),
         notWon: await solModel.count({ cnStatus: "notWon" }),
         notPursuing: await solModel.count({ cnStatus: "notPursuing" }),
         total: await solModel.count(),
@@ -105,16 +107,34 @@ const TopBar = forwardRef(
               New ({counts.new || 0})
             </TabsTrigger>
             <TabsTrigger
+              className={styles.topBar_tab__researching}
+              value="researching"
+            >
+              Researching ({counts.researching || 0})
+            </TabsTrigger>
+            <TabsTrigger
+              className={styles.topBar_tab__pursuing}
+              value="pursuing"
+            >
+              Pursuing ({counts.pursuing || 0})
+            </TabsTrigger>
+            <TabsTrigger
+              className={styles.topBar_tab__preApproval}
+              value="preApproval"
+            >
+              Pre-Approval ({counts.preApproval || 0})
+            </TabsTrigger>
+            <TabsTrigger
               className={styles.topBar_tab__submitted}
               value="submitted"
             >
               Submitted ({counts.submitted || 0})
             </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__rfps} value="rfps">
-              RFPs ({counts.rfps || 0})
-            </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__erp} value="erp">
-              ERP ({counts.erp || 0})
+            <TabsTrigger
+              className={styles.topBar_tab__negotiation}
+              value="negotiation"
+            >
+              Negotiation ({counts.negotiation || 0})
             </TabsTrigger>
             <TabsTrigger className={styles.topBar_tab__awarded} value="awarded">
               Awarded ({counts.awarded || 0})

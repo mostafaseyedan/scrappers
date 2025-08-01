@@ -23,6 +23,8 @@ runConfig:
 #   secret: mySecretRef
 
 env:
+  - variable: BASE_URL
+    value: https://reconrfp.cendien.com
   - variable: BIDDIRECT_USER
     secret: DEV_BIDDIRECT_USER
   - variable: BIDDIRECT_PASS

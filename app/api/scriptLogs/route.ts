@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { solicitation as solModel } from "@/app/models";
 import {
   get as fireGet,
-  post as firePost,
   parseQueryString,
+  post as firePost,
 } from "@/lib/firebaseAdmin";
-import { post as elasticPost } from "@/lib/elastic";
-import { fireToJs } from "@/lib/dataUtils";
-
-const COLLECTION = "solicitations";
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);
@@ -20,13 +15,13 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
-    const records = await fireGet(COLLECTION, queryOptions);
+    const records = await fireGet("scriptLogs", queryOptions);
     results = {
       count: records.length,
       results: records,
     };
   } catch (error) {
-    console.error(`Failed to get ${COLLECTION}`, error);
+    console.error(`Failed to get script logs`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     results = { error: errorMessage };
     status = 500;
@@ -49,13 +44,11 @@ export async function POST(req: NextRequest) {
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;
 
-    const parsedData = solModel.schema.postApi.parse(bodyJson);
-    const fireDoc = await firePost(COLLECTION, parsedData, user);
-    await elasticPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
+    const fireDoc = await firePost("scriptLogs", bodyJson, user);
 
     results = fireDoc;
   } catch (error) {
-    console.error(`Failed to create ${COLLECTION}`, error);
+    console.error(`Failed to create script log`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     results = { error: errorMessage };
     status = 500;

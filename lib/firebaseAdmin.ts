@@ -1,14 +1,26 @@
 import { initializeApp, getApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import {
+  getFirestore,
+  OrderByDirection,
+  Timestamp,
+} from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import {
   DocumentSnapshot,
   QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
+import queryString from "query-string";
 
 type NormalizeDocOptionsParams = {
   hidePrivate?: boolean;
   schema?: Record<string, any>;
+};
+
+type GetOptions = {
+  limit?: string | number | null;
+  page?: string | number | null;
+  sort?: string | null;
+  filters?: Record<string, any>;
 };
 
 export const client = initDb();
@@ -32,11 +44,130 @@ export function initStorage() {
   return getStorage(getApps().length ? getApp() : init());
 }
 
-export async function get(dbPath: string) {
-  const dbCollection = client.collection(dbPath);
-  const docs = await dbCollection.orderBy("created", "desc").get();
+export function parseQueryString(url: string) {
+  const qIndex = url.indexOf("?");
+
+  if (qIndex === -1) {
+    return {};
+  }
+
+  const query = queryString.parse(url.substring(qIndex), {
+    arrayFormat: "bracket",
+  });
+  const queryObj: any = {};
+
+  for (const key of Object.keys(query)) {
+    const value = query[key];
+    let currNode = queryObj;
+
+    // Converts query names with dots into values
+    if (key.includes(".")) {
+      const keyParts = key.split(".");
+      keyParts.forEach((keyPart, i) => {
+        if (currNode[keyPart] === undefined) {
+          currNode[keyPart] = {};
+        }
+
+        if (i === keyParts.length - 1) {
+          currNode[keyPart] = value;
+        }
+
+        currNode = currNode[keyPart];
+      });
+    } else if (key.match(/page|limit/) && typeof value === "string") {
+      queryObj[key] = parseInt(value);
+    } else {
+      queryObj[key] = parseQueryValue(value as string);
+    }
+  }
+
+  return queryObj;
+}
+
+export function parseQueryValue(value: string) {
+  if (value === "false") {
+    return false;
+  }
+
+  if (value === "true") {
+    return true;
+  }
+
+  if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return new Date(value);
+  }
+
+  return value;
+}
+
+export async function get(dbPath: string, options: GetOptions = {}) {
+  const limit = parseInt(options?.limit as string) || 20;
+  const page = parseInt(options?.page as string) || 1;
+  const sort = options?.sort ?? "created desc";
+  const filters = options?.filters || {};
+  const collectionRef = client.collection(dbPath);
+  let queryChain: FirebaseFirestore.Query = collectionRef;
   const normalizedDocs: Record<string, any>[] = [];
 
+  if (limit) {
+    queryChain = queryChain.limit(limit);
+  }
+
+  if (page) {
+    const offset = (page - 1) * limit;
+    queryChain = queryChain.offset(offset);
+  }
+
+  const rawFilterItems = Object.entries(filters);
+  const filterItems = [];
+  if (rawFilterItems.length > 0) {
+    for (const [field, value] of rawFilterItems) {
+      if (value.includes(" AND ")) {
+        const values = value.split(" AND ");
+        for (const val of values) {
+          // > or < operators
+          if (val.match(/^[><=]+ /)) {
+            const [operator, finalVal] = val.split(" ");
+            filterItems.push({
+              field,
+              operator: operator,
+              value: parseQueryValue(finalVal),
+            });
+          } else {
+            filterItems.push({
+              field,
+              operator: "==",
+              value: parseQueryString(val),
+            });
+          }
+        }
+      } else {
+        filterItems.push({
+          field,
+          operator: "==",
+          value: parseQueryValue(value as string),
+        });
+      }
+    }
+  }
+  for (const filterItem of filterItems) {
+    queryChain = queryChain.where(
+      filterItem.field,
+      filterItem.operator,
+      filterItem.value
+    );
+  }
+
+  // Sorting is not allowed with filter items
+  if (sort && rawFilterItems.length === 0) {
+    const [field, direction] = sort.split(" ");
+    queryChain = queryChain.orderBy(
+      field,
+      (direction || "asc") as OrderByDirection
+    );
+  }
+
+  const docs = await queryChain.get();
   docs.forEach((doc) => {
     const normalizedDoc = normalizeDoc(doc);
     normalizedDocs.push(normalizedDoc);

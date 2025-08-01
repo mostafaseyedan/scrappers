@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { solicitation as solModel } from "@/app/models";
 import {
   get as fireGet,
-  post as firePost,
   parseQueryString,
+  post as firePost,
 } from "@/lib/firebaseAdmin";
-import { post as elasticPost } from "@/lib/elastic";
-import { fireToJs } from "@/lib/dataUtils";
+import { stat as statModel } from "@/app/models";
 
-const COLLECTION = "solicitations";
+const COLLECTION = "stats";
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);
@@ -49,9 +47,8 @@ export async function POST(req: NextRequest) {
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;
 
-    const parsedData = solModel.schema.postApi.parse(bodyJson);
+    const parsedData = statModel.schema.db.parse(bodyJson);
     const fireDoc = await firePost(COLLECTION, parsedData, user);
-    await elasticPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
 
     results = fireDoc;
   } catch (error) {

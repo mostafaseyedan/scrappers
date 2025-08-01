@@ -1,15 +1,19 @@
 import "dotenv/config";
-import HyperAgent from "@hyperbrowser/agent";
-import { ChatOpenAI } from "@langchain/openai";
 import chalk from "chalk";
 import { z } from "zod";
-import fs from "fs";
-import { exec, execSync } from "child_process";
-import { initDb, initStorage } from "@/lib/firebaseAdmin";
+import { initStorage } from "@/lib/firebaseAdmin";
 import { solicitation as solModel } from "@/app/models";
 import { cnStatuses } from "@/app/config";
-import { executeTask, getLatestFolder } from "@/scripts/utils";
+import {
+  endScript,
+  executeTask,
+  getLatestFolder,
+  initHyperAgent,
+} from "@/scripts/utils";
+import { sanitizeDateString } from "@/lib/utils";
 
+const VENDOR = "publicpurchase";
+const BASE_URL = "http://localhost:3000";
 const DEBUG = true;
 const HIDE_STEPS = true;
 const USER = process.env.PUBLICPURCHASE_USER;
@@ -28,7 +32,7 @@ const tasks = {
       - url: get link from last column
     3. Scroll to bottom to hit next page and repeat Step 2 until the last page.
     4. Get the total number of pages from the bottom of the page
-    5. Get from memory and store to the json under the key 'solicitations' and also set 'totalSolicitations' to the total number of solicitations found.`,
+    5. Get from memory and store to the json under the key 'solicitations' and also set 'successCount' to the total number of solicitations found.`,
   solDetails: ({ rawSolId }: Record<string, any>) =>
     `Throughout the whole task, you will be using the credentials: username: '${USER}', password: '${PASS}'. Do not click any links that will leave the site, and do not click any links that will open a new tab or window. You will be using the browser to navigate the site and extract data. The goal is to extract all solicitations from publicpurchase.com.
     1. Go to https://publicpurchase.com/gems/syndication/bidView?syndicatedBidId=${rawSolId}
@@ -45,7 +49,7 @@ const rawCategorySolSchema = z.object({
   issuer: z.string(),
   location: z.string(),
   closingDate: z.string().nullable(),
-  notes: z.string().optional(),
+  notes: z.string(),
   categories: z.array(z.string()).default([]),
   url: z.string(),
 });
@@ -53,7 +57,7 @@ const rawCategorySolSchema = z.object({
 const schemas = {
   categorySummary: z.object({
     categoryId: z.string(),
-    totalSolicitations: z.number().default(0),
+    successCount: z.number().default(0),
     totalPages: z.number(),
     solicitations: z.array(rawCategorySolSchema).default([]),
   }),
@@ -66,7 +70,7 @@ const schemas = {
   }),
   dbSol: z.object({
     categories: z.array(z.string()).default([]),
-    closingDate: z.date().optional(),
+    closingDate: z.date().nullable().optional(),
     cnData: z.object({}).default({}),
     cnLiked: z.boolean().default(false),
     cnModified: z.boolean().default(false),
@@ -115,6 +119,7 @@ function cleanUpCategorySummary(
   const categoryId =
     categorySummary.categoryId as keyof typeof interestedCategories;
   let cleanedUpSols = [];
+  let countExpired = 0;
 
   for (const sol of categorySummary.solicitations) {
     const closingDate = sol.closingDate?.toString() || "";
@@ -133,9 +138,30 @@ function cleanUpCategorySummary(
         // If the closing date is more than 3 days in the future, we keep it
         if (secDiff > 60 * 60 * 24 * 3) {
           cleanedUpSols.push(sol);
+        } else {
+          countExpired++;
+        }
+      } else {
+        if (sol.closingDate) {
+          const testDate = new Date(sol.closingDate);
+          if (!isNaN(testDate.getTime())) {
+            sol.closingDate = testDate.toISOString();
+            cleanedUpSols.push(sol);
+          } else {
+            console.log("ignored", sol.title);
+          }
+        } else {
+          sol.closingDate = "";
+          cleanedUpSols.push(sol);
         }
       }
+    } else {
+      countExpired++;
     }
+  }
+
+  if (countExpired > 0) {
+    console.log(`${countExpired} expired.`);
   }
 
   return cleanedUpSols;
@@ -151,9 +177,7 @@ function sanitizeSolForDb(rawSolData: Record<string, any>) {
 
   const newData = {
     categories: rawSolData.categories || [],
-    closingDate: rawSolData.closingDate?.match(/^\d{4}-\d{2}-\d{2}/)
-      ? new Date(rawSolData.closingDate)
-      : null,
+    closingDate: sanitizeDateString(rawSolData.closingDate),
     cnStatus: "new",
     created: new Date(),
     description: rawSolData.description,
@@ -168,36 +192,16 @@ function sanitizeSolForDb(rawSolData: Record<string, any>) {
     url: `https://publicpurchase.com/gems/syndication/bidView?syndicatedBidId=${rawSolData.id}`,
   };
 
-  return schemas.dbSol.parse(newData);
+  return newData;
 }
 
-async function run() {
+async function run(agent: any) {
   console.log(`\nExtracting from publicpurchase.com ${start.toLocaleString()}`);
 
-  const db = initDb();
   const storage = initStorage();
   const bucket = storage.bucket();
-  const solCollection = db.collection("solicitations");
 
-  let out, cmd;
-
-  const llm = new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    model: "gpt-4.1-mini",
-    temperature: 0,
-    cache: true,
-  });
-
-  const agent = new HyperAgent({
-    llm,
-    debug: DEBUG,
-    browserProvider: "Local",
-    localConfig: {
-      downloadsPath: ".output/purchasehistory/tmp/downloads",
-    },
-  });
-
-  let cacheFolder = getLatestFolder(".output/purchasehistory");
+  let cacheFolder = getLatestFolder(".output/publicpurchase");
   if (cacheFolder) console.log(`Previous session found: ${cacheFolder}`);
   else cacheFolder = start.toISOString();
 
@@ -206,18 +210,19 @@ async function run() {
     keyof typeof interestedCategories
   >) {
     const categoryName = interestedCategories[categoryId];
-    console.log(`\n  Processing category ${categoryId} ${categoryName}`);
+    console.log(`\nProcessing category ${categoryId} ${categoryName}`);
     let categorySummary = await executeTask({
       agent,
       name: "categorySummary",
       task: tasks.categorySummary({ categoryId }),
-      folder: `.output/purchasehistory/${cacheFolder}`,
+      folder: `.output/publicpurchase/${cacheFolder}`,
       data: { categoryId },
       outputSchema: schemas.categorySummary,
       hideSteps: HIDE_STEPS,
     });
     categorySummary = JSON.parse(categorySummary);
     categorySummary.categoryId = categoryId;
+    dupCount = 0;
 
     // Loop through each solicitation in the category
     const cleanedUpSols = cleanUpCategorySummary(categorySummary);
@@ -227,23 +232,32 @@ async function run() {
     for (let i = 0; i < cleanedUpSols.length; i++) {
       const rawSol = cleanedUpSols[i];
       console.log(
-        `    [${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${rawSol.title}`
+        `\n[${i + 1}/${cleanedUpSols.length}] ${rawSol.id} - ${rawSol.title}`
       );
 
       // Check Firestore for existing solicitation
-      const existingSol = await solCollection
-        .where("siteId", "==", rawSol.id)
-        .get();
-      if (!existingSol.empty) {
-        console.log(`      Already exists in Firestore. Skipping.`);
+      const respCheckExist = await solModel.get({
+        baseUrl: BASE_URL,
+        filters: { siteId: rawSol.id },
+        token: process.env.SERVICE_KEY,
+      });
+      if (respCheckExist.results?.length) {
+        console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
+        dupCount++;
         continue;
+      }
+
+      if (dupCount >= 10) {
+        throw new Error(
+          chalk.yellow("\nStopping script due to too many duplicates found.")
+        );
       }
 
       // Go into each solicitation details page and grab more details
       let solDetails = await executeTask({
         agent,
         name: "solDetails",
-        folder: `.output/purchasehistory/${cacheFolder}`,
+        folder: `.output/publicpurchase/${cacheFolder}`,
         data: { rawSolId: rawSol.id },
         outputSchema: schemas.solDetails,
         task: tasks.solDetails({ rawSolId: rawSol.id }),
@@ -251,30 +265,50 @@ async function run() {
       });
       solDetails = JSON.parse(solDetails);
 
-      // Sanitize rawSol and save to Firestore
-      const dbSolData = sanitizeSolForDb({ ...rawSol, ...solDetails });
-      const newDoc = await solCollection.add(dbSolData);
-      console.log(`      Saved to Firestore ${newDoc.id}`);
-
-      // Save to Elasticsearch
-
-      totalSolicitations++;
+      // Save to Firestore
+      let fireDoc;
+      if (respCheckExist.results?.length) {
+        fireDoc = respCheckExist.results[0];
+        console.log(chalk.grey(`  Already exists in Firestore ${fireDoc.id}.`));
+        dupCount++;
+      } else {
+        const dbSolData = sanitizeSolForDb({ ...rawSol, ...solDetails });
+        const newRecord = await solModel.post({
+          baseUrl: BASE_URL,
+          data: dbSolData,
+          token: process.env.SERVICE_KEY,
+        });
+        console.log(chalk.green(chalk.grey(`  Saved. ${newRecord.id}`)));
+        successCount++;
+      }
     }
   }
+
+  await agent.closeAgent();
 }
 
-let totalSolicitations = 0;
+const agent = initHyperAgent({ debug: DEBUG, vendor: VENDOR });
+let dupCount = 0;
+let successCount = 0;
+let failCount = 0;
+let junkCount = 0;
 const start = new Date();
 performance.mark("start");
 
-run()
+const endScriptOptions = {
+  agent,
+  baseUrl: BASE_URL,
+  vendor: VENDOR,
+  counts: {
+    success: successCount,
+    fail: failCount,
+    junk: junkCount,
+    duplicates: dupCount,
+  },
+};
+
+run(agent)
   .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
-  .finally(() => {
-    performance.mark("end");
-    const totalSec = (
-      performance.measure("total-duration", "start", "end").duration / 1000
-    ).toFixed(1);
-    console.log(`\nTotal solicitations processed: ${totalSolicitations}`);
-    console.log(`Total time: ${totalSec}s ${new Date().toLocaleString()}`);
-    process.exit(0);
-  });
+  .finally(() => endScript(endScriptOptions));
+
+process.on("SIGINT", () => endScript(endScriptOptions));

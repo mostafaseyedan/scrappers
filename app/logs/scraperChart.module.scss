@@ -1,0 +1,11 @@
+.scraperChart {
+  border: 1px solid #eee;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 10px;
+
+  &_chart {
+    height: 100px;
+    width: 100%;
+  }
+}

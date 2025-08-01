@@ -20,6 +20,13 @@
     }
   }
 
+  &_cnType {
+    margin-bottom: 5px;
+    > button {
+      margin-left: auto;
+    }
+  }
+
   &_contentCol {
     flex: 1 1 100%;
   }
@@ -70,6 +77,27 @@
   &_keywords {
     > label {
       margin-right: 5px;
+    }
+  }
+
+  &_logsContent {
+    &_log {
+      border-bottom: 1px solid #eee;
+      display: flex;
+      padding: 10px 20px;
+      pre {
+        color: #c7c7c7;
+        margin: 0;
+      }
+      &_actionType {
+        margin-left: auto;
+      }
+      &_created {
+        white-space: nowrap;
+        color: #c7c7c7;
+        display: block;
+        width: 160px;
+      }
     }
   }
 

@@ -5,12 +5,20 @@ import { authConfig } from "@/config/serverConfig";
 
 const ALLOWED_KEYS = {
   MOHAMMAD: process.env.MOHAMMAD_KEY,
+  SERVICE: process.env.SERVICE_KEY,
 };
 
 export async function checkSession(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
-  const tokens = await getTokens(await cookies(), authConfig);
-  let bearerToken: string;
+  const getCookies = await cookies();
+  const tokens = (await getTokens(getCookies, authConfig)) as {
+    accessToken?: string;
+    decodedToken?: Record<string, any>;
+  };
+  const cookieToken = getCookies.get("AuthToken")?.value;
+  const authToken =
+    authHeader?.startsWith("Bearer ") && authHeader.substring(7);
+  const token = authToken || cookieToken || tokens?.accessToken;
   let isValidSession = Boolean(tokens);
   let user;
 
@@ -19,10 +27,9 @@ export async function checkSession(req: NextRequest) {
     user.type = "user";
   }
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    bearerToken = authHeader.substring(7);
+  if (token) {
     const checkKeys = Object.entries(ALLOWED_KEYS).filter(
-      ([, value]) => value === bearerToken
+      ([, value]) => value === token
     );
     isValidSession = checkKeys.length > 0;
 

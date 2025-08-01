@@ -72,7 +72,10 @@ const SolActions = ({
             aria-label="Save solicitation"
             onClick={async (e) => {
               e.stopPropagation();
-              await solModel.patch(sol.id, { cnLiked: !sol.cnLiked });
+              await solModel.patch({
+                id: sol.id,
+                data: { cnLiked: !sol.cnLiked },
+              });
               if (refreshSols) await refreshSols();
             }}
           >
@@ -153,7 +156,7 @@ const SolActions = ({
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
-                      await solModel.remove(sol.id);
+                      await solModel.remove({ id: sol.id });
                       if (refreshSols) await refreshSols();
                     }}
                   >

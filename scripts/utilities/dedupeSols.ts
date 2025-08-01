@@ -1,5 +1,8 @@
 import "dotenv/config";
 import { initDb } from "@/lib/firebaseAdmin";
+import { solicitation as solModel } from "@/app/models";
+
+const BASE_URL = "http://localhost:3000";
 
 const db = initDb();
 
@@ -26,7 +29,7 @@ async function dedupeSolicitations() {
     if (!toKeep) toKeep = records[0];
     const toDelete = records.filter((r) => r.id !== toKeep.id);
     for (const rec of toDelete) {
-      await db.collection("solicitations").doc(rec.id).delete();
+      await solModel.remove(rec.id, BASE_URL, process.env.DEV_API_TOKEN);
       console.log(`Deleted duplicate for siteId ${siteId}: ${rec.id}`);
       totalDeleted++;
     }
