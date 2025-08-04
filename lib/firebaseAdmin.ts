@@ -5,6 +5,7 @@ import {
   Timestamp,
 } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { getAuth } from "firebase-admin/auth";
 import {
   DocumentSnapshot,
   QueryDocumentSnapshot,
@@ -34,6 +35,10 @@ function init() {
     }),
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   });
+}
+
+export function initAuth() {
+  return getAuth(getApps().length ? getApp() : init());
 }
 
 export function initDb() {

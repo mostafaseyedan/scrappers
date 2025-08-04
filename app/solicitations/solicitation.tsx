@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState, Dispatch, SetStateAction, useEffect } from "react";
+import {
+  useContext,
+  useState,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+} from "react";
 import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
 import { cnStatuses, cnTypes } from "../config";
@@ -21,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { UserContext } from "../userContext";
 import styles from "./solicitation.module.scss";
 
 function isWithinAWeek(date: Date): boolean {
@@ -44,6 +51,21 @@ type SolicitationProps = {
   variant?: "compact" | "expanded";
 };
 
+async function uidsToNames(
+  uids: string[] = [],
+  getUser: (uid: string) => Promise<Record<string, any> | undefined>
+): Promise<string[]> {
+  return Promise.all(
+    uids.map(async (uid: string): Promise<string> => {
+      if (getUser) {
+        const user = await getUser(uid);
+        return user ? user.displayName || user.email || uid : uid;
+      }
+      return uid;
+    })
+  );
+}
+
 const Solicitation = ({
   sol,
   className,
@@ -57,6 +79,31 @@ const Solicitation = ({
   const [expanded, setExpanded] = useState(false);
   const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
   const [cnType, setCnType] = useState(sol.cnType || "-");
+  const userContext = useContext(UserContext);
+  const getUser = userContext?.getUser;
+  const [viewedBy, setViewedBy] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (getUser) {
+      uidsToNames(sol.viewedBy, getUser).then((names) => {
+        if (isMounted) setViewedBy(names);
+      });
+    } else {
+      setViewedBy([]);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [sol.viewedBy, getUser]);
+
+  (sol.viewedBy || []).map(async (uid: string) => {
+    if (getUser) {
+      const user = await getUser(uid);
+      return user ? user.displayName || user.email || uid : uid;
+    }
+    return uid;
+  });
 
   useEffect(() => {
     setCnStatus(sol.cnStatus);
@@ -167,8 +214,8 @@ const Solicitation = ({
               <TooltipContent>
                 Viewed By
                 <br />
-                {sol.viewedBy?.length > 0
-                  ? sol.viewedBy.map((v: string) => (
+                {viewedBy?.length > 0
+                  ? viewedBy.map((v: string) => (
                       <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
                     ))
                   : "No one yet"}

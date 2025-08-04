@@ -631,13 +631,12 @@ const solicitation: any = {
     collection = "solicitations",
     data,
     ...options
-  }: PostParams) => {
+  }: PostParams) =>
     await defaultCalls.post({
       collection,
       data,
       ...options,
-    });
-  },
+    }),
   put: async ({
     collection = "solicitations",
     id,
