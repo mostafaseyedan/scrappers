@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -38,7 +38,8 @@ export default function RootLayout({
   const pathname = usePathname();
   const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [, setAuthChecked] = useState(false);
+  const usersCache = useRef<Record<string, any>>({});
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -47,6 +48,23 @@ export default function RootLayout({
     });
     return () => unsubscribe();
   }, []);
+
+  async function getUser(uid: string) {
+    if (usersCache.current[uid]) {
+      return usersCache.current[uid];
+    }
+
+    const response = await fetch(`/api/users/${uid}`);
+    const json = await response.json();
+
+    if (json.error) {
+      console.error("Failed to get user", json.error);
+      return;
+    }
+
+    usersCache.current[uid] = json;
+    return json;
+  }
 
   async function logout() {
     await signOut(getAuth(app));
@@ -59,9 +77,7 @@ export default function RootLayout({
   }
 
   return (
-    <UserContext.Provider
-      value={{ user, setUser, authChecked, setAuthChecked }}
-    >
+    <UserContext.Provider value={{ user, getUser }}>
       <html lang="en">
         <title>Cendien Recon</title>
         <body

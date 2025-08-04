@@ -16,7 +16,7 @@ import { sanitizeDateString } from "@/lib/utils";
 
 const VENDOR = "biddirect";
 const BASE_URL = "http://localhost:3000";
-const DEBUG = true;
+const DEBUG = false;
 const HIDE_STEPS = true;
 const USER = process.env.BIDDIRECT_USER;
 const PASS = process.env.BIDDIRECT_PASS;
@@ -444,6 +444,26 @@ const endScriptOptions = {
 
 run(agent)
   .catch((error: any) => console.error(chalk.red(`  ${error}`, error?.stack)))
-  .finally(() => endScript(endScriptOptions));
+  .finally(() =>
+    endScript({
+      ...endScriptOptions,
+      counts: {
+        success: successCount,
+        fail: failCount,
+        junk: junkCount,
+        duplicates: dupCount,
+      },
+    })
+  );
 
-process.on("SIGINT", () => endScript(endScriptOptions));
+process.on("SIGINT", () =>
+  endScript({
+    ...endScriptOptions,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      junk: junkCount,
+      duplicates: dupCount,
+    },
+  })
+);

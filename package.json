@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^9.0.3",
+    "@elastic/elasticsearch": "^9.1.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.1.1",
     "@hyperbrowser/agent": "^0.3.1",

@@ -11,7 +11,11 @@
     width: 170px;
   }
   &_tab {
-    &__submitted {
+    &__submitted,
+    &__researching,
+    &__pursuing,
+    &__preApproval,
+    &__negotiation {
       color: map.get(variables.$statusColors, "submitted");
     }
     &__rfps {

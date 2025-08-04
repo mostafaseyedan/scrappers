@@ -60,3 +60,18 @@ export function secToTimeStr(seconds: number): string {
     "0"
   )}:${String(secs).padStart(2, "0")}`;
 }
+
+export async function uidsToNames(
+  uids: string[] = [],
+  getUser: (uid: string) => Promise<Record<string, any> | undefined>
+): Promise<string[]> {
+  return Promise.all(
+    uids.map(async (uid: string): Promise<string> => {
+      if (getUser && uid) {
+        const user = await getUser(uid);
+        return user ? user.displayName || user.email || uid : uid;
+      }
+      return uid;
+    })
+  );
+}

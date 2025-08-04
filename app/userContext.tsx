@@ -2,9 +2,7 @@ import { createContext, useContext } from "react";
 
 export interface UserContextType {
   user: any;
-  setUser: (user: any) => void;
-  authChecked: boolean;
-  setAuthChecked: (checked: boolean) => void;
+  getUser: (uid: string) => Promise<any>;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(

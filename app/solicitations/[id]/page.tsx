@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, uidsToNames } from "@/lib/utils";
 import {
   solicitation as solModel,
   solicitation_comment as solCommentModel,
@@ -35,6 +35,9 @@ function isWithinAWeek(date: Date): boolean {
 }
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const userContext = useContext(UserContext);
+  const user = userContext?.user;
+  const getUser = userContext?.getUser;
   const { id } = use(params);
   const [sol, setSol] = useState<Record<string, any> | undefined>();
   const [logs, setLogs] = useState<Record<string, any>[]>([]);
@@ -43,8 +46,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [cnType, setCnType] = useState<string>(sol?.cnType || "-");
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
-
-  const user = useContext(UserContext)?.user;
+  const [viewedBy, setViewedBy] = useState<string[]>([]);
 
   async function refresh() {
     if (!id) {
@@ -52,10 +54,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     }
 
     const dbSol = await solModel.getById({ id });
-
-    // Grab comments
-    const respComments = await solCommentModel.get(id);
-    if (respComments.results?.length) setComments(respComments.results);
 
     setSol(dbSol);
     setCnStatus(dbSol?.cnStatus || "new");
@@ -85,12 +83,48 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           await solModel.patch({ id: sol.id, data: { viewedBy: viewedBy } });
         }
 
+        // Grab comments
+        const respComments = await solCommentModel.get(id);
+        if (respComments.results?.length) {
+          respComments.results.map(async (msg: Record<string, any>) => {
+            if (getUser)
+              msg.author = (await uidsToNames([msg.authorId], getUser)).join(
+                ""
+              );
+            return msg;
+          });
+          setComments(respComments.results);
+        }
+
         // Grab logs
         const respLogs = await solLogModel.get({ solId: id });
-        if (respLogs.results?.length) setLogs(respLogs.results);
+        if (respLogs.results?.length) {
+          respLogs.results.map(async (log: Record<string, any>) => {
+            if (getUser)
+              log.actionUser = (
+                await uidsToNames([log.actionUserId], getUser)
+              ).join("");
+            return log;
+          });
+          setLogs(respLogs.results);
+        }
       }
     })();
   }, [sol]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (getUser && sol?.viewedBy) {
+      uidsToNames(sol.viewedBy, getUser).then((names) => {
+        if (isMounted) setViewedBy(names);
+      });
+    } else {
+      setViewedBy([]);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [sol?.viewedBy, getUser]);
 
   return (
     <div>
@@ -168,7 +202,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </div>
               <div className="mb-4">
                 <label>Viewed By ({sol.viewedBy?.length || 0})</label>
-                <span>{sol.viewedBy?.join(", ")}</span>
+                <span>{viewedBy?.join(", ")}</span>
               </div>
 
               <Tabs defaultValue="notes">
@@ -207,7 +241,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                               styles.sol_tabs_commentsContent_comment_author
                             }
                           >
-                            {comment.authorId}
+                            {comment.author}
                           </span>
                           <span
                             className={
@@ -256,8 +290,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                           {$d(log.created, "M/dd/yyyy h:mm a")}
                         </span>
                         <div>
-                          {log.actionUserId} {log.actionType}ed this
-                          solicitation.
+                          {log.actionUser}{" "}
+                          {log.actionType +
+                            (log.actionType.charAt(
+                              log.actionType.length - 1
+                            ) === "e"
+                              ? "d"
+                              : "ed")}{" "}
+                          this solicitation.
                           {Object.values(log.actionData || {}).length > 0 && (
                             <pre>{JSON.stringify(log.actionData)}</pre>
                           )}
@@ -369,14 +409,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <label>Extracted Date</label>
               <span>{sol.created && $d(sol.created, "M/dd/yyyy h:mm a")}</span>
             </div>
-
             <EditSolDialog
               solId={sol.id}
               open={showEditSol}
               onOpenChange={setShowEditSol}
               onSubmitSuccess={() => refresh()}
             />
-
             <CreateCommentDialog
               solId={sol.id}
               open={showCreateComment}

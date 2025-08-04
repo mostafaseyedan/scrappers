@@ -105,11 +105,13 @@ const ScraperChart = () => {
     });
 
     if (statData.results?.length) {
+      console.log("statData", statData.results);
       const { data, vendors } = generateChartData(
         statData.results,
         startDate,
         endDate
       );
+      console.log({ data, vendors });
       setChartData(data);
       setVendors(vendors);
     }

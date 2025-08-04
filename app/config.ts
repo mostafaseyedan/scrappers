@@ -5,8 +5,8 @@ export const cnStatuses = {
   preApproval: "Pre-Approval",
   submitted: "Submitted",
   negotiation: "Negotiation",
-  monitor: "Monitor",
   awarded: "Awarded",
+  monitor: "Monitor",
   notWon: "Not Won",
   notPursuing: "Not Pursuing",
 };
