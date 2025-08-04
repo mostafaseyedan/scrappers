@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getById } from "@/lib/firebaseAdmin";
 import { checkSession } from "@/lib/serverUtils";
 import { initAuth } from "@/lib/firebaseAdmin";
 import { z } from "zod";
