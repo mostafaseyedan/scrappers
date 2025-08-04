@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@elastic/elasticsearch':
-        specifier: ^9.0.3
-        version: 9.0.3
+        specifier: ^9.1.0
+        version: 9.1.0
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -217,8 +217,8 @@ packages:
     resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
     engines: {node: '>=18'}
 
-  '@elastic/elasticsearch@9.0.3':
-    resolution: {integrity: sha512-aagnssrVQi538wExO0Au169amtq68sXSwQMyzblQVAsqcmbqRTtzmGhKOjnDP0LK3ml0Mtje1uX+Vda7RhqDsA==}
+  '@elastic/elasticsearch@9.1.0':
+    resolution: {integrity: sha512-lV5uZlzBuXSkn7KdYaArqN3PJEO98bAKaSIO4Fh2B565/bJcnLLP3zbGX/h2cn2CbdfmLnoOczgzQ0H09KDuWQ==}
     engines: {node: '>=18'}
 
   '@elastic/transport@9.1.0':
@@ -4601,7 +4601,7 @@ snapshots:
 
   '@csstools/css-tokenizer@3.0.4': {}
 
-  '@elastic/elasticsearch@9.0.3':
+  '@elastic/elasticsearch@9.1.0':
     dependencies:
       '@elastic/transport': 9.1.0
       apache-arrow: 19.0.1

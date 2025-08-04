@@ -12,6 +12,10 @@
       margin-left: auto;
     }
     &[data-status="submitted"],
+    &[data-status="researching"],
+    &[data-status="pursuing"],
+    &[data-status="preApproval"],
+    &[data-status="negotiation"],
     &[data-status="awarded"] {
       > button {
         @extend .sol_statusItem_submitted;
@@ -153,7 +157,11 @@
   }
 }
 
+.sol_statusItem_researching,
+.sol_statusItem_pursuing,
+.sol_statusItem_preApproval,
 .sol_statusItem_submitted,
+.sol_statusItem_negotiation,
 .sol_statusItem_awarded {
   color: map.get(variables.$statusColors, "submitted");
 }

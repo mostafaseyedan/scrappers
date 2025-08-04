@@ -43,17 +43,6 @@ export async function GET(
   try {
     if (!user) throw new Error("Unauthenticated");
     const doc = await getById(COLLECTION, id);
-    /* Get rid of this. This is a little too noisy.
-    await solLogModel.post({
-      solId: id,
-      baseUrl: process.env.BASE_URL,
-      token: process.env.SERVICE_KEY,
-      data: {
-        solId: id,
-        actionType: "view",
-        actionUserId: user.uid,
-      },
-    }); */
     results = doc;
   } catch (error) {
     console.error(`Failed to get from ${COLLECTION} ${id}`, error);
@@ -80,7 +69,11 @@ export async function PATCH(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
     const updatedDoc = await patch(COLLECTION, id, updateData);
-    await elasticPatch(COLLECTION, id, fireToJs(updateData));
+    const elasticDoc = fireToJs(updatedDoc);
+    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
+    if (elasticDoc.description)
+      elasticDoc.description_semantic = elasticDoc.description;
+    await elasticPatch(COLLECTION, id, elasticDoc);
     await solLogModel.post({
       solId: id,
       baseUrl: process.env.BASE_URL,
@@ -119,7 +112,24 @@ export async function PUT(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
     const updatedDoc = await put(COLLECTION, id, updateData);
-    await elasticPatch(COLLECTION, id, fireToJs(updateData));
+    const elasticDoc = fireToJs(updatedDoc);
+    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
+    if (elasticDoc.description)
+      elasticDoc.description_semantic = elasticDoc.description;
+    await elasticPatch(COLLECTION, id, elasticDoc);
+
+    await solLogModel.post({
+      solId: id,
+      baseUrl: process.env.BASE_URL,
+      token: process.env.SERVICE_KEY,
+      data: {
+        solId: id,
+        actionType: "update",
+        actionData: updateData,
+        actionUserId: user.uid,
+      },
+    });
+
     results = updatedDoc.data();
   } catch (error) {
     console.error(`Failed to update in ${COLLECTION} ${id}`, error);

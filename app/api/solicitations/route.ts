@@ -51,7 +51,13 @@ export async function POST(req: NextRequest) {
 
     const parsedData = solModel.schema.postApi.parse(bodyJson);
     const fireDoc = await firePost(COLLECTION, parsedData, user);
-    await elasticPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
+    const elasticDoc = fireToJs(fireDoc);
+
+    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
+    if (elasticDoc.description)
+      elasticDoc.description_semantic = elasticDoc.description;
+
+    await elasticPost(COLLECTION, fireDoc.id, elasticDoc);
 
     results = fireDoc;
   } catch (error) {

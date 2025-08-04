@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, uidsToNames } from "@/lib/utils";
 import Link from "next/link";
 import {
   useContext,
@@ -50,21 +50,6 @@ type SolicitationProps = {
   onEditSol: (solId: string) => void;
   variant?: "compact" | "expanded";
 };
-
-async function uidsToNames(
-  uids: string[] = [],
-  getUser: (uid: string) => Promise<Record<string, any> | undefined>
-): Promise<string[]> {
-  return Promise.all(
-    uids.map(async (uid: string): Promise<string> => {
-      if (getUser) {
-        const user = await getUser(uid);
-        return user ? user.displayName || user.email || uid : uid;
-      }
-      return uid;
-    })
-  );
-}
 
 const Solicitation = ({
   sol,

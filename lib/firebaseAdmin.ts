@@ -123,6 +123,7 @@ export async function get(dbPath: string, options: GetOptions = {}) {
     queryChain = queryChain.offset(offset);
   }
 
+  // NOTE: Firestore only supports one field filter at a time w/o index.
   const rawFilterItems = Object.entries(filters);
   const filterItems = [];
   if (rawFilterItems.length > 0) {
@@ -163,8 +164,11 @@ export async function get(dbPath: string, options: GetOptions = {}) {
     );
   }
 
-  // Sorting is not allowed with filter items
-  if (sort && rawFilterItems.length === 0) {
+  // Sorting is not allowed with other filters not matching the sort field
+  const notSortFilters = rawFilterItems.filter(
+    (filter) => filter[0] !== sort.split(" ")[0]
+  );
+  if (sort && notSortFilters.length === 0) {
     const [field, direction] = sort.split(" ");
     queryChain = queryChain.orderBy(
       field,

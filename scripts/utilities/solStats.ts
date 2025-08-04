@@ -5,7 +5,7 @@ import { format as $d, addDays, subDays, set as dSet } from "date-fns";
 
 async function run() {
   const startDate = subDays(new Date(), 90);
-  const endDate = addDays(new Date(), 1);
+  const endDate = addDays(new Date(), 2);
   const created = `> ${$d(startDate, "yyyy-MM-dd")} AND < ${$d(
     endDate,
     "yyyy-MM-dd"

@@ -44,7 +44,11 @@ async function run() {
         console.log("Processing document", doc.id);
         return [
           { index: { _index: "solicitations", _id: doc.id } },
-          { ...doc },
+          {
+            ...doc,
+            title_semantic: doc.title,
+            description_semantic: doc.description,
+          },
         ];
       },
       onDrop: (tdoc) => {
