@@ -9,6 +9,7 @@ import {
   executeTask,
   getLatestFolder,
   initHyperAgent,
+  isItRelated,
 } from "@/scripts/utils";
 import { sanitizeDateString } from "@/lib/utils";
 
@@ -113,7 +114,7 @@ const interestedCategories = {
   "33705": "Professional, scientific, and technical services",
 };
 
-function cleanUpCategorySummary(
+async function cleanUpCategorySummary(
   categorySummary: z.infer<typeof schemas.categorySummary>
 ) {
   const categoryId =
@@ -123,6 +124,7 @@ function cleanUpCategorySummary(
 
   for (const sol of categorySummary.solicitations) {
     const closingDate = sol.closingDate?.toString() || "";
+    let validSol;
 
     sol.categories = [`${categoryId} - ${interestedCategories[categoryId]}`];
 
@@ -130,14 +132,14 @@ function cleanUpCategorySummary(
       if (closingDate == "Upon Contract") {
         sol.closingDate = null;
         sol.notes = "Estimated End Date is Upon Contract";
-        cleanedUpSols.push(sol);
+        validSol = { ...sol };
       } else if (closingDate.match(/^[a-z]+ \d{2}, \d{4}/i)) {
         sol.closingDate = new Date(closingDate).toISOString();
         const secDiff =
           (new Date(sol.closingDate).getTime() - new Date().getTime()) / 1000;
         // If the closing date is more than 3 days in the future, we keep it
         if (secDiff > 60 * 60 * 24 * 3) {
-          cleanedUpSols.push(sol);
+          validSol = { ...sol };
         } else {
           countExpired++;
         }
@@ -146,17 +148,26 @@ function cleanUpCategorySummary(
           const testDate = new Date(sol.closingDate);
           if (!isNaN(testDate.getTime())) {
             sol.closingDate = testDate.toISOString();
-            cleanedUpSols.push(sol);
+            validSol = { ...sol };
           } else {
-            console.log("ignored", sol.title);
+            console.log(`ignored invalid closingDate ${sol.closingDate}`);
           }
         } else {
           sol.closingDate = "";
-          cleanedUpSols.push(sol);
+          validSol = { ...sol };
         }
       }
     } else {
       countExpired++;
+    }
+
+    if (validSol) {
+      const isIt = await isItRelated(validSol);
+      if (!isIt) {
+        console.log(chalk.yellow(`  Not IT-related. Skipping.`));
+      } else {
+        cleanedUpSols.push(validSol);
+      }
     }
   }
 
@@ -225,7 +236,7 @@ async function run(agent: any) {
     dupCount = 0;
 
     // Loop through each solicitation in the category
-    const cleanedUpSols = cleanUpCategorySummary(categorySummary);
+    const cleanedUpSols = await cleanUpCategorySummary(categorySummary);
     console.log(
       `    Filtered ${cleanedUpSols.length} out of ${categorySummary.totalSolicitations} solicitations`
     );
