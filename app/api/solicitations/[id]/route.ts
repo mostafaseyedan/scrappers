@@ -3,7 +3,10 @@ import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
 import { remove as elasticRemove, patch as elasticPatch } from "@/lib/elastic";
 import { checkSession } from "@/lib/serverUtils";
-import { solicitation_log as solLogModel } from "@/app/models";
+import {
+  solicitation as solModel,
+  solicitation_log as solLogModel,
+} from "@/app/models";
 
 const COLLECTION = "solicitations";
 
@@ -60,12 +63,14 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const { body } = req;
-  const updateData = await new NextResponse(body).json();
+  let updateData = await new NextResponse(body).json();
   const user = await checkSession(req);
   let results;
   let status = 200;
 
   if (updateData.cnStatus === "notPursuing") updateData.cnType = "nonRelevant";
+  if (updateData.publishDate === "") updateData.publishDate = null;
+  if (updateData.closingDate === "") updateData.closingDate = null;
 
   try {
     if (!user) throw new Error("Unauthenticated");

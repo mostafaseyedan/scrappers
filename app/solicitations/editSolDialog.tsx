@@ -47,6 +47,7 @@ const EditSolDialog = ({
     (async () => {
       if (solId) {
         const sol = await solModel.getById({ id: solId });
+        setFormError("");
         form.reset({
           title: sol.title ?? "",
           issuer: sol.issuer ?? "",
@@ -93,13 +94,20 @@ const EditSolDialog = ({
     formValues.categories = sanitizeUniqueCommaValues(formValues.categories);
     formValues.keywords = sanitizeUniqueCommaValues(formValues.keywords);
 
-    const resp = await solModel.patch({ id: solId, data: formValues });
+    let resp;
+    try {
+      resp = await solModel.patch({ id: solId, data: formValues });
+    } catch (error: unknown) {
+      resp = { error };
+    }
 
-    if (resp.error) {
-      toast.error("Failed to update solicitation");
+    if (resp?.error) {
+      toast.error("Failed to update solicitation", resp.error);
+      setFormError(resp.error.toString());
       return console.error("Error updating solicitation:", resp.error);
     }
 
+    setFormError("");
     onOpenChange(false);
     toast.success(`Solicitation ${solId} updated successfully`);
     onSubmitSuccess?.();

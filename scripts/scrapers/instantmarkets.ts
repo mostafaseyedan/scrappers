@@ -152,12 +152,28 @@ async function run(agent: any) {
     const solsLen = categoryPage.solicitations.length;
     for (let solIndex = 0; solIndex < solsLen; solIndex++) {
       const rawSol = categoryPage.solicitations[solIndex];
+      let fireDoc;
+
       console.log(
         `\np[${page}/${totalPages}] [${solIndex + 1}/${solsLen}] ${rawSol.id} ${
           rawSol.title
         }`
       );
 
+      // Check Firestore for existing solicitation
+      const respCheckExist = await solModel.get({
+        baseUrl: BASE_URL,
+        filters: { siteId: rawSol.id },
+        token: process.env.SERVICE_KEY,
+      });
+      if (respCheckExist.results?.length) {
+        fireDoc = respCheckExist.results[0];
+        console.log(chalk.grey(`  Already exists in Firestore ${fireDoc.id}.`));
+        dupCount++;
+        continue;
+      }
+
+      // Check if the solicitation is IT-related
       const isIt = await isItRelated(rawSol);
       if (!isIt) {
         junkCount++;
@@ -165,6 +181,7 @@ async function run(agent: any) {
         continue;
       }
 
+      // Check if the solicitation is expired
       const sanitizedDateStr = sanitizeDateString(rawSol.closingDate);
       const closingDate =
         rawSol.closingDate && sanitizedDateStr
@@ -191,32 +208,18 @@ async function run(agent: any) {
       });
       rawSolDetails = JSON.parse(rawSolDetails) || {};
 
-      // Check Firestore for existing solicitation
-      const respCheckExist = await solModel.get({
+      // Save to Firestore
+      const dbSolData = sanitizeSolForApi({
+        ...rawSol,
+        ...(rawSol.title === rawSolDetails.title ? rawSolDetails : {}),
+      });
+      const newRecord = await solModel.post({
         baseUrl: BASE_URL,
-        filters: { siteId: rawSol.id },
+        data: dbSolData,
         token: process.env.SERVICE_KEY,
       });
-
-      // Save to Firestore
-      let fireDoc;
-      if (respCheckExist.results?.length) {
-        fireDoc = respCheckExist.results[0];
-        console.log(chalk.grey(`  Already exists in Firestore ${fireDoc.id}.`));
-        dupCount++;
-      } else {
-        const dbSolData = sanitizeSolForApi({
-          ...rawSol,
-          ...(rawSol.title === rawSolDetails.title ? rawSolDetails : {}),
-        });
-        const newRecord = await solModel.post({
-          baseUrl: BASE_URL,
-          data: dbSolData,
-          token: process.env.SERVICE_KEY,
-        });
-        console.log(chalk.green(`  Saved. ${newRecord.id}`));
-        successCount++;
-      }
+      console.log(chalk.green(`  Saved. ${newRecord.id}`));
+      successCount++;
 
       if (dupCount >= 3) {
         console.warn(

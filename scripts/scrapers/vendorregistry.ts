@@ -120,6 +120,8 @@ async function run(agent: any) {
   const max = categorySummary.solicitations.length;
   for (let i = 0; i < max; i++) {
     const rawSol = categorySummary.solicitations[i];
+    let fireDoc;
+
     console.log(
       `\n[${i + 1}/${categorySummary.solicitations.length}] ${rawSol.id} - ${
         rawSol.title
@@ -134,7 +136,6 @@ async function run(agent: any) {
     });
 
     // Save to Firestore
-    let fireDoc;
     if (respCheckExist.results?.length) {
       fireDoc = respCheckExist.results[0];
       console.log(chalk.grey(`  Already exists in Firestore. ${fireDoc.id}`));

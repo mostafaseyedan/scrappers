@@ -121,12 +121,28 @@ async function cleanUpCategorySummary(
     categorySummary.categoryId as keyof typeof interestedCategories;
   let cleanedUpSols = [];
   let countExpired = 0;
+  let i = 1;
 
   for (const sol of categorySummary.solicitations) {
     const closingDate = sol.closingDate?.toString() || "";
     let validSol;
 
     sol.categories = [`${categoryId} - ${interestedCategories[categoryId]}`];
+
+    // Check Firestore for existing solicitation
+    const respCheckExist = await solModel.get({
+      baseUrl: BASE_URL,
+      filters: { siteId: sol.id },
+      token: process.env.SERVICE_KEY,
+    });
+    if (respCheckExist.results?.length) {
+      console.log(
+        `\n[${i}/${categorySummary.solicitations.length}] ${sol.id} - ${sol.title}`
+      );
+      console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
+      dupCount++;
+      continue;
+    }
 
     if (!closingDate.match(/closed/i)) {
       if (closingDate == "Upon Contract") {
@@ -151,6 +167,7 @@ async function cleanUpCategorySummary(
             validSol = { ...sol };
           } else {
             console.log(`ignored invalid closingDate ${sol.closingDate}`);
+            junkCount++;
           }
         } else {
           sol.closingDate = "";
@@ -164,11 +181,17 @@ async function cleanUpCategorySummary(
     if (validSol) {
       const isIt = await isItRelated(validSol);
       if (!isIt) {
+        console.log(
+          `\n[${i}/${categorySummary.solicitations.length}] ${validSol.id} - ${validSol.title}`
+        );
         console.log(chalk.yellow(`  Not IT-related. Skipping.`));
+        junkCount++;
       } else {
         cleanedUpSols.push(validSol);
       }
     }
+
+    i++;
   }
 
   if (countExpired > 0) {
@@ -238,7 +261,7 @@ async function run(agent: any) {
     // Loop through each solicitation in the category
     const cleanedUpSols = await cleanUpCategorySummary(categorySummary);
     console.log(
-      `    Filtered ${cleanedUpSols.length} out of ${categorySummary.totalSolicitations} solicitations`
+      `\nFiltered ${cleanedUpSols.length} out of ${categorySummary.solicitations.length} solicitations`
     );
     for (let i = 0; i < cleanedUpSols.length; i++) {
       const rawSol = cleanedUpSols[i];

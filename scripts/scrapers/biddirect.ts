@@ -325,6 +325,19 @@ async function run(agent: any) {
         } ${rawSol.title}`
       );
 
+      // Check Firestore for existing solicitation
+      const respCheckExist = await solModel.get({
+        baseUrl: BASE_URL,
+        filters: { siteId: rawSol.id },
+        token: process.env.SERVICE_KEY,
+      });
+      if (respCheckExist.results?.length) {
+        console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
+        dupCount++;
+        continue;
+      }
+
+      // Check if the solicitation is IT-related
       const isIt = await isItRelated(rawSol);
       if (!isIt) {
         junkCount++;
@@ -332,6 +345,7 @@ async function run(agent: any) {
         continue;
       }
 
+      // Check if the solicitation is expired
       const sanitizedDateStr = sanitizeDateString(rawSol.closingDate);
       const closingDate =
         rawSol.closingDate && sanitizedDateStr
@@ -359,18 +373,6 @@ async function run(agent: any) {
       });
       rawSolDetails = JSON.parse(rawSolDetails) || {};
 
-      // Check Firestore for existing solicitation
-      const respCheckExist = await solModel.get({
-        baseUrl: BASE_URL,
-        filters: { siteId: rawSol.id },
-        token: process.env.SERVICE_KEY,
-      });
-      if (respCheckExist.results?.length) {
-        console.log(chalk.grey(`  Already exists in Firestore. Skipping.`));
-        dupCount++;
-        continue;
-      }
-
       // Save data
       const dbSolData = sanitizeSolForApi({
         ...rawSol,
@@ -382,6 +384,7 @@ async function run(agent: any) {
         token: process.env.SERVICE_KEY,
       });
       console.log(chalk.green(`  Saved. ${newRecord.id}`));
+      successCount++;
 
       // Process downloads
       const fileUrls = await processDownloads({
@@ -406,8 +409,6 @@ async function run(agent: any) {
           `  ${fileUrls.length} documents updated in Firestore for ${newRecord.id}`
         )
       );
-
-      successCount++;
 
       if (dupCount >= 10) {
         console.warn(
