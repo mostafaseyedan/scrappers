@@ -17,6 +17,15 @@ import { Dispatch, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { solicitation as solModel } from "@/app/models";
+import { cnStatuses, cnTypes } from "../config";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import styles from "./topBar.module.scss";
 
@@ -56,7 +65,6 @@ const TopBar = forwardRef(
     ref
   ) => {
     const [counts, setCounts] = useState<Record<string, number>>({});
-    const [cnStatus, setCnStatus] = useState("new");
 
     async function refresh() {
       const counts = {
@@ -85,75 +93,94 @@ const TopBar = forwardRef(
 
     return (
       <div className={cn(styles.topBar, className)}>
-        <Tabs
-          value={cnStatus}
-          onValueChange={(value) => {
-            setQ("");
-            setCnStatus(value);
-            setPage(1);
-            setFilter((prev) => {
-              if (value === "all") {
-                const newValues = { ...prev };
-                delete newValues.cnStatus;
-                return newValues;
-              } else {
-                return { ...prev, cnStatus: value };
-              }
-            });
-          }}
+        <div
+          className={styles.cnStatusDropdown}
+          data-status={queryParams.filter.cnStatus}
         >
-          <TabsList>
-            <TabsTrigger className={styles.topBar_tab__new} value="new">
-              New ({counts.new || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__researching}
-              value="researching"
-            >
-              Researching ({counts.researching || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__pursuing}
-              value="pursuing"
-            >
-              Pursuing ({counts.pursuing || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__preApproval}
-              value="preApproval"
-            >
-              Pre-Approval ({counts.preApproval || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__submitted}
-              value="submitted"
-            >
-              Submitted ({counts.submitted || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__negotiation}
-              value="negotiation"
-            >
-              Negotiation ({counts.negotiation || 0})
-            </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__awarded} value="awarded">
-              Awarded ({counts.awarded || 0})
-            </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__monitor} value="monitor">
-              Monitor ({counts.monitor || 0})
-            </TabsTrigger>
-            <TabsTrigger className={styles.topBar_tab__notWon} value="notWon">
-              Not Won ({counts.notWon || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              className={styles.topBar_tab__notPursuing}
-              value="notPursuing"
-            >
-              Not Pursuing ({counts.notPursuing || 0})
-            </TabsTrigger>
-            <TabsTrigger value="all">All ({counts.total})</TabsTrigger>
-          </TabsList>
-        </Tabs>
+          <Select
+            value={
+              queryParams.filter.cnStatus === undefined
+                ? "all"
+                : queryParams.filter.cnStatus || "new"
+            }
+            onValueChange={async (value) => {
+              setPage(1);
+              setFilter((prev) => {
+                if (value === "all") {
+                  const newValues = { ...prev };
+                  delete newValues.cnStatus;
+                  return newValues;
+                } else {
+                  return { ...prev, cnStatus: value };
+                }
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="New" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectGroup>
+                {Object.entries(cnStatuses).map(([value, label]) => (
+                  <SelectItem
+                    className={styles[`sol_statusItem_${value}`]}
+                    key={value}
+                    value={value}
+                  >
+                    {label} <span>({counts[value] || 0})</span>
+                  </SelectItem>
+                ))}
+                <SelectItem
+                  className={styles[`sol_statusItem_all`]}
+                  value="all"
+                >
+                  All <span>({counts.total || 0})</span>
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className={styles.cnTypeDropdown}>
+          <Select
+            value={queryParams.filter.cnType || "-"}
+            onValueChange={async (value) => {
+              setPage(1);
+              setFilter((prev) => {
+                if (value === "-") {
+                  const newValues = { ...prev };
+                  delete newValues.cnType;
+                  return newValues;
+                } else {
+                  return { ...prev, cnType: value };
+                }
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="-" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectGroup>
+                <SelectItem
+                  key={"default"}
+                  value={"-"}
+                  className={styles[`sol_typeItem_default`]}
+                >
+                  -
+                </SelectItem>
+                {cnTypes.map((type) => (
+                  <SelectItem
+                    key={type.key}
+                    value={type.key}
+                    className={styles[`sol_typeItem_${type.key}`]}
+                  >
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={onClickCreateSol}>Create</Button>
         <div className={styles.topBar_filter}>
           <Popover>
@@ -199,7 +226,11 @@ const TopBar = forwardRef(
           value={q}
           onChange={(e) => {
             setPage(1);
-            setCnStatus("all");
+            setFilter((prev) => {
+              const newValues = { ...prev };
+              delete newValues.cnStatus;
+              return newValues;
+            });
             setQ(e.target.value);
           }}
         />
