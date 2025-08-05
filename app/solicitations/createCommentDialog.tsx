@@ -68,9 +68,8 @@ const CreateCommentDialog = ({
               render={({ field }) => {
                 return (
                   <FormItem>
-                    <FormLabel>Body</FormLabel>
                     <FormControl>
-                      <Textarea {...field} />
+                      <Textarea {...field} placeholder="Message" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

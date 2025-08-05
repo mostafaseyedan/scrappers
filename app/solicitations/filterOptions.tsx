@@ -10,7 +10,6 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
-import { cnTypes } from "../config";
 
 import styles from "./filterOptions.module.scss";
 
@@ -109,52 +108,23 @@ const FilterOptions = ({
           </SelectContent>
         </Select>
       </section>
-      <section>
-        <label>Type</label>
-        <Select
-          defaultValue="none"
-          value={queryParams.filter.cnType || "none"}
-          onValueChange={(value) =>
-            setFilter((prev) => {
-              if (value === "none") {
-                const newValues = { ...prev };
-                delete newValues.cnType;
-                return newValues;
-              } else {
-                return { ...prev, cnType: value };
-              }
-            })
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">None</SelectItem>
-              {cnTypes.map((type) => (
-                <SelectItem key={type.key} value={type.key}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </section>
       <section className={styles.filterOptions_other}>
         <label>Other</label>
         <Checkbox
           checked={queryParams.filter.cnLiked || false}
-          onCheckedChange={(checked) =>
+          onCheckedChange={(checked) => {
+            setPage(1);
             setFilter((prev) => {
+              const newValues = { ...prev };
               if (checked === false) {
-                const newValues = { ...prev };
                 delete newValues.cnLiked;
                 return newValues;
+              } else {
+                delete newValues.cnStatus;
+                return { ...newValues, cnLiked: true };
               }
-              return { ...prev, cnLiked: true };
-            })
-          }
+            });
+          }}
         />
         <span>Show saved items</span>
       </section>

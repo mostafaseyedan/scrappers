@@ -54,7 +54,7 @@ function generateChartData(
     }
   }
 
-  for (let day = 0; day < 7; day++) {
+  for (let day = 0; day < 15; day++) {
     const dayStr = $d(addDays(startDate, day), "yyyy-MM-dd");
     const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
       acc[vendor] = 0;
@@ -77,7 +77,7 @@ function generateChartData(
       0
     );
     data.push({
-      date: `${$d(dateStr, "M/dd")} (${dayTotal})`,
+      date: `${$d(dateStr, "M/d")}`,
       ...vendorData,
     });
   }
@@ -92,7 +92,7 @@ const ScraperChart = () => {
   const [vendors, setVendors] = useState<string[]>([]);
 
   async function refresh() {
-    const startDate = subDays(new Date(), 6);
+    const startDate = subDays(new Date(), 15);
     const endDate = addDays(new Date(), 1);
     const statData = await StatModel.get({
       sort: "startDate desc",
@@ -125,7 +125,7 @@ const ScraperChart = () => {
     <Card className={styles.scraperChart}>
       <CardHeader>
         <CardTitle>Solicitations Success Count</CardTitle>
-        <CardDescription>last 7 days</CardDescription>
+        <CardDescription>last 15 days</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer

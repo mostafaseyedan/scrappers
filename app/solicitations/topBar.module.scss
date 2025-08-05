@@ -1,6 +1,45 @@
 @use "sass:map";
 @use "../variables";
 
+.cnStatusDropdown {
+  &[data-status="submitted"],
+  &[data-status="researching"],
+  &[data-status="pursuing"],
+  &[data-status="preApproval"],
+  &[data-status="negotiation"],
+  &[data-status="awarded"] {
+    > button {
+      @extend .sol_statusItem_submitted;
+      border-color: map.get(variables.$statusColors, "submitted");
+    }
+  }
+  &[data-status="rfps"],
+  &[data-status="monitor"] {
+    > button {
+      @extend .sol_statusItem_rfps;
+      border-color: map.get(variables.$statusColors, "rfps");
+    }
+  }
+  &[data-status="erp"] {
+    > button {
+      @extend .sol_statusItem_erp;
+      border-color: map.get(variables.$statusColors, "erp");
+    }
+  }
+  &[data-status="notWon"] {
+    > button {
+      @extend .sol_statusItem_notWon;
+      border-color: map.get(variables.$statusColors, "notWon");
+    }
+  }
+  &[data-status="notPursuing"] {
+    > button {
+      @extend .sol_statusItem_notPursuing;
+      border-color: map.get(variables.$statusColors, "notPursuing");
+    }
+  }
+}
+
 .topBar {
   display: flex;
   gap: 5px;
@@ -37,4 +76,26 @@
       color: map.get(variables.$statusColors, "notPursuing");
     }
   }
+}
+
+.sol_statusItem_researching,
+.sol_statusItem_pursuing,
+.sol_statusItem_preApproval,
+.sol_statusItem_submitted,
+.sol_statusItem_negotiation,
+.sol_statusItem_awarded {
+  color: map.get(variables.$statusColors, "submitted");
+}
+.sol_statusItem_rfps,
+.sol_statusItem_monitor {
+  color: map.get(variables.$statusColors, "rfps");
+}
+.sol_statusItem_erp {
+  color: map.get(variables.$statusColors, "erp");
+}
+.sol_statusItem_notWon {
+  color: map.get(variables.$statusColors, "notWon");
+}
+.sol_statusItem_notPursuing {
+  color: map.get(variables.$statusColors, "notPursuing");
 }
