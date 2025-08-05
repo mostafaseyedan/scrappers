@@ -72,10 +72,11 @@ function generateChartData(
   }
 
   for (const [dateStr, vendorData] of Object.entries(dailyStats)) {
+    /*
     const dayTotal = Object.values(vendorData).reduce(
       (sum, count) => sum + count,
       0
-    );
+    ); */
     data.push({
       date: `${$d(dateStr, "M/d")}`,
       ...vendorData,
