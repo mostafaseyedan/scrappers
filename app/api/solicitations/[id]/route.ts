@@ -77,6 +77,10 @@ export async function PATCH(
     if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
     if (elasticDoc.description)
       elasticDoc.description_semantic = elasticDoc.description;
+
+    if (elasticDoc.publishDate === "") elasticDoc.publishDate = null;
+    if (elasticDoc.closingDate === "") elasticDoc.closingDate = null;
+
     await elasticPatch(COLLECTION, id, elasticDoc);
     await solLogModel.post({
       solId: id,
