@@ -1,4 +1,4 @@
-Connect to https://rfpmart.com/ to search for future RFPs for ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, Oracle Database Managed Services in the USA. Focus on opportunities in the future only, not past or expired.
+Connect to https://www.centralauctionhouse.com/ to search for future RFPs for ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, Oracle Database Managed Services in the USA. Focus on opportunities in the future only, not past or expired.
 
 Important Instructions for Robust Execution:
 
@@ -19,6 +19,6 @@ closingDate: Bidding End Date (Deadline)
 description: Key Notes
 externalLinks: array of any external links or even direct url to the issuer website
 siteId: get from the title link. For example a4c9f99f-c56e-4d02-b334-fde94fceff8b is the ID from  https://app.bidsync.com/bid-detail/a4c9f99f-c56e-4d02-b334-fde94fceff8b?bidScore=1.0004
-url: title url link
+siteUrl: title url link
 
-For the 'description' column, provide a brief summary of what the buyer is looking for. For the 'url' column, provide the direct link to the RFP.
+For the 'description' column, provide a brief summary of what the buyer is looking for. For the 'siteUrl' column, provide the direct link to the RFP.
