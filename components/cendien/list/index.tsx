@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 type ListParams = {
   className?: string;
   itemTemplate?: (item: any) => React.ReactNode;
+  onPreResults?: (results: any[]) => void;
   url: string;
 };
 
@@ -16,6 +17,7 @@ const List = ({
   url,
   className,
   itemTemplate = defaultItemTemplate,
+  onPreResults = async (results) => results,
 }: ListParams) => {
   const [items, setItems] = useState([]);
 
@@ -24,7 +26,9 @@ const List = ({
     const json = await results.json();
     if (json.error) return console.error(json.error);
     if (json.results) {
-      setItems(json.results);
+      let results = json.results;
+      if (onPreResults) results = await onPreResults(json.results);
+      setItems(results);
     }
   }
 
