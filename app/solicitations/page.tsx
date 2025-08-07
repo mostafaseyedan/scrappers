@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Solicitation } from "./solicitation";
 import queryString from "query-string";
@@ -19,6 +19,8 @@ import { EditSolDialog } from "./editSolDialog";
 import { CreateCommentDialog } from "./createCommentDialog";
 import { CreateSolDialog } from "./createSolDialog";
 import { TopBar } from "./topBar";
+import { UserContext } from "../userContext";
+import { uidsToNames } from "@/lib/utils";
 
 import styles from "./page.module.scss";
 
@@ -48,6 +50,8 @@ export default function Page() {
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
   const [showCreateSol, setShowCreateSol] = useState(false);
+  const userContext = useContext(UserContext);
+  const getUser = userContext?.getUser;
 
   const debouncedSearchSols = useDebouncedCallback(
     async (params: Partial<SearchSolsParams>) => {
@@ -94,16 +98,32 @@ export default function Page() {
     const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
     const data = await resp.json();
     const total = data.hits?.total?.value || 0;
+    const hits = data.hits?.hits.length ? data.hits.hits : [];
+    const dbSols = hits.length
+      ? hits.map((hit: Record<string, any>) => ({
+          ...hit._source,
+          id: hit._id,
+          viewedBy: hit._source.viewedBy || [],
+        }))
+      : [];
 
-    if (data.hits?.hits.length > 0) {
-      const newSols = data.hits.hits.map((hit: Record<string, any>) => ({
-        id: hit._id,
-        ...hit._source,
-      }));
-      setSols(newSols);
-    } else {
-      setSols([]);
+    if (dbSols.length > 0) {
+      let userIds: string[] = [];
+      dbSols.forEach((sol: Record<string, any>) => {
+        userIds.push(...(sol.viewedBy || []));
+      });
+      const userNames = getUser ? await uidsToNames(userIds, getUser) : [];
+      const userMap = new Map(userIds.map((id, idx) => [id, userNames[idx]]));
+
+      dbSols.map((sol: Record<string, any>) => {
+        sol.viewedByNames = (sol.viewedBy || []).map((uid: string) => {
+          return userMap.get(uid) || uid;
+        });
+        return sol;
+      });
     }
+
+    setSols(dbSols);
 
     if (q || Object.keys(finalFilter).length > 0) {
       setTotalFiltered(total);
