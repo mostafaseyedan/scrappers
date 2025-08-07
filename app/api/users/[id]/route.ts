@@ -24,7 +24,11 @@ export async function GET(
   try {
     if (!user) throw new Error("Unauthenticated");
 
-    results = await auth.getUser(id);
+    if (id.startsWith("service")) {
+      results = { displayName: id };
+    } else {
+      results = await auth.getUser(id);
+    }
   } catch (error) {
     console.error(`Failed to get from ${COLLECTION} ${id}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);

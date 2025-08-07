@@ -46,7 +46,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [cnType, setCnType] = useState<string>(sol?.cnType || "-");
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
-  const [viewedBy, setViewedBy] = useState<string[]>([]);
 
   async function refresh() {
     if (!id) {
@@ -83,27 +82,48 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           await solModel.patch({ id: sol.id, data: { viewedBy: viewedBy } });
         }
 
-        // Grab comments
+        let userIds: string[] = [];
+
         const respComments = await solCommentModel.get(id);
+        const respLogs = await solLogModel.get({ solId: id });
+
+        if (respComments.results?.length) {
+          userIds = Array.from(
+            new Set(
+              respComments.results.map(
+                (msg: Record<string, any>) => msg.authorId
+              )
+            )
+          );
+        }
+
+        if (respLogs.results?.length) {
+          userIds = Array.from(
+            new Set([
+              ...userIds,
+              ...respLogs.results.map(
+                (log: Record<string, any>) => log.actionUserId
+              ),
+            ])
+          );
+        }
+
+        const userNames = getUser ? await uidsToNames(userIds, getUser) : [];
+        const userMap = new Map(userIds.map((id, idx) => [id, userNames[idx]]));
+
+        // Grab comments
         if (respComments.results?.length) {
           respComments.results.map(async (msg: Record<string, any>) => {
-            if (getUser)
-              msg.author = (await uidsToNames([msg.authorId], getUser)).join(
-                ""
-              );
+            msg.author = userMap.get(msg.authorId) || msg.authorId;
             return msg;
           });
           setComments(respComments.results);
         }
 
         // Grab logs
-        const respLogs = await solLogModel.get({ solId: id });
         if (respLogs.results?.length) {
           respLogs.results.map(async (log: Record<string, any>) => {
-            if (getUser)
-              log.actionUser = (
-                await uidsToNames([log.actionUserId], getUser)
-              ).join("");
+            log.actionUser = userMap.get(log.actionUserId) || log.actionUserId;
             return log;
           });
           setLogs(respLogs.results);
@@ -111,20 +131,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       }
     })();
   }, [sol]);
-
-  useEffect(() => {
-    let isMounted = true;
-    if (getUser && sol?.viewedBy) {
-      uidsToNames(sol.viewedBy, getUser).then((names) => {
-        if (isMounted) setViewedBy(names);
-      });
-    } else {
-      setViewedBy([]);
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [sol?.viewedBy, getUser]);
 
   return (
     <div>
@@ -202,7 +208,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </div>
               <div className="mb-4">
                 <label>Viewed By ({sol.viewedBy?.length || 0})</label>
-                <span>{viewedBy?.join(", ")}</span>
+                <span>{sol.viewedByNames?.join(", ")}</span>
               </div>
 
               <Tabs defaultValue="notes">
