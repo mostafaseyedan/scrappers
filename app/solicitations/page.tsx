@@ -108,7 +108,7 @@ export default function Page() {
       : [];
 
     if (dbSols.length > 0) {
-      let userIds: string[] = [];
+      const userIds: string[] = [];
       dbSols.forEach((sol: Record<string, any>) => {
         userIds.push(...(sol.viewedBy || []));
       });
