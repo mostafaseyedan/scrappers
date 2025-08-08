@@ -69,8 +69,8 @@ export default function Page() {
               if (!getUser) return logs;
 
               // Get user name for each actionUserId
-              let userIds = new Set<string>();
-              let solIds = new Set<string>();
+              const userIds = new Set<string>();
+              const solIds = new Set<string>();
 
               logs.forEach((log) => {
                 if (log.actionUserId) userIds.add(log.actionUserId as string);
