@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
-import { remove as elasticRemove, patch as elasticPatch } from "@/lib/elastic";
+import {
+  remove as elasticRemove,
+  patch as elasticPatch,
+  post as elasticPost,
+} from "@/lib/elastic";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation_log as solLogModel } from "@/app/models";
 
@@ -81,7 +85,16 @@ export async function PATCH(
     if (elasticDoc.publishDate === "") elasticDoc.publishDate = null;
     if (elasticDoc.closingDate === "") elasticDoc.closingDate = null;
 
-    await elasticPatch(COLLECTION, id, elasticDoc);
+    // If the elastic document is missing, create it
+    await elasticPatch(COLLECTION, id, elasticDoc).catch(async (error) => {
+      console.error(`Failed to update elastic for ${COLLECTION} ${id}`, error);
+
+      if (error.message.includes("document_missing_exception")) {
+        await elasticPost(COLLECTION, id, elasticDoc);
+        console.log(`Elastic document created for ${COLLECTION} ${id}`);
+      }
+    });
+
     await solLogModel.post({
       solId: id,
       baseUrl: process.env.BASE_URL,

@@ -7,13 +7,13 @@ import { secToTimeStr } from "@/lib/utils";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const TOKEN = process.env.SERVICE_KEY;
-const VENDOR = "chatgptweb";
+const VENDOR = "bidmain";
 
 async function uploadBidsyncJson() {
   // Path to the JSON file
   const filePath = path.resolve(
     __dirname,
-    `../../.output/${VENDOR}/2025-08-06.json`
+    `../../.output/${VENDOR}/2025-08-08.json`
   );
   const fileContent = fs.readFileSync(filePath, "utf-8");
   const records = JSON.parse(fileContent);
@@ -34,7 +34,6 @@ async function uploadBidsyncJson() {
         );
         dupCount++;
 
-        /*
         await solicitation.patch({
           id: checkRecord.results[0].id,
           baseUrl: BASE_URL,
@@ -42,7 +41,6 @@ async function uploadBidsyncJson() {
           data: { ...record },
         });
         console.log("  Updated existing record");
-        */
 
         continue; // Skip if the record already exists
       }

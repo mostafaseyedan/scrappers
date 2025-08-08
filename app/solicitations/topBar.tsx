@@ -67,16 +67,24 @@ const TopBar = forwardRef(
 
     async function refresh() {
       const counts = {
-        new: await solModel.count({ cnStatus: "new" }),
-        researching: await solModel.count({ cnStatus: "researching" }),
-        pursuing: await solModel.count({ cnStatus: "pursuing" }),
-        preApproval: await solModel.count({ cnStatus: "preApproval" }),
-        submitted: await solModel.count({ cnStatus: "submitted" }),
-        negotiation: await solModel.count({ cnStatus: "negotiation" }),
-        monitor: await solModel.count({ cnStatus: "monitor" }),
-        awarded: await solModel.count({ cnStatus: "awarded" }),
-        notWon: await solModel.count({ cnStatus: "notWon" }),
-        notPursuing: await solModel.count({ cnStatus: "notPursuing" }),
+        new: await solModel.count({ filters: { cnStatus: "new" } }),
+        researching: await solModel.count({
+          filters: { cnStatus: "researching" },
+        }),
+        pursuing: await solModel.count({ filters: { cnStatus: "pursuing" } }),
+        preApproval: await solModel.count({
+          filters: { cnStatus: "preApproval" },
+        }),
+        submitted: await solModel.count({ filters: { cnStatus: "submitted" } }),
+        negotiation: await solModel.count({
+          filters: { cnStatus: "negotiation" },
+        }),
+        monitor: await solModel.count({ filters: { cnStatus: "monitor" } }),
+        awarded: await solModel.count({ filters: { cnStatus: "awarded" } }),
+        notWon: await solModel.count({ filters: { cnStatus: "notWon" } }),
+        notPursuing: await solModel.count({
+          filters: { cnStatus: "notPursuing" },
+        }),
         total: await solModel.count(),
       };
       setCounts(counts);
