@@ -56,6 +56,7 @@ const SolActions = ({
   sol,
   refreshSols,
   onEditSol,
+  onDeleteSuccess,
 }: SolActionsProps) => {
   return (
     <div className={cn(styles.solActions, className)}>
@@ -157,7 +158,7 @@ const SolActions = ({
                   <AlertDialogAction
                     onClick={async () => {
                       await solModel.remove({ id: sol.id });
-                      if (refreshSols) await refreshSols();
+                      if (onDeleteSuccess) onDeleteSuccess();
                     }}
                   >
                     Delete

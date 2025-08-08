@@ -7,6 +7,7 @@ import { useContext, useEffect } from "react";
 import { format as $d } from "date-fns";
 import { UserContext } from "@/app/userContext";
 import { uidsToNames } from "@/lib/utils";
+import { solicitation as solModel } from "@/app/models";
 
 import styles from "./page.module.scss";
 
@@ -68,13 +69,30 @@ export default function Page() {
               if (!getUser) return logs;
 
               // Get user name for each actionUserId
-              const userIds = Array.from(
-                new Set(logs.map((log) => log.actionUserId))
-              );
-              const userNames = await uidsToNames(userIds, getUser);
+              const userIds = new Set<string>();
+              const solIds = new Set<string>();
+
+              logs.forEach((log) => {
+                if (log.actionUserId) userIds.add(log.actionUserId as string);
+                if (log.solId) solIds.add(log.solId as string);
+              });
+
+              const userIdsArr: string[] = Array.from(userIds);
+              const solIdsArr: string[] = Array.from(solIds);
+
+              const userNames = await uidsToNames(userIdsArr, getUser);
               const userMap = new Map(
-                userIds.map((id, idx) => [id, userNames[idx]])
+                userIdsArr.map((id, idx) => [id, userNames[idx]])
               );
+              const solsEntries: [string, any][] = await Promise.all(
+                solIdsArr.map(async (id) => {
+                  const sol =
+                    (await solModel.getById({ id }).catch(() => null)) || {};
+                  return [id, sol] as [string, any];
+                })
+              );
+              const solsMap = new Map(solsEntries);
+              console.log({ solsMap });
 
               return logs
                 .sort(
@@ -85,6 +103,7 @@ export default function Page() {
                 .map((log) => ({
                   ...log,
                   actionUser: userMap.get(log.actionUserId) || log.actionUserId,
+                  sol: solsMap.get(log.solId) || {},
                 }));
             }}
             itemTemplate={(item) => (
@@ -101,7 +120,7 @@ export default function Page() {
                     (item.actionType.charAt(item.actionType.length - 1) === "e"
                       ? "d"
                       : "ed")}{" "}
-                  solicitation {item.solId}
+                  solicitation {item.sol?.title} {item.solId}
                   <div className={styles.solsList_item_actionData}>
                     {JSON.stringify(item.actionData)}
                   </div>

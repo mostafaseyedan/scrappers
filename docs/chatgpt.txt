@@ -1,4 +1,6 @@
-Connect to https://www.centralauctionhouse.com/ to search for future RFPs for ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, Oracle Database Managed Services in the USA. Focus on opportunities in the future only, not past or expired.
+Use user and pass for connecting to https://app.bidsync.com/login to search for future RFPs for ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, Oracle Database Managed Services in the USA. Focus on opportunities in the future only, not past or expired.
+user: idenis@gmail.com
+pass: xZR!@BG#5gtKx%J2
 
 Important Instructions for Robust Execution:
 

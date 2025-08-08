@@ -49,6 +49,55 @@ export function initStorage() {
   return getStorage(getApps().length ? getApp() : init());
 }
 
+export async function count(dbPath: string, options: Partial<GetOptions> = {}) {
+  const filters = options?.filters || {};
+  const collectionRef = client.collection(dbPath);
+  let queryChain: FirebaseFirestore.Query = collectionRef;
+
+  const rawFilterItems = Object.entries(filters);
+  const filterItems = [];
+  if (rawFilterItems.length > 0) {
+    for (const [field, value] of rawFilterItems) {
+      if (value.includes(" AND ")) {
+        const values = value.split(" AND ");
+        for (const val of values) {
+          // > or < operators
+          if (val.match(/^[><=]+ /)) {
+            const [operator, finalVal] = val.split(" ");
+            filterItems.push({
+              field,
+              operator: operator,
+              value: parseQueryValue(finalVal),
+            });
+          } else {
+            filterItems.push({
+              field,
+              operator: "==",
+              value: parseQueryString(val),
+            });
+          }
+        }
+      } else {
+        filterItems.push({
+          field,
+          operator: "==",
+          value: parseQueryValue(value as string),
+        });
+      }
+    }
+  }
+  for (const filterItem of filterItems) {
+    queryChain = queryChain.where(
+      filterItem.field,
+      filterItem.operator,
+      filterItem.value
+    );
+  }
+
+  const snapshot = await queryChain.count().get();
+  return snapshot.data().count;
+}
+
 export function parseQueryString(url: string) {
   const qIndex = url.indexOf("?");
 

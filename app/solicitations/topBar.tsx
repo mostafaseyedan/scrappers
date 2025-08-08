@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { solicitation as solModel } from "@/app/models";
 import { cnStatuses, cnTypes } from "../config";
 import {
   Select,
@@ -65,20 +64,13 @@ const TopBar = forwardRef(
   ) => {
     const [counts, setCounts] = useState<Record<string, number>>({});
 
+    async function getCounts() {
+      const resp = await fetch(`/api/solicitations/counts/summary`);
+      return (await resp.json()) || {};
+    }
+
     async function refresh() {
-      const counts = {
-        new: await solModel.count({ cnStatus: "new" }),
-        researching: await solModel.count({ cnStatus: "researching" }),
-        pursuing: await solModel.count({ cnStatus: "pursuing" }),
-        preApproval: await solModel.count({ cnStatus: "preApproval" }),
-        submitted: await solModel.count({ cnStatus: "submitted" }),
-        negotiation: await solModel.count({ cnStatus: "negotiation" }),
-        monitor: await solModel.count({ cnStatus: "monitor" }),
-        awarded: await solModel.count({ cnStatus: "awarded" }),
-        notWon: await solModel.count({ cnStatus: "notWon" }),
-        notPursuing: await solModel.count({ cnStatus: "notPursuing" }),
-        total: await solModel.count(),
-      };
+      const counts = await getCounts();
       setCounts(counts);
     }
 
@@ -173,7 +165,7 @@ const TopBar = forwardRef(
                     value={type.key}
                     className={styles[`sol_typeItem_${type.key}`]}
                   >
-                    {type.label}
+                    {type.label} {`(${counts[type.key] || 0})`}
                   </SelectItem>
                 ))}
               </SelectGroup>

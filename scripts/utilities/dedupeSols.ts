@@ -10,6 +10,8 @@ async function dedupeSolicitations() {
   const snapshot = await db.collection("solicitations").get();
   const siteIdMap: Record<string, any[]> = {};
 
+  console.log(`Found ${snapshot.size} solicitation records.`);
+
   // Group docs by siteId
   snapshot.docs.forEach((doc) => {
     const data = doc.data();
@@ -29,7 +31,11 @@ async function dedupeSolicitations() {
     if (!toKeep) toKeep = records[0];
     const toDelete = records.filter((r) => r.id !== toKeep.id);
     for (const rec of toDelete) {
-      await solModel.remove(rec.id, BASE_URL, process.env.DEV_API_TOKEN);
+      await solModel.remove({
+        id: rec.id,
+        baseUrl: BASE_URL,
+        token: process.env.SERVICE_KEY,
+      });
       console.log(`Deleted duplicate for siteId ${siteId}: ${rec.id}`);
       totalDeleted++;
     }

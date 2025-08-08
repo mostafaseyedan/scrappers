@@ -1,11 +1,4 @@
 import { z } from "zod";
-import { db } from "@/lib/firebaseClient";
-import {
-  collection as fCollection,
-  getCountFromServer,
-  query,
-  where,
-} from "firebase/firestore";
 import { cnStatuses } from "./config";
 import queryString from "query-string";
 
@@ -283,7 +276,37 @@ const defaultClientCalls = {
 }; */
 
 const defaultCalls = {
-  count: async () => {},
+  count: async ({
+    collection,
+    filters,
+    token,
+    baseUrl,
+  }: Partial<GetParams>) => {
+    const flattenedFilters: Record<string, any> = {};
+    for (const [key, value] of Object.entries(filters || {})) {
+      flattenedFilters[`filters.${key}`] = value;
+    }
+
+    const urlQueryString = queryString.stringify({
+      ...flattenedFilters,
+    });
+
+    const resp = await fetch(
+      `${baseUrl || ""}/api/${collection}/counts?${urlQueryString}`,
+      {
+        method: "GET",
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      }
+    );
+    const json = await resp.json();
+
+    if (json.error)
+      throw new Error(
+        `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`
+      );
+
+    return json.count || 0;
+  },
   get: async ({
     collection,
     page,
@@ -601,53 +624,37 @@ const solicitation: any = {
       title: z.string().min(1, "Title is required"),
     }),
   },
-  count: async (filter: Record<string, any> = {}) => {
-    const colRef = fCollection(db, "solicitations");
-    let queryRef: any = colRef;
-
-    Object.entries(filter).forEach(([key, value]) => {
-      queryRef = query(queryRef, where(key, "==", value));
-    });
-
-    const snap = await getCountFromServer(queryRef);
-    return snap.data().count;
-  },
-  get: async ({ collection = "solicitations", ...options }: GetParams) =>
-    await defaultCalls.get({ collection, ...options }),
-  getById: async ({
-    collection = "solicitations",
-    id,
-    ...options
-  }: GetByIdParams) =>
-    await defaultCalls.getById({ collection, id, ...options }),
-  patch: async ({
-    collection = "solicitations",
-    id,
-    data,
-    ...options
-  }: PatchParams) =>
-    await defaultCalls.patch({ collection, id, data, ...options }),
-  post: async ({
-    collection = "solicitations",
-    data,
-    ...options
-  }: PostParams) =>
-    await defaultCalls.post({
-      collection,
-      data,
+  count: async ({ ...options }: Partial<GetParams> = {}) =>
+    await defaultCalls.count({
+      collection: "solicitations",
       ...options,
     }),
-  put: async ({
-    collection = "solicitations",
-    id,
-    data,
-    ...options
-  }: PutParams) => await defaultCalls.put({ collection, id, data, ...options }),
-  remove: async ({
-    collection = "solicitations",
-    id,
-    ...options
-  }: RemoveParams) => await defaultCalls.remove({ collection, id, ...options }),
+  get: async ({ ...options }: Partial<GetParams> = {}) =>
+    await defaultCalls.get({ collection: "solicitations", ...options }),
+  getById: async ({ id, ...options }: GetByIdParams) =>
+    await defaultCalls.getById({ ...options, collection: "solicitations", id }),
+  patch: async ({ id, data, ...options }: PatchParams) =>
+    await defaultCalls.patch({
+      ...options,
+      collection: "solicitations",
+      id,
+      data,
+    }),
+  post: async ({ data, ...options }: PostParams) =>
+    await defaultCalls.post({
+      ...options,
+      collection: "solicitations",
+      data,
+    }),
+  put: async ({ id, data, ...options }: PutParams) =>
+    await defaultCalls.put({
+      ...options,
+      collection: "solicitations",
+      id,
+      data,
+    }),
+  remove: async ({ id, ...options }: RemoveParams) =>
+    await defaultCalls.remove({ ...options, collection: "solicitations", id }),
   search: async (params: SolSearchParams = {}) => {
     const baseUrl = params.baseUrl || "";
 
