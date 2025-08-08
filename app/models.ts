@@ -631,52 +631,30 @@ const solicitation: any = {
     }),
   get: async ({ ...options }: Partial<GetParams> = {}) =>
     await defaultCalls.get({ collection: "solicitations", ...options }),
-  getById: async ({
-    collection = "solicitations",
-    id,
-    ...options
-  }: GetByIdParams) =>
-    await defaultCalls.getById({ collection: "solicitations", id, ...options }),
-  patch: async ({
-    collection = "solicitations",
-    id,
-    data,
-    ...options
-  }: PatchParams) =>
+  getById: async ({ id, ...options }: GetByIdParams) =>
+    await defaultCalls.getById({ ...options, collection: "solicitations", id }),
+  patch: async ({ id, data, ...options }: PatchParams) =>
     await defaultCalls.patch({
+      ...options,
       collection: "solicitations",
       id,
       data,
-      ...options,
     }),
-  post: async ({
-    collection = "solicitations",
-    data,
-    ...options
-  }: PostParams) =>
+  post: async ({ data, ...options }: PostParams) =>
     await defaultCalls.post({
+      ...options,
       collection: "solicitations",
       data,
-      ...options,
     }),
-  put: async ({
-    collection = "solicitations",
-    id,
-    data,
-    ...options
-  }: PutParams) =>
+  put: async ({ id, data, ...options }: PutParams) =>
     await defaultCalls.put({
+      ...options,
       collection: "solicitations",
       id,
       data,
-      ...options,
     }),
-  remove: async ({
-    collection = "solicitations",
-    id,
-    ...options
-  }: RemoveParams) =>
-    await defaultCalls.remove({ collection: "solicitations", id, ...options }),
+  remove: async ({ id, ...options }: RemoveParams) =>
+    await defaultCalls.remove({ ...options, collection: "solicitations", id }),
   search: async (params: SolSearchParams = {}) => {
     const baseUrl = params.baseUrl || "";
 
