@@ -1,7 +1,12 @@
 @use "sass:map";
 @use "../../variables";
 
+.page {
+  max-width: 100vw;
+}
+
 .sol {
+  max-width: 100%;
   display: flex;
   padding: 10px;
   padding-left: 0;
@@ -29,6 +34,11 @@
 
   &_contentCol {
     flex: 1 1 100%;
+    max-width: 100%;
+
+    label {
+      margin-right: 10px;
+    }
   }
 
   &_datesCol {
@@ -84,10 +94,14 @@
     &_log {
       border-bottom: 1px solid #eee;
       display: flex;
+      width: 100%;
       padding: 10px 20px;
       pre {
+        display: block;
         color: #c7c7c7;
         margin: 0;
+        max-width: 60vw;
+        overflow-y: auto;
       }
       &_actionType {
         margin-left: auto;
@@ -151,7 +165,7 @@
       &_comment {
         border-bottom: 1px solid #eee;
         color: gray;
-        padding: 5px 10px;
+        padding: 10px 20px;
         &_author {
           font-weight: 500;
           margin-right: 10px;

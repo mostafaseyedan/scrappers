@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn, uidsToNames } from "@/lib/utils";
+import { uidsToNames } from "@/lib/utils";
 import {
   solicitation as solModel,
   solicitation_comment as solCommentModel,
@@ -46,6 +46,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [cnType, setCnType] = useState<string>(sol?.cnType || "-");
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
+  const [viewedByNames, setViewedByNames] = useState<string[]>([]);
 
   async function refresh() {
     if (!id) {
@@ -128,16 +129,28 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           });
           setLogs(respLogs.results);
         }
+
+        setViewedByNames(
+          await Promise.all(
+            sol.viewedBy.map(async (uid: string) => {
+              if (getUser) {
+                const user = await getUser(uid);
+                return user ? user.displayName || user.email || uid : uid;
+              }
+              return uid;
+            })
+          )
+        );
       }
     })();
   }, [sol]);
 
   return (
-    <div>
+    <div className={styles.page}>
       {sol && (
         <>
           <Link href="/solicitations">&lt; Back to solicitations</Link>
-          <div className={cn(styles.sol)}>
+          <div className={styles.sol}>
             <SolActions
               sol={sol}
               showExpandOption={false}
@@ -208,7 +221,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </div>
               <div className="mb-4">
                 <label>Viewed By ({sol.viewedBy?.length || 0})</label>
-                <span>{sol.viewedByNames?.join(", ")}</span>
+                <span>{viewedByNames?.join(", ")}</span>
               </div>
 
               <Tabs defaultValue="notes">
