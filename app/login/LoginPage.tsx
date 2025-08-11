@@ -1,0 +1,265 @@
+"use client";
+
+import {
+  UserCredential,
+  getRedirectResult,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailAndPassword,
+  signInWithEmailLink,
+} from "firebase/auth";
+import Link from "next/link";
+import * as React from "react";
+import { useLoadingCallback } from "react-loading-hook";
+import { loginWithCredential } from "@/app/api";
+import { Button } from "@/components/uiAuth/Button";
+import { ButtonGroup } from "@/components/uiAuth/ButtonGroup";
+import { MainTitle } from "@/components/uiAuth/MainTitle";
+import { PasswordForm } from "@/components/uiAuth/PasswordForm";
+import { PasswordFormValue } from "@/components/uiAuth/PasswordForm/PasswordForm";
+import { Switch } from "@/components/uiAuth/Switch/Switch";
+import { LoadingIcon } from "@/components/uiAuth/icons";
+import { getFirebaseAuth } from "../auth/firebase";
+import { appendRedirectParam } from "../shared/redirect";
+import { useRedirectAfterLogin } from "../shared/useRedirectAfterLogin";
+import { useRedirectParam } from "../shared/useRedirectParam";
+import {
+  getGoogleProvider,
+  getMicrosoftProvider,
+  loginWithProvider,
+  loginWithProviderUsingRedirect,
+} from "./firebase";
+import styles from "./login.module.css";
+
+const auth = getFirebaseAuth();
+
+export function LoginPage({
+  loginAction,
+}: {
+  loginAction: (email: string, password: string) => void;
+}) {
+  const [hasLogged, setHasLogged] = React.useState(false);
+  const [shouldLoginWithAction, setShouldLoginWithAction] =
+    React.useState(false);
+  let [isLoginActionPending, startTransition] = React.useTransition();
+  const redirect = useRedirectParam();
+  const redirectAfterLogin = useRedirectAfterLogin();
+
+  async function handleLogin(credential: UserCredential) {
+    await loginWithCredential(credential);
+    redirectAfterLogin();
+  }
+
+  const [handleLoginWithEmailAndPassword, isEmailLoading, emailPasswordError] =
+    useLoadingCallback(async ({ email, password }: PasswordFormValue) => {
+      setHasLogged(false);
+
+      const auth = getFirebaseAuth();
+
+      if (shouldLoginWithAction) {
+        startTransition(() => loginAction(email, password));
+      } else {
+        await handleLogin(
+          await signInWithEmailAndPassword(auth, email, password)
+        );
+
+        setHasLogged(true);
+      }
+    });
+
+  const [handleLoginWithGoogle, isGoogleLoading, googleError] =
+    useLoadingCallback(async () => {
+      setHasLogged(false);
+
+      const auth = getFirebaseAuth();
+      await handleLogin(await loginWithProvider(auth, getGoogleProvider(auth)));
+
+      setHasLogged(true);
+    });
+
+  const [
+    handleLoginWithGoogleUsingRedirect,
+    isGoogleUsingRedirectLoading,
+    googleUsingRedirectError,
+  ] = useLoadingCallback(async () => {
+    setHasLogged(false);
+
+    const auth = getFirebaseAuth();
+    await loginWithProviderUsingRedirect(auth, getGoogleProvider(auth));
+
+    setHasLogged(true);
+  });
+
+  const [handleLoginWithMicrosoft, isMicrosoftLoading, microsoftError] =
+    useLoadingCallback(async () => {
+      setHasLogged(false);
+
+      const auth = getFirebaseAuth();
+      await handleLogin(
+        await loginWithProvider(auth, getMicrosoftProvider(auth))
+      );
+
+      setHasLogged(true);
+    });
+
+  const [
+    handleLoginWithMicrosoftUsingRedirect,
+    isMicrosoftUsingRedirectLoading,
+    microsoftUsingRedirectError,
+  ] = useLoadingCallback(async () => {
+    setHasLogged(false);
+
+    const auth = getFirebaseAuth();
+    await loginWithProviderUsingRedirect(auth, getMicrosoftProvider(auth));
+
+    setHasLogged(true);
+  });
+
+  async function handleLoginWithRedirect() {
+    const credential = await getRedirectResult(auth);
+
+    if (credential?.user) {
+      await handleLogin(credential);
+
+      setHasLogged(true);
+    }
+  }
+
+  React.useEffect(() => {
+    handleLoginWithRedirect();
+  }, []);
+
+  const [handleLoginWithEmailLink, isEmailLinkLoading, emailLinkError] =
+    useLoadingCallback(async () => {
+      const auth = getFirebaseAuth();
+      const email = window.prompt("Please provide your email");
+
+      if (!email) {
+        return;
+      }
+
+      window.localStorage.setItem("emailForSignIn", email);
+
+      await sendSignInLinkToEmail(auth, email, {
+        url: process.env.NEXT_PUBLIC_ORIGIN + "/login",
+        handleCodeInApp: true,
+      });
+    });
+
+  async function handleLoginWithEmailLinkCallback() {
+    const auth = getFirebaseAuth();
+    if (!isSignInWithEmailLink(auth, window.location.href)) {
+      return;
+    }
+
+    let email = window.localStorage.getItem("emailForSignIn");
+    if (!email) {
+      email = window.prompt("Please provide your email for confirmation");
+    }
+
+    if (!email) {
+      return;
+    }
+
+    setHasLogged(false);
+
+    await handleLogin(
+      await signInWithEmailLink(auth, email, window.location.href)
+    );
+    window.localStorage.removeItem("emailForSignIn");
+
+    setHasLogged(true);
+  }
+
+  React.useEffect(() => {
+    handleLoginWithEmailLinkCallback();
+  }, []);
+
+  return (
+    <div className={styles.page}>
+      <MainTitle>Login</MainTitle>
+      {hasLogged && (
+        <div className={styles.info}>
+          <span>
+            Redirecting to <strong>{redirect || "/"}</strong>
+          </span>
+          <LoadingIcon />
+        </div>
+      )}
+      {!hasLogged && (
+        <PasswordForm
+          loading={isEmailLoading || isLoginActionPending}
+          onSubmit={handleLoginWithEmailAndPassword}
+          actions={
+            // `firebase/auth` library is not yet compatible with Vercel's Edge environment
+            !process.env.VERCEL ? (
+              <div className={styles.loginWithAction}>
+                <Switch
+                  value={shouldLoginWithAction}
+                  onChange={setShouldLoginWithAction}
+                />
+                Login with Server Action
+              </div>
+            ) : undefined
+          }
+          error={
+            emailPasswordError ||
+            googleError ||
+            emailLinkError ||
+            googleUsingRedirectError ||
+            microsoftError ||
+            microsoftUsingRedirectError
+          }
+        >
+          <ButtonGroup>
+            <Link
+              className={styles.link}
+              href={appendRedirectParam("/reset-password", redirect)}
+            >
+              Reset password
+            </Link>
+            <Link href={appendRedirectParam("/register", redirect)}>
+              <Button>Register</Button>
+            </Link>
+            <Button
+              loading={isGoogleLoading}
+              disabled={isGoogleLoading}
+              onClick={handleLoginWithGoogle}
+            >
+              Log in with Google (Popup)
+            </Button>
+            <Button
+              loading={isGoogleUsingRedirectLoading}
+              disabled={isGoogleUsingRedirectLoading}
+              onClick={handleLoginWithGoogleUsingRedirect}
+            >
+              Log in with Google (Redirect)
+            </Button>
+            <Button
+              style={{ display: "none" }}
+              loading={isEmailLinkLoading}
+              disabled={isEmailLinkLoading}
+              onClick={handleLoginWithEmailLink}
+            >
+              Log in with Email Link
+            </Button>
+            <Button
+              loading={isMicrosoftLoading}
+              disabled={isMicrosoftLoading}
+              onClick={handleLoginWithMicrosoft}
+            >
+              Log in with Microsoft (Popup)
+            </Button>
+            <Button
+              loading={isMicrosoftUsingRedirectLoading}
+              disabled={isMicrosoftUsingRedirectLoading}
+              onClick={handleLoginWithMicrosoftUsingRedirect}
+            >
+              Log in with Microsoft (Redirect)
+            </Button>
+          </ButtonGroup>
+        </PasswordForm>
+      )}
+    </div>
+  );
+}
