@@ -25,21 +25,10 @@ import { useRedirectAfterLogin } from "../shared/useRedirectAfterLogin";
 import { useRedirectParam } from "../shared/useRedirectParam";
 import {
   getGoogleProvider,
+  getMicrosoftProvider,
   loginWithProvider,
   loginWithProviderUsingRedirect,
-  getMicrosoftProvider,
 } from "./firebase";
-  // Microsoft Entra SSO
-  const [handleLoginWithMicrosoft, isMicrosoftLoading, microsoftError] =
-    useLoadingCallback(async () => {
-      setHasLogged(false);
-
-      const auth = getFirebaseAuth();
-      // getMicrosoftProvider should return a new OAuthProvider for Microsoft
-      await handleLogin(await loginWithProvider(auth, getMicrosoftProvider(auth)));
-
-      setHasLogged(true);
-    });
 import styles from "./login.module.css";
 
 const auth = getFirebaseAuth();
@@ -97,6 +86,31 @@ export function LoginPage({
 
     const auth = getFirebaseAuth();
     await loginWithProviderUsingRedirect(auth, getGoogleProvider(auth));
+
+    setHasLogged(true);
+  });
+
+  const [handleLoginWithMicrosoft, isMicrosoftLoading, microsoftError] =
+    useLoadingCallback(async () => {
+      setHasLogged(false);
+
+      const auth = getFirebaseAuth();
+      await handleLogin(
+        await loginWithProvider(auth, getMicrosoftProvider(auth))
+      );
+
+      setHasLogged(true);
+    });
+
+  const [
+    handleLoginWithMicrosoftUsingRedirect,
+    isMicrosoftUsingRedirectLoading,
+    microsoftUsingRedirectError,
+  ] = useLoadingCallback(async () => {
+    setHasLogged(false);
+
+    const auth = getFirebaseAuth();
+    await loginWithProviderUsingRedirect(auth, getMicrosoftProvider(auth));
 
     setHasLogged(true);
   });
@@ -193,7 +207,8 @@ export function LoginPage({
             googleError ||
             emailLinkError ||
             googleUsingRedirectError ||
-            microsoftError
+            microsoftError ||
+            microsoftUsingRedirectError
           }
         >
           <ButtonGroup>
@@ -214,13 +229,6 @@ export function LoginPage({
               Log in with Google (Popup)
             </Button>
             <Button
-              loading={isMicrosoftLoading}
-              disabled={isMicrosoftLoading}
-              onClick={handleLoginWithMicrosoft}
-            >
-              Log in with Microsoft Entra
-            </Button>
-            <Button
               loading={isGoogleUsingRedirectLoading}
               disabled={isGoogleUsingRedirectLoading}
               onClick={handleLoginWithGoogleUsingRedirect}
@@ -228,11 +236,26 @@ export function LoginPage({
               Log in with Google (Redirect)
             </Button>
             <Button
+              style={{ display: "none" }}
               loading={isEmailLinkLoading}
               disabled={isEmailLinkLoading}
               onClick={handleLoginWithEmailLink}
             >
               Log in with Email Link
+            </Button>
+            <Button
+              loading={isMicrosoftLoading}
+              disabled={isMicrosoftLoading}
+              onClick={handleLoginWithMicrosoft}
+            >
+              Log in with Microsoft (Popup)
+            </Button>
+            <Button
+              loading={isMicrosoftUsingRedirectLoading}
+              disabled={isMicrosoftUsingRedirectLoading}
+              onClick={handleLoginWithMicrosoftUsingRedirect}
+            >
+              Log in with Microsoft (Redirect)
             </Button>
           </ButtonGroup>
         </PasswordForm>

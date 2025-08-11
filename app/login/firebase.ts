@@ -8,6 +8,7 @@ import type {
 import {
   browserPopupRedirectResolver,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   signOut,
@@ -20,6 +21,18 @@ export const isCredentialAlreadyInUseError = (e: AuthError) =>
 
 export const logout = async (auth: Auth): Promise<void> => {
   return signOut(auth);
+};
+
+export const getMicrosoftProvider = (auth: Auth) => {
+  const provider = new OAuthProvider("microsoft.com");
+  provider.addScope("profile");
+  provider.addScope("email");
+  provider.addScope("openid");
+  setDeviceLanguage(auth);
+  provider.setCustomParameters({
+    prompt: "select_account",
+  });
+  return provider;
 };
 
 export const getGoogleProvider = (auth: Auth) => {
