@@ -1,7 +1,7 @@
 import * as React from "react";
 import styles from "./icons.module.css";
 
-export function HomeIcon(props: JSX.IntrinsicElements["span"]) {
+export function HomeIcon(props: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       {...props}

@@ -41,7 +41,7 @@ export function LoginPage({
   const [hasLogged, setHasLogged] = React.useState(false);
   const [shouldLoginWithAction, setShouldLoginWithAction] =
     React.useState(false);
-  let [isLoginActionPending, startTransition] = React.useTransition();
+  const [isLoginActionPending, startTransition] = React.useTransition();
   const redirect = useRedirectParam();
   const redirectAfterLogin = useRedirectAfterLogin();
 

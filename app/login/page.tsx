@@ -1,6 +1,11 @@
+import { Suspense } from "react";
 import { loginAction } from "../actions/login";
 import { LoginPage as ClientLoginPage } from "./LoginPage";
 
 export default function Login() {
-  return <ClientLoginPage loginAction={loginAction} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ClientLoginPage loginAction={loginAction} />
+    </Suspense>
+  );
 }

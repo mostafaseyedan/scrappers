@@ -13,7 +13,7 @@ export function Button({
   children,
   variant = "outlined",
   ...props
-}: JSX.IntrinsicElements["button"] & {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
   variant?: "contained" | "outlined";
 }) {

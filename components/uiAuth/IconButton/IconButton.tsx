@@ -1,7 +1,11 @@
 import styles from "./IconButton.module.css";
 import { cx } from "../classNames";
 
-export function IconButton(props: JSX.IntrinsicElements["button"]) {
+import React from "react";
+
+export function IconButton(
+  props: React.ButtonHTMLAttributes<HTMLButtonElement>
+) {
   return (
     <button
       {...props}
