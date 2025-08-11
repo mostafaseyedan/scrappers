@@ -1,8 +1,11 @@
-import {Tokens} from 'next-firebase-auth-edge';
-import {Metadata, User} from '../auth/AuthContext';
-import {filterStandardClaims} from 'next-firebase-auth-edge/lib/auth/claims';
+import { Tokens } from "next-firebase-auth-edge";
+import { Metadata, User } from "../auth/AuthContext";
+import { filterStandardClaims } from "next-firebase-auth-edge/lib/auth/claims";
 
-export const toUser = ({token, customToken, decodedToken, metadata}: Tokens<Metadata>): User => {
+export const toUser = (
+  { token, customToken, decodedToken }: Tokens,
+  metadata?: Metadata
+): User => {
   const {
     uid,
     email,
@@ -10,7 +13,7 @@ export const toUser = ({token, customToken, decodedToken, metadata}: Tokens<Meta
     email_verified: emailVerified,
     phone_number: phoneNumber,
     name: displayName,
-    source_sign_in_provider: signInProvider
+    source_sign_in_provider: signInProvider,
   } = decodedToken;
 
   const customClaims = filterStandardClaims(decodedToken);
@@ -26,6 +29,6 @@ export const toUser = ({token, customToken, decodedToken, metadata}: Tokens<Meta
     customClaims,
     idToken: token,
     customToken,
-    metadata
+    metadata: metadata ?? { uid: uid ?? "", timestamp: Date.now() },
   };
 };

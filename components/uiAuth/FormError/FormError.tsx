@@ -1,5 +1,7 @@
-import styles from "./FormError.module.css";
+import React from "react";
 import { cx } from "../classNames";
-export function FormError(props: JSX.IntrinsicElements["span"]) {
+import styles from "./FormError.module.css";
+
+export function FormError(props: React.ComponentProps<"span">) {
   return <span {...props} className={cx(styles.error, props.className)} />;
 }

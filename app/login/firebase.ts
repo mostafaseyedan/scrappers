@@ -2,7 +2,6 @@ import type {
   Auth,
   AuthError,
   AuthProvider,
-  User,
   UserCredential,
 } from "firebase/auth";
 import {

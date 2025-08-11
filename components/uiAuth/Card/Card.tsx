@@ -1,5 +1,7 @@
 import styles from "./Card.module.css";
 import { cx } from "../classNames";
-export function Card(props: JSX.IntrinsicElements["div"]) {
+import React from "react";
+
+export function Card(props: React.HTMLAttributes<HTMLDivElement>) {
   return <div {...props} className={cx(styles.card, props.className)} />;
 }
