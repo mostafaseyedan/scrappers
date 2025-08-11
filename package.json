@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.1.0",
+    "@firebase/app": "^0.14.1",
+    "@firebase/app-check": "^0.11.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.1.1",
     "@hyperbrowser/agent": "^0.3.1",
@@ -45,6 +47,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.60.0",
+    "react-loading-hook": "^1.1.2",
     "recharts": "2.15.4",
     "sass": "^1.89.2",
     "sonner": "^2.0.6",
