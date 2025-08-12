@@ -196,7 +196,6 @@ export function LoginPage({
                   value={shouldLoginWithAction}
                   onChange={setShouldLoginWithAction}
                 />
-                Login with Server Action
               </div>
             ) : undefined
           }
@@ -216,34 +215,24 @@ export function LoginPage({
             Reset password
           </Link>
           <Link href={appendRedirectParam("/register", redirect)}>
-            <Button>Register</Button>
+            <Button className="w-full">Register</Button>
           </Link>
-          <Button disabled={isGoogleLoading} onClick={handleLoginWithGoogle}>
+          <Button onClick={handleLoginWithGoogle}>
             Log in with Google (Popup)
           </Button>
-          <Button
-            disabled={isGoogleUsingRedirectLoading}
-            onClick={handleLoginWithGoogleUsingRedirect}
-          >
+          <Button onClick={handleLoginWithGoogleUsingRedirect}>
             Log in with Google (Redirect)
           </Button>
           <Button
             style={{ display: "none" }}
-            disabled={isEmailLinkLoading}
             onClick={handleLoginWithEmailLink}
           >
             Log in with Email Link
           </Button>
-          <Button
-            disabled={isMicrosoftLoading}
-            onClick={handleLoginWithMicrosoft}
-          >
+          <Button onClick={handleLoginWithMicrosoft}>
             Log in with Microsoft (Popup)
           </Button>
-          <Button
-            disabled={isMicrosoftUsingRedirectLoading}
-            onClick={handleLoginWithMicrosoftUsingRedirect}
-          >
+          <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
             Log in with Microsoft (Redirect)
           </Button>
         </PasswordForm>
