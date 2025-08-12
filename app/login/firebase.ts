@@ -29,8 +29,7 @@ export const getMicrosoftProvider = (auth: Auth) => {
   provider.addScope("openid");
   setDeviceLanguage(auth);
   provider.setCustomParameters({
-    prompt: "select_account",
-    tenant: "731cf8da-9ed1-43e4-901a-a8fda2084922",
+    tenantId: process.env.NEXT_PUBLIC_MICROSOFT_TENANT_ID || "organizations",
   });
   return provider;
 };
