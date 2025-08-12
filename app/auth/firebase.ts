@@ -33,9 +33,10 @@ export function getFirebaseAuth() {
     );
   }
 
+  /*
   if (clientConfig.tenantId) {
     auth.tenantId = clientConfig.tenantId;
-  }
+  } */
 
   return auth;
 }
