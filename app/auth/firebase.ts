@@ -2,7 +2,7 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   connectAuthEmulator,
   getAuth,
-  inMemoryPersistence,
+  browserLocalPersistence,
   setPersistence,
 } from "firebase/auth";
 import { clientConfig } from "@/config/clientConfig";
@@ -18,9 +18,8 @@ export const getFirebaseApp = () => {
 export function getFirebaseAuth() {
   const auth = getAuth(getFirebaseApp());
 
-  // App relies only on server token. We make sure Firebase does not store credentials in the browser.
-  // See: https://github.com/awinogrodzki/next-firebase-auth-edge/issues/143
-  setPersistence(auth, inMemoryPersistence);
+  // Use browserLocalPersistence to maintain auth state across page refreshes
+  setPersistence(auth, browserLocalPersistence);
 
   if (process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST) {
     // https://stackoverflow.com/questions/73605307/firebase-auth-emulator-fails-intermittently-with-auth-emulator-config-failed
