@@ -31,8 +31,6 @@ export const getMicrosoftProvider = (auth: Auth) => {
   provider.setCustomParameters({
     prompt: "select_account",
     tenant: "731cf8da-9ed1-43e4-901a-a8fda2084922",
-    response_type: "code",
-    response_mode: "fragment",
   });
   return provider;
 };
