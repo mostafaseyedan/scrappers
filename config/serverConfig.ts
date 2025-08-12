@@ -34,7 +34,7 @@ export const authConfig = {
   enableCustomToken: false,
   experimental_enableTokenRefreshOnExpiredKidHeader: true,
   debug: true, // Enable debug mode to help troubleshoot authentication issues
-  // tenantId: clientConfig.tenantId,
+  tenantId: clientConfig.tenantId,
   getMetadata: async (tokens: Tokens) => {
     return { uid: tokens.decodedToken.uid, timestamp: new Date().getTime() };
   },

@@ -53,14 +53,6 @@ export const loginWithProvider = async (
   auth: Auth,
   provider: AuthProvider
 ): Promise<UserCredential> => {
-  // For Microsoft, always use redirect flow due to PKCE requirements
-  if (
-    provider instanceof OAuthProvider &&
-    provider.providerId === "microsoft.com"
-  ) {
-    return signInWithRedirect(auth, provider);
-  }
-
   // For other providers, use popup
   const result = await signInWithPopup(
     auth,
