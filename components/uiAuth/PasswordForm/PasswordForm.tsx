@@ -2,11 +2,11 @@ import * as React from "react";
 import type { JSX } from "react";
 import styles from "./PasswordForm.module.css";
 import { cx } from "../classNames";
-import { Input } from "../Input";
+import { Input } from "@/components/ui/input";
 import { IconButton } from "../IconButton";
 import { VisibleIcon } from "../icons/VisibleIcon";
 import { HiddenIcon } from "../icons/HiddenIcon";
-import { Button } from "../Button";
+import { Button } from "@/components/ui/button";
 import { FirebaseError } from "firebase/app";
 import { FormError } from "../FormError";
 
@@ -87,12 +87,7 @@ export function PasswordForm({
         </div>
         {actions}
         {error && <FormError>{error.message}</FormError>}
-        <Button
-          loading={loading}
-          disabled={loading || disabled}
-          variant="contained"
-          type="submit"
-        >
+        <Button disabled={loading || disabled} type="submit">
           Submit
         </Button>
       </form>

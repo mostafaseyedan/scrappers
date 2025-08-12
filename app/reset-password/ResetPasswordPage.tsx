@@ -5,10 +5,9 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import Link from "next/link";
 import { useLoadingCallback } from "react-loading-hook";
 import { getFirebaseAuth } from "@/app/auth/firebase";
-import { Button } from "@/components/uiAuth/Button";
+import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/uiAuth/FormError";
-import { Input } from "@/components/uiAuth/Input";
-import { MainTitle } from "@/components/uiAuth/MainTitle";
+import { Input } from "@/components/ui/input";
 import { appendRedirectParam } from "@/app/shared/redirect";
 import { useRedirectParam } from "@/app/shared/useRedirectParam";
 import styles from "./ResetPasswordPage.module.css";
@@ -32,7 +31,7 @@ export function ResetPasswordPage() {
 
   return (
     <div className={styles.page}>
-      <MainTitle>Reset password</MainTitle>
+      <h2>Reset password</h2>
       <form onSubmit={sendResetInstructions} className={styles.form}>
         <Input
           required
@@ -46,12 +45,7 @@ export function ResetPasswordPage() {
           <p className={styles.info}>Instructions sent. Check your email.</p>
         )}
         {error && <FormError>{error?.message}</FormError>}
-        <Button
-          loading={loading}
-          disabled={loading}
-          variant="contained"
-          type="submit"
-        >
+        <Button disabled={loading} type="submit">
           Send reset instructions
         </Button>
         <Link href={appendRedirectParam("/login", redirect)}>

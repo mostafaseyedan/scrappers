@@ -30,6 +30,9 @@ export const getMicrosoftProvider = (auth: Auth) => {
   setDeviceLanguage(auth);
   provider.setCustomParameters({
     prompt: "select_account",
+    tenant: "731cf8da-9ed1-43e4-901a-a8fda2084922",
+    response_type: "code",
+    response_mode: "fragment",
   });
   return provider;
 };
@@ -50,6 +53,15 @@ export const loginWithProvider = async (
   auth: Auth,
   provider: AuthProvider
 ): Promise<UserCredential> => {
+  // For Microsoft, always use redirect flow due to PKCE requirements
+  if (
+    provider instanceof OAuthProvider &&
+    provider.providerId === "microsoft.com"
+  ) {
+    return signInWithRedirect(auth, provider);
+  }
+
+  // For other providers, use popup
   const result = await signInWithPopup(
     auth,
     provider,
