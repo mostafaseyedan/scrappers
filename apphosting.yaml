@@ -62,11 +62,11 @@ env:
   - variable: NEXT_PUBLIC_ELASTIC_API_KEY
     value: OHZISkQ1Z0J5MW5yclhOQ0oyMTc6SkxZVVhPb2VvcEZlRXdJUk5naHlzdw==
   - variable: USE_SECURE_COOKIE
-    value: false
+    value: true
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: AIzaSyA7_t4CGojp6vIYxEQS2vXOZSKmj-ZKaLw
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: rfpscraper-dc3d8.firebaseapp.com
+    value: reconrfp.cendien.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: rfpscraper-dc3d8
   - variable: NEXT_PUBLIC_FIREBASE_BUCKET
