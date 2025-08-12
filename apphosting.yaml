@@ -77,3 +77,5 @@ env:
     value: 1:1025032713267:web:bfb3a0ae85e4a648f55f46
   - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
     value: G-P9TDT2PKR5
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_TENANT_ID
+    value: 731cf8da-9ed1-43e4-901a-a8fda2084922

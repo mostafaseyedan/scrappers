@@ -12,9 +12,7 @@ import Link from "next/link";
 import * as React from "react";
 import { useLoadingCallback } from "react-loading-hook";
 import { loginWithCredential } from "@/app/api";
-import { Button } from "@/components/uiAuth/Button";
-import { ButtonGroup } from "@/components/uiAuth/ButtonGroup";
-import { MainTitle } from "@/components/uiAuth/MainTitle";
+import { Button } from "@/components/ui/button";
 import { PasswordForm } from "@/components/uiAuth/PasswordForm";
 import { PasswordFormValue } from "@/components/uiAuth/PasswordForm/PasswordForm";
 import { Switch } from "@/components/uiAuth/Switch/Switch";
@@ -177,7 +175,7 @@ export function LoginPage({
 
   return (
     <div className={styles.page}>
-      <MainTitle>Login</MainTitle>
+      <h2>Login</h2>
       {hasLogged && (
         <div className={styles.info}>
           <span>
@@ -211,53 +209,43 @@ export function LoginPage({
             microsoftUsingRedirectError
           }
         >
-          <ButtonGroup>
-            <Link
-              className={styles.link}
-              href={appendRedirectParam("/reset-password", redirect)}
-            >
-              Reset password
-            </Link>
-            <Link href={appendRedirectParam("/register", redirect)}>
-              <Button>Register</Button>
-            </Link>
-            <Button
-              loading={isGoogleLoading}
-              disabled={isGoogleLoading}
-              onClick={handleLoginWithGoogle}
-            >
-              Log in with Google (Popup)
-            </Button>
-            <Button
-              loading={isGoogleUsingRedirectLoading}
-              disabled={isGoogleUsingRedirectLoading}
-              onClick={handleLoginWithGoogleUsingRedirect}
-            >
-              Log in with Google (Redirect)
-            </Button>
-            <Button
-              style={{ display: "none" }}
-              loading={isEmailLinkLoading}
-              disabled={isEmailLinkLoading}
-              onClick={handleLoginWithEmailLink}
-            >
-              Log in with Email Link
-            </Button>
-            <Button
-              loading={isMicrosoftLoading}
-              disabled={isMicrosoftLoading}
-              onClick={handleLoginWithMicrosoft}
-            >
-              Log in with Microsoft (Popup)
-            </Button>
-            <Button
-              loading={isMicrosoftUsingRedirectLoading}
-              disabled={isMicrosoftUsingRedirectLoading}
-              onClick={handleLoginWithMicrosoftUsingRedirect}
-            >
-              Log in with Microsoft (Redirect)
-            </Button>
-          </ButtonGroup>
+          <Link
+            className={styles.link}
+            href={appendRedirectParam("/reset-password", redirect)}
+          >
+            Reset password
+          </Link>
+          <Link href={appendRedirectParam("/register", redirect)}>
+            <Button>Register</Button>
+          </Link>
+          <Button disabled={isGoogleLoading} onClick={handleLoginWithGoogle}>
+            Log in with Google (Popup)
+          </Button>
+          <Button
+            disabled={isGoogleUsingRedirectLoading}
+            onClick={handleLoginWithGoogleUsingRedirect}
+          >
+            Log in with Google (Redirect)
+          </Button>
+          <Button
+            style={{ display: "none" }}
+            disabled={isEmailLinkLoading}
+            onClick={handleLoginWithEmailLink}
+          >
+            Log in with Email Link
+          </Button>
+          <Button
+            disabled={isMicrosoftLoading}
+            onClick={handleLoginWithMicrosoft}
+          >
+            Log in with Microsoft (Popup)
+          </Button>
+          <Button
+            disabled={isMicrosoftUsingRedirectLoading}
+            onClick={handleLoginWithMicrosoftUsingRedirect}
+          >
+            Log in with Microsoft (Redirect)
+          </Button>
         </PasswordForm>
       )}
     </div>
