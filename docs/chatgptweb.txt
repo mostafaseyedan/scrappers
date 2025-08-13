@@ -1,12 +1,7 @@
-VendorRegistry RFP Finder — USA ERP/IT Future Opportunities
+Web Search
 
 Objective
-• Log in to https://www.vendorregistry.com and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data and write results to the provided Google Sheet.
-
-Authentication
-• Credentials (use securely; prefer secret variables if available):
-	– user: vendor@cendien.com
-	– pass: 3620NJoseyLn!
+• Search the web and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data and write results to the provided Google Sheet.
 
 Scope & Filters
 • Geography: United States only.
@@ -22,15 +17,14 @@ Scope & Filters
 	– System Modernization
 
 Core Workflow
-1) Navigate to VendorRegistry and log in with the credentials.
-2) Access the opportunities/bids search/browse page.
-3) For each keyword above:
+1) Search web for opportunities/bids search/browse page.
+2) For each keyword above:
 	 • Run a search (try both singular/plural and common synonyms where applicable).
 	 • Apply filters for “Active/Upcoming” and the USA if available.
 	 • Sort by closing date ascending, then iterate results.
-4) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past.
-5) Deduplicate across keywords using the tuple: [title, issuer, closingDate].
-6) Respect site ToS and rate limits; avoid excessive requests and handle anti-bot challenges gracefully.
+3) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past.
+4) Deduplicate across keywords using the tuple: [title, issuer, closingDate].
+5) Respect site ToS and rate limits; avoid excessive requests and handle anti-bot challenges gracefully.
 
 Resilience & Error Handling
 • Handle cookie banners, pop-ups, and consent prompts by accepting/dismissing to proceed.
