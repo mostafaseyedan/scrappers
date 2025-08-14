@@ -1,8 +1,8 @@
 export default `
-Web Search
+Central Auction House
 
 Objective
-• Search the web and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Log in to https://www.centralauctionhouse.com/ and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
 
 Scope & Filters
 • Geography: United States only.
@@ -25,7 +25,6 @@ Core Workflow
 	 • Sort by closing date ascending, then iterate results.
 3) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past.
 4) Deduplicate across keywords using the tuple: [title, issuer, closingDate].
-5) Respect site ToS and rate limits; avoid excessive requests and handle anti-bot challenges gracefully.
 
 Resilience & Error Handling
 • Handle cookie banners, pop-ups, and consent prompts by accepting/dismissing to proceed.
@@ -41,7 +40,6 @@ Data Extraction (per opportunity)
 • issuer: Agency or issuing organization name.
 • location: City/County/State as listed (or State if only that is available).
 • siteId: Prefer an explicit ID on the page. Else, use the last meaningful path segment of the detail URL (e.g., the GUID-like token). If neither exists, use a stable hash of [title + issuer + closingDate].
-• site: Constant value 'chatgptvendorregistry'.
 • siteUrl: Direct detail page URL (leave blank if not retrievable).
 • contactInfo: Any listed emails and/or phone numbers (comma-separated). Scan the description and contact sections.
 • externalLinks: Any external or referenced links (comma-separated), including the issuer’s procurement page if present.
@@ -67,7 +65,7 @@ Quality & Compliance
 • Throttle requests to be polite (e.g., ~1–2 pages/sec; add random jitter).
 • Validate closingDate > now; discard otherwise.
 • Limit total processed results to a reasonable cap (e.g., first 200 unique matches) to avoid runaway loops.
-• Provide a short run summary at the end: keywords tried, results found, rows written, rows skipped, and any notable errors.
+• Only output JSON at the end.
 
 Notes
 • If multiple closing dates are shown, choose the main bid submission deadline (not questions or pre-bid dates).

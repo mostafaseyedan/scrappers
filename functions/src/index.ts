@@ -7,7 +7,6 @@ setGlobalOptions({ maxInstances: 10 });
 import "./config/firebase";
 
 // Re-export individual functions (barrel pattern)
-export * from "./http/addMessage";
 export * from "./firestore/makeUppercase";
 export * from "./schedulers/dailyMaintenance";
 export * from "./http/chatgpt";
