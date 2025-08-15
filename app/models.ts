@@ -296,13 +296,13 @@ const defaultCalls = {
       {
         method: "GET",
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      },
+      }
     );
     const json = await resp.json();
 
     if (json.error) {
       throw new Error(
-        `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`,
+        `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`
       );
     }
 
@@ -333,13 +333,13 @@ const defaultCalls = {
       `${baseUrl || ""}/api/${collection}?${urlQueryString}`,
       {
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      },
+      }
     );
     const json = await resp.json();
 
     if (json.error) {
       throw new Error(
-        `Failed to fetch data. ${json.error} (defaultCalls.get/${collection})`,
+        `Failed to fetch data. ${json.error} (defaultCalls.get/${collection})`
       );
     }
 
@@ -354,7 +354,7 @@ const defaultCalls = {
 
     if (json.error) {
       throw new Error(
-        `Failed to fetch data by ID: ${id}. ${json.error} (defaultCalls.getById/${collection})`,
+        `Failed to fetch data by ID: ${id}. ${json.error} (defaultCalls.getById/${collection})`
       );
     }
 
@@ -363,7 +363,7 @@ const defaultCalls = {
   getByKey: async ({ collection, key, token, baseUrl }: GetByKeyParams) => {
     const urlQueryString = queryString.stringify({
       "filters.key": key,
-      "sort": "",
+      sort: "",
     });
 
     const resp = await fetch(
@@ -371,13 +371,13 @@ const defaultCalls = {
       {
         method: "GET",
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      },
+      }
     );
     const json = await resp.json();
 
     if (json.error) {
       throw new Error(
-        `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`,
+        `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`
       );
     }
 
@@ -400,7 +400,7 @@ const defaultCalls = {
 
     if (json.error) {
       throw new Error(
-        `Failed to create data. ${json.error} (defaultCalls.post/${collection})`,
+        `Failed to create data. ${json.error} (defaultCalls.post/${collection})`
       );
     }
 
@@ -419,7 +419,7 @@ const defaultCalls = {
 
     if (json.error) {
       throw new Error(
-        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`,
+        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
       );
     }
 
@@ -438,7 +438,7 @@ const defaultCalls = {
 
     if (json.error) {
       throw new Error(
-        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`,
+        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
       );
     }
 
@@ -460,7 +460,7 @@ const defaultCalls = {
 
     if (!record) {
       throw new Error(
-        `Document not found with key: ${key}. (defaultCalls.patchByKey/${collection})`,
+        `Document not found with key: ${key}. (defaultCalls.patchByKey/${collection})`
       );
     }
 
@@ -483,7 +483,7 @@ const defaultCalls = {
 
     if (json.error) {
       throw new Error(
-        `Failed to delete data with ID: ${id}. ${json.error} (defaultCalls.remove/${collection})`,
+        `Failed to delete data with ID: ${id}. ${json.error} (defaultCalls.remove/${collection})`
       );
     }
 
@@ -536,6 +536,7 @@ const scriptLog: any = {
     failCount: z.number().default(0),
     junkCount: z.number().default(0),
     timeStr: z.string().default("00:00:00"), // hh:mm:ss
+    data: z.any().default({}),
   }),
   get: async ({ collection = "scriptLogs", ...options }: GetParams) =>
     await defaultCalls.get({ collection, ...options }),
@@ -605,7 +606,7 @@ const solicitation: any = {
       externalLinks: z.array(z.string()).default([]),
       issuer: z.string().min(1, "Issuer is required"),
       keywords: z.array(z.string()).default([]),
-      location: z.string().min(1, "Location is required"),
+      location: z.string().default(""),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
       publishDate: z.string().nullable().default(null),
       questionsDueByDate: z.string().nullable().default(null),
@@ -685,7 +686,7 @@ const solicitation: any = {
           Cookie: `AuthToken=${params.token}`,
         },
         credentials: "include",
-      },
+      }
     );
     const json = await resp.json();
 
@@ -712,7 +713,7 @@ const solicitation_comment: any = {
   },
   post: async (
     solId: string,
-    data: z.infer<typeof solicitation_comment.schema>,
+    data: z.infer<typeof solicitation_comment.schema>
   ) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`, {
       method: "POST",

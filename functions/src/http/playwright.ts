@@ -7,7 +7,12 @@ import { logger } from "firebase-functions";
 export const playwright = onRequest(
   {
     memory: "1GiB",
-    secrets: ["DEV_PUBLICPURCHASE_USER", "DEV_PUBLICPURCHASE_PASS"],
+    secrets: [
+      "DEV_GEMINI_KEY",
+      "DEV_PUBLICPURCHASE_USER",
+      "DEV_PUBLICPURCHASE_PASS",
+      "DEV_SERVICE_KEY",
+    ],
     timeoutSeconds: 3600,
   },
   async (req, res) => {
