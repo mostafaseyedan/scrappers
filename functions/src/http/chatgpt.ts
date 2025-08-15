@@ -28,7 +28,7 @@ export const chatgpt = onRequest(
     let dupCount = 0;
     let failCount = 0;
     let successCount = 0;
-    let junkCount = 0;
+    const junkCount = 0;
     let agentResponse;
     let status = 200;
     let results;
@@ -36,14 +36,14 @@ export const chatgpt = onRequest(
     const vendorRaw = req.query.vendor;
     const vendorStr = Array.isArray(vendorRaw) ? vendorRaw[0] : vendorRaw;
     const VENDOR = (
-      typeof vendorStr === "string" && vendorStr.trim() in prompts
-        ? vendorStr.trim()
-        : undefined
+      typeof vendorStr === "string" && vendorStr.trim() in prompts ?
+        vendorStr.trim() :
+        undefined
     ) as keyof typeof prompts | undefined;
 
     logger.log(
       `ChatGpt Rfp ${VENDOR} Search Started`,
-      new Date().toISOString()
+      new Date().toISOString(),
     );
 
     if (!VENDOR || typeof VENDOR !== "string" || !VENDOR.trim()) {
@@ -94,7 +94,7 @@ export const chatgpt = onRequest(
         record.site = "chatgpt" + VENDOR;
         record.externalLinks = record.externalLinks?.split(",") || [];
         record.externalLinks = record.externalLinks.filter(
-          (link: string) => link.trim() !== ""
+          (link: string) => link.trim() !== "",
         );
 
         const result = await solModel.post({
@@ -115,14 +115,14 @@ export const chatgpt = onRequest(
       const totalSec = Number(
         (
           performance.measure("total-duration", "start", "end").duration / 1000
-        ).toFixed(0)
+        ).toFixed(0),
       );
 
       logger.log(
-        `\nTotal time: ${secToTimeStr(totalSec)} ${new Date().toLocaleString()}`
+        `\nTotal time: ${secToTimeStr(totalSec)} ${new Date().toLocaleString()}`,
       );
       logger.log(
-        `Success: ${successCount}, Failures: ${failCount}, Duplicates: ${dupCount}, Junk: ${junkCount}`
+        `Success: ${successCount}, Failures: ${failCount}, Duplicates: ${dupCount}, Junk: ${junkCount}`,
       );
 
       const logRecord = {
@@ -153,7 +153,7 @@ export const chatgpt = onRequest(
 
       res.status(status).json({ ...results });
     }
-  }
+  },
 );
 
 async function runAgent({
@@ -162,8 +162,9 @@ async function runAgent({
   vendor: keyof typeof prompts;
 }): Promise<any> {
   if (!vendor) throw new Error("Vendor is required for runAgent");
-  if (!prompts[vendor])
+  if (!prompts[vendor]) {
     throw new Error(`No prompt found for vendor: ${vendor}`);
+  }
 
   const aiClient = new OpenAI({
     apiKey: process.env.DEV_OPENAI_API_KEY,

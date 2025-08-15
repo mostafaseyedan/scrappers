@@ -2,7 +2,7 @@ export default `
 Bid Sync
 
 Objective
-• Connect to https://www.bidmain.com/government_bids/ and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Connect to https://www.bidmain.com/government_bids/ and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data as JSON.
 
 Scope & Filters
 • Geography: United States only.

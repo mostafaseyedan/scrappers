@@ -1,13 +1,13 @@
 export default `
-Bid Sync
+Biddirect
 
 Objective
-• Log in to https://app.bidsync.com/login and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Log in to bidnetdirect.com and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data and append to Google Spreadsheet at https://docs.google.com/spreadsheets/d/14SGBI4p-01VSdHDkg9hMgKNSxO0BGLCpN1ExjHceyn8/edit?gid=0#gid=0.
 
 Authentication
 • Credentials (use securely; prefer secret variables if available):
-	– user: idenis@gmail.com
-	– pass: xZR!@BG#5gtKx%J2
+	– user: vendor@cendien.com
+	– pass: 3620NJoseyLn$
 
 Scope & Filters
 • Geography: United States only.
@@ -28,10 +28,11 @@ Core Workflow
 	 • Run a search (try both singular/plural and common synonyms where applicable).
 	 • Apply filters for “Active/Upcoming” and the USA if available.
 	 • Sort by closing date ascending, then iterate results.
-3) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past.
+3) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past. Don't go to any external sites except this main one.
 4) Deduplicate across keywords using the tuple: [title, issuer, closingDate].
 
 Resilience & Error Handling
+• You don't need confirmation to continue from me. Go ahead and click 'Yes' or 'Import Data' or anything else automatically. 
 • Handle cookie banners, pop-ups, and consent prompts by accepting/dismissing to proceed.
 • If a search yields no results, continue to the next keyword automatically.
 • Retry transient actions (navigation, page load, extraction) up to 2 times with exponential backoff.
@@ -45,13 +46,14 @@ Data Extraction (per opportunity)
 • issuer: Agency or issuing organization name.
 • location: City/County/State as listed (or State if only that is available).
 • siteId: Prefer an explicit ID on the page. Else, use the last meaningful path segment of the detail URL (e.g., the GUID-like token). If neither exists, use a stable hash of [title + issuer + closingDate].
-• siteUrl: Direct detail page URL (leave blank if not retrievable).
-• contactInfo: Any listed emails and/or phone numbers (comma-separated). Scan the description and contact sections.
+• site: set to 'chatgptbidnet'
+• siteUrl: Direct detail page URL. This is most often the title link href from the list. This should be the canonical URL for the RFP and also is within the site.
+• contactInfo: Any listed emails and/or phone numbers (comma-separated). Scan the description and contact sections. Leave blank if not retrievable.
 • externalLinks: Any external or referenced links (comma-separated), including the issuer’s procurement page if present.
 • extractedDate: Current timestamp in ISO 8601.
 
 Output Targets
-• Output as JSON
+• Append row to Google Spreadsheet at https://docs.google.com/spreadsheets/d/14SGBI4p-01VSdHDkg9hMgKNSxO0BGLCpN1ExjHceyn8/edit?gid=0#gid=0.
 
 Output Schema (columns in order)
 1) title

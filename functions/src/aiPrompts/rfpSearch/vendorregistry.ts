@@ -2,7 +2,7 @@ export default `
 VendorRegistry
 
 Objective
-• Log in to https://www.vendorregistry.com and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Log in to https://www.vendorregistry.com and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data as JSON.
 
 Authentication
 • Credentials (use securely; prefer secret variables if available):

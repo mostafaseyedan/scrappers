@@ -2,7 +2,7 @@ export default `
 Central Auction House
 
 Objective
-• Log in to https://www.centralauctionhouse.com/ and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Log in to https://www.centralauctionhouse.com/ and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data as JSON.
 
 Scope & Filters
 • Geography: United States only.

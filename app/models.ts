@@ -296,14 +296,15 @@ const defaultCalls = {
       {
         method: "GET",
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      }
+      },
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`
+        `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`,
       );
+    }
 
     return json.count || 0;
   },
@@ -332,14 +333,15 @@ const defaultCalls = {
       `${baseUrl || ""}/api/${collection}?${urlQueryString}`,
       {
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      }
+      },
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to fetch data. ${json.error} (defaultCalls.get/${collection})`
+        `Failed to fetch data. ${json.error} (defaultCalls.get/${collection})`,
       );
+    }
 
     return json;
   },
@@ -350,17 +352,18 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to fetch data by ID: ${id}. ${json.error} (defaultCalls.getById/${collection})`
+        `Failed to fetch data by ID: ${id}. ${json.error} (defaultCalls.getById/${collection})`,
       );
+    }
 
     return json;
   },
   getByKey: async ({ collection, key, token, baseUrl }: GetByKeyParams) => {
     const urlQueryString = queryString.stringify({
       "filters.key": key,
-      sort: "",
+      "sort": "",
     });
 
     const resp = await fetch(
@@ -368,14 +371,15 @@ const defaultCalls = {
       {
         method: "GET",
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      }
+      },
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`
+        `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`,
       );
+    }
 
     return json;
   },
@@ -394,10 +398,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to create data. ${json.error} (defaultCalls.post/${collection})`
+        `Failed to create data. ${json.error} (defaultCalls.post/${collection})`,
       );
+    }
 
     return json;
   },
@@ -412,10 +417,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
+        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`,
       );
+    }
 
     return json;
   },
@@ -430,10 +436,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
+        `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`,
       );
+    }
 
     return json;
   },
@@ -451,10 +458,11 @@ const defaultCalls = {
       baseUrl,
     });
 
-    if (!record)
+    if (!record) {
       throw new Error(
-        `Document not found with key: ${key}. (defaultCalls.patchByKey/${collection})`
+        `Document not found with key: ${key}. (defaultCalls.patchByKey/${collection})`,
       );
+    }
 
     return await defaultCalls.patch({
       collection,
@@ -473,10 +481,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
-        `Failed to delete data with ID: ${id}. ${json.error} (defaultCalls.remove/${collection})`
+        `Failed to delete data with ID: ${id}. ${json.error} (defaultCalls.remove/${collection})`,
       );
+    }
 
     return id;
   },
@@ -676,7 +685,7 @@ const solicitation: any = {
           Cookie: `AuthToken=${params.token}`,
         },
         credentials: "include",
-      }
+      },
     );
     const json = await resp.json();
 
@@ -703,7 +712,7 @@ const solicitation_comment: any = {
   },
   post: async (
     solId: string,
-    data: z.infer<typeof solicitation_comment.schema>
+    data: z.infer<typeof solicitation_comment.schema>,
   ) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`, {
       method: "POST",

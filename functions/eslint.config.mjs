@@ -1,47 +1,42 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Use FlatCompat to support legacy "extends" entries
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
-
+// Flat config version – remove legacy .eslintrc.js when this is active.
 export default [
-  // Ignore build and generated outputs
+  // 1. Ignore build + generated artifacts
   { ignores: ["lib/**", "generated/**", "eslint.config.mjs"] },
 
-  // Bring in equivalent of our legacy extends
-  ...compat.extends(
-    "eslint:recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "google",
-    "plugin:@typescript-eslint/recommended"
-  ),
-
-  // Local parser and rule customizations
+  // 2. Base JS recommended rules applied to all JS/TS source files
   {
+    files: ["**/*.ts", "**/*.tsx", "**/*.js"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
         project: ["tsconfig.json", "tsconfig.dev.json"],
         sourceType: "module",
+        ecmaVersion: "latest",
+      },
+      globals: {
+        // Node globals
+        process: "readonly",
+        console: "readonly",
+        // Runtime high-resolution timer (Cloud Functions Node 18+ / 20+ / 22+)
+        performance: "readonly",
+        // fetch is available in Node 18+ experimental and 21+ stable; Node 22 used per engines
+        fetch: "readonly",
+        Request: "readonly",
+        Response: "readonly",
+        Headers: "readonly",
       },
     },
+    plugins: { "@typescript-eslint": tsPlugin },
     rules: {
+      ...js.configs.recommended.rules,
+      ...tsPlugin.configs.recommended.rules,
+      "@typescript-eslint/no-explicit-any": "off",
       quotes: ["error", "double"],
-      "import/no-unresolved": 0,
       indent: ["error", 2],
-      "object-curly-spacing": 0,
-      "max-len": ["warn", { code: 120 }],
     },
   },
 ];

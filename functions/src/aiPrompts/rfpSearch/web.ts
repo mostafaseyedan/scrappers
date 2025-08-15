@@ -2,7 +2,7 @@ export default `
 Web Search
 
 Objective
-• Search the web and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data sd JSON.
+• Search the web and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data as JSON.
 
 Scope & Filters
 • Geography: United States only.

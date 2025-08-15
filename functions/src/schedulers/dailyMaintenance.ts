@@ -16,7 +16,7 @@ export const dailymaintenance = onSchedule(
     schedule: "*/10 * * * *", // Every 10 minutes
     timeZone: "UTC", // Adjust if a specific local timezone is required
     retryCount: 3, // Basic retry; adjust/remove based on idempotency of your task
-    secrets: ["OPENAI_API_KEY"], // Bind secret so it's available at runtime
+    secrets: ["DEV_OPENAI_API_KEY"], // Bind secret so it's available at runtime
   },
   async (event) => {
     logger.info("Maintenance job (10m interval) triggered", {
@@ -24,9 +24,9 @@ export const dailymaintenance = onSchedule(
     });
 
     // Skip if secret missing (local emulator without secret set)
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEV_OPENAI_API_KEY;
     if (!apiKey) {
-      logger.warn("OPENAI_API_KEY not set; skipping ChatGPT call.");
+      logger.warn("DEV_OPENAI_API_KEY not set; skipping ChatGPT call.");
       return;
     }
 

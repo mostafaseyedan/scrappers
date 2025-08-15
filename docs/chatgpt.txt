@@ -1,82 +1,61 @@
-VendorRegistry RFP Finder — USA ERP/IT Future Opportunities
+RFP Search
 
-Objective
-• Log in to https://www.vendorregistry.com and find active/upcoming (future, not expired) RFPs in the USA related to ERP and IT services. Extract structured data and write results to the provided Google Sheet.
+Replace the following text:
+{{VENDOR_NAME}} = publicpurchase
+{{VENDOR_URL}} = https://www.publicpurchase.com/gems/login/login
+{{VENDOR_USER}} = idenis
+{{VENDOR_PASS}} = 3620NJosey!
 
-Authentication
-• Credentials (use securely; prefer secret variables if available):
-	– user: vendor@cendien.com
-	– pass: 3620NJoseyLn!
+Objective 
+Log in at {{VENDOR_URL}} and identify active or upcoming RFPs in the USA related to ERP and IT services. Extract structured information for each opportunity and append it to Google Sheet at https://docs.google.com/spreadsheets/d/14SGBI4p-01VSdHDkg9hMgKNSxO0BGLCpN1ExjHceyn8/edit?gid=0#gid=0.
 
-Scope & Filters
-• Geography: United States only.
-• Timing: Only opportunities with a future closing date (strictly greater than “now” at runtime). Exclude past/expired/cancelled.
-• Categories/Keywords (match any; prioritize exact matches in title/description):
-	– ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration
-	– Infor Support, Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation
-	– Lawson Consulting, Lawson Managed Services
-	– Workday HCM, Workday Migration
-	– PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support
-	– Oracle ERP, Oracle Support, Oracle Database Managed Services
-	– IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT Services
-	– System Modernization
+Authentication 
+User: {{VENDOR_USER}} 
+Pass: {{VENDOR_PASS}}
+
+Search Scope & Filters 
+Location: United States only. 
+Timing: Include only bids with a future closing date (strictly greater than the current date). Exclude past, expired or cancelled opportunities. 
+Keywords (match any; prioritize exact matches in title/description): ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration Infor Support, Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation Lawson Consulting, Lawson Managed Services Workday HCM, Workday Migration PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support Oracle ERP, Oracle Support, Oracle Database Managed Services IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT Services System Modernization
 
 Core Workflow
-1) Navigate to VendorRegistry and log in with the credentials.
-2) Access the opportunities/bids search/browse page.
-3) For each keyword above:
-	 • Run a search (try both singular/plural and common synonyms where applicable).
-	 • Apply filters for “Active/Upcoming” and the USA if available.
-	 • Sort by closing date ascending, then iterate results.
-4) For each result detail page, extract fields (see Data Extraction). Skip if closing date is missing or in the past.
-5) Deduplicate across keywords using the tuple: [title, issuer, closingDate].
-6) Respect site ToS and rate limits; avoid excessive requests and handle anti-bot challenges gracefully.
+Navigate to the All Bids list after logging in and accept any cookie or pop-up prompts.
+For each keyword:
+Use the search bar or scroll to locate relevant bids.
+Apply any available filters for Active/Upcoming and USA.
+Sort by closing date ascending, then iterate results.
+For each listing, open the bid detail page. Capture the detail page URL as siteUrl.
+Extract required fields from the detail page. Only process if closingDate is in the future.
+Skip duplicates based on [title, issuer, closingDate].
 
 Resilience & Error Handling
-• Handle cookie banners, pop-ups, and consent prompts by accepting/dismissing to proceed.
-• If a search yields no results, continue to the next keyword automatically.
-• Retry transient actions (navigation, page load, extraction) up to 2 times with exponential backoff.
-• If the detail page link cannot be reliably retrieved, leave siteUrl blank and continue.
-• If a field is missing, leave it blank except for required derived fields (site, extractedDate).
+Dismiss cookie banners or pop-ups.
+If a search yields no results, continue to next keyword.
+Retry navigation or extraction up to 2 times for transient errors.
+If any field is missing (except siteId, site, siteUrl, extractedDate) leave it blank.
 
-Data Extraction (per opportunity)
-• title: The RFP title as shown on the detail page.
-• description: 1–3 brief sentences summarizing the scope and buyer needs.
-• closingDate: Bid deadline in ISO 8601 (use site timezone if available, else local time). Must be future.
-• issuer: Agency or issuing organization name.
-• location: City/County/State as listed (or State if only that is available).
-• siteId: Prefer an explicit ID on the page. Else, use the last meaningful path segment of the detail URL (e.g., the GUID-like token). If neither exists, use a stable hash of [title + issuer + closingDate].
-• site: Constant value 'chatgptvendorregistry'.
-• siteUrl: Direct detail page URL (leave blank if not retrievable).
-• contactInfo: Any listed emails and/or phone numbers (comma-separated). Scan the description and contact sections.
-• externalLinks: Any external or referenced links (comma-separated), including the issuer’s procurement page if present.
-• extractedDate: Current timestamp in ISO 8601.
+Data Extraction Fields (in order)
+title – RFP title.
+description – 1–3 sentence summary.
+closingDate – ISO 8601 future deadline.
+issuer – Issuing organization.
+location – City/County/State or State alone.
+siteId – Explicit ID if present; else last meaningful URL path segment; else stable hash of title+issuer+closingDate.
+site – "chat{{VENDOR_NAME}}".
+siteUrl – Detail page URL.
+contactInfo – Emails or phone numbers (comma-separated) if present.
+externalLinks – Referenced links (comma-separated).
+extractedDate – Current timestamp ISO 8601.
 
-Output Targets
-• Primary: Append rows to this Google Sheet (one row per RFP):
-	https://docs.google.com/spreadsheets/d/14SGBI4p-01VSdHDkg9hMgKNSxO0BGLCpN1ExjHceyn8/edit?gid=0#gid=0
-• Fallback: If writing to the sheet isn’t possible, output a CSV with the exact columns below.
-
-Output Schema (columns in order)
-1) title
-2) description
-3) closingDate
-4) issuer
-5) location
-6) siteId
-7) site
-8) siteUrl
-9) contactInfo
-10) externalLinks
-11) extractedDate
+Output
+Append new rows to the Google Sheet in the exact column order above.
+Throttle requests (~1–2 pages per second) with slight random delay.
+Process at most 200 unique matches.
 
 Quality & Compliance
-• Throttle requests to be polite (e.g., ~1–2 pages/sec; add random jitter).
-• Validate closingDate > now; discard otherwise.
-• Limit total processed results to a reasonable cap (e.g., first 200 unique matches) to avoid runaway loops.
-• Provide a short run summary at the end: keywords tried, results found, rows written, rows skipped, and any notable errors.
+Validate closingDate > now; discard otherwise.
+Use primary bid submission deadline if multiple dates.
+Use legal/procurement issuer name.
 
 Notes
-• If multiple closing dates are shown, choose the main bid submission deadline (not questions or pre-bid dates).
-• Prefer issuer’s legal/procurement name rather than a platform alias.
-• Keep descriptions concise; avoid copying large blocks verbatim.
+None

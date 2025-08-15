@@ -10,5 +10,6 @@ import "./config/firebase";
 export * from "./firestore/makeUppercase";
 export * from "./schedulers/dailyMaintenance";
 export * from "./http/chatgpt";
+export * from "./http/playwright";
 
 // Add future exports above this line.
