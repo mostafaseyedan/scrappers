@@ -13,13 +13,13 @@ import { db } from "../config/firebase";
 // Current schedule: */10 * * * *  => every 10 minutes (UTC)
 export const dailymaintenance = onSchedule(
   {
-    schedule: "*/10 * * * *", // Every 10 minutes
+    schedule: "0 0 * * *", // Every day at midnight UTC
     timeZone: "UTC", // Adjust if a specific local timezone is required
     retryCount: 3, // Basic retry; adjust/remove based on idempotency of your task
     secrets: ["DEV_OPENAI_API_KEY"], // Bind secret so it's available at runtime
   },
   async (event) => {
-    logger.info("Maintenance job (10m interval) triggered", {
+    logger.info("Maintenance job (daily interval) triggered", {
       scheduleTime: event.scheduleTime,
     });
 

@@ -1,47 +1,62 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { chromium, Locator } from "playwright-core";
-// import { logger } from "firebase-functions";
+import playwrightCore from "playwright-core";
+import chromium from "@sparticuz/chromium";
+import type { Locator } from "playwright-core";
 
 async function captureBids(rows: Locator) {
-  const bids = [];
+  const bids: any[] = [];
   const rowCount = await rows.count();
   for (let i = 0; i < rowCount; i++) {
     const row = rows.nth(i);
-    const bid = {
+    bids.push({
       title: await row.locator("> td:nth-child(1)").innerText(),
       issuer: await row.locator("> td:nth-child(2)").innerText(),
       publishDate: await row.locator("> td:nth-child(3)").innerText(),
       closingDate: await row.locator("> td:nth-child(4)").innerText(),
       site: "publicpurchase",
       siteId: await row.locator("> td:nth-child(7)").innerText(),
-    };
-    bids.push(bid);
+    });
   }
-
   return bids;
 }
 
 export const playwright = onRequest(
-  { memory: "1GiB", timeoutSeconds: 60 * 60 },
+  { memory: "1GiB", timeoutSeconds: 3600 },
   async (req, res) => {
-    const USER = "idenis";
-    const PASS = "3620NJosey!";
-    let bids = [];
+    const USER = process.env.PUBLICPURCHASE_USER || "idenis";
+    const PASS = process.env.PUBLICPURCHASE_PASS || "3620NJosey!";
 
     if (!USER || !PASS) {
       res.status(500).send("Missing creds");
       return;
     }
 
-    const browser = await chromium.launch({
+    // Ensure playwright looks inside node_modules
+    // process.env.PLAYWRIGHT_BROWSERS_PATH = "0";
+    // const { chromium } = await import("playwright");
+    // Debug: log what’s actually deployed
+    /*
+    try {
+      const coreDir = path.dirname(
+        require.resolve("playwright-core/package.json")
+      );
+      const localBrowsers = path.join(coreDir, ".local-browsers");
+      console.log("Exists .local-browsers:", fs.existsSync(localBrowsers));
+      if (fs.existsSync(localBrowsers)) {
+        console.log(".local-browsers contents:", fs.readdirSync(localBrowsers));
+      }
+      console.log("chromium.executablePath():", chromium.executablePath());
+    } catch (e) {
+      console.log("Browser debug error:", e);
+    } */
+
+    const browser = await playwrightCore.chromium.launch({
+      executablePath: await chromium.executablePath(),
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-      ],
+      args: chromium.args,
     });
+
+    let allBids: any[] = [];
 
     try {
       const context = await browser.newContext();
@@ -57,53 +72,42 @@ export const playwright = onRequest(
         page.click("input[value=\"Login\"]"),
       ]);
 
-      // We should be at home page
       await page.waitForSelector("#invitedBids");
-
-      // Go to last page
-      page.locator("#invitedBids > div:nth-child(2) a:last-child").click();
+      await page
+        .locator("#invitedBids > div:nth-child(2) a:last-child")
+        .click();
       await page.waitForTimeout(1000);
 
+      allBids.push(
+        ...(await captureBids(page.locator("#invitedBids tbody > tr:visible")))
+      );
+
       /*
-  bids = [
-    ...(await captureBids(page.locator("#invitedBids tbody > tr:visible"))),
-  ];
-  console.log(bids);
-  */
-
-      let lastPage = false;
-      do {
-        bids = [
+      let done = false;
+      while (!done) {
+        allBids.push(
           ...(await captureBids(
-            page.locator("#invitedBids tbody > tr:visible"),
-          )),
-        ];
-        console.log(bids);
-
-        const prevPage = page.locator(
-          "#invitedBids > div:nth-child(2) a:nth-child(2)",
+            page.locator("#invitedBids tbody > tr:visible")
+          ))
         );
-        const styles = await prevPage.getAttribute("style");
-
-        prevPage.click();
-        await page.waitForTimeout(3000);
-
-        if (styles?.includes("color:#999999")) {
-          lastPage = true;
+        const prevPage = page.locator(
+          "#invitedBids > div:nth-child(2) a:nth-child(2)"
+        );
+        const style = await prevPage.getAttribute("style");
+        if (style?.includes("color:#999999")) {
+          done = true;
+        } else {
+          await prevPage.click();
+          await page.waitForTimeout(1500);
         }
-      } while (lastPage !== false);
+      } */
 
-      // Temporary pause so you can see the logged-in state
-      await page.waitForTimeout(5000);
-
-      await browser.close();
-
-      res.json({ bids });
+      res.json({ bids: allBids });
     } catch (e: any) {
       console.error(e);
       res.status(500).send(e.message);
     } finally {
       await browser.close();
     }
-  },
+  }
 );
