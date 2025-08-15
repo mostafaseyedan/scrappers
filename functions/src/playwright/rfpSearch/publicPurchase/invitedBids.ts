@@ -70,3 +70,23 @@ export async function scrapeAllBids(page: Page) {
 
   return allBids;
 }
+
+export async function run(page: Page, env: Record<string, any> = {}) {
+  const USER = env.DEV_PUBLICPURCHASE_USER!;
+  const PASS = env.DEV_PUBLICPURCHASE_PASS!;
+  let results = {};
+
+  if (!USER) throw new Error("Missing USER environment variable for run");
+  if (!PASS) throw new Error("Missing PASS environment variable for run");
+
+  await login(page, USER, PASS);
+
+  // Go to last page
+  page.locator("#invitedBids > div:nth-child(2) a:last-child").click();
+  await page.waitForTimeout(1000);
+
+  const bids = await scrapeAllBids(page);
+  results = { bids };
+
+  return results;
+}
