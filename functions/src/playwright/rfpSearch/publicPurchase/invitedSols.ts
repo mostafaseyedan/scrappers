@@ -1,4 +1,4 @@
-import { isNotExpired, isItRelated } from "../../../lib/script";
+import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
 import {
   solicitation as solModel,
   scriptLog as logModel,
@@ -6,37 +6,6 @@ import {
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
 import type { Locator, Page } from "playwright-core";
-
-export async function parseSolRows(rows: Locator) {
-  const sols = [];
-  const rowCount = await rows.count();
-  for (let i = 0; i < rowCount; i++) {
-    const row = rows.nth(i);
-    const publishDate = sanitizeDateString(
-      await row.locator("> td:nth-child(3)").innerText()
-    );
-    const closingDate = sanitizeDateString(
-      await row.locator("> td:nth-child(4)").innerText()
-    );
-    const sol = {
-      title: await row.locator("> td:nth-child(1)").innerText(),
-      issuer: await row.locator("> td:nth-child(2)").innerText(),
-      publishDate: publishDate || null,
-      closingDate: closingDate || null,
-      site: "publicpurchase",
-      siteId: await row.locator("> td:nth-child(7)").innerText(),
-      siteUrl:
-        "https://www.publicpurchase.com" +
-        (await row
-          .locator("> td:nth-child(1) > a[href]")
-          .first()
-          .getAttribute("href")),
-    };
-    sols.push(sol);
-  }
-
-  return sols;
-}
 
 export async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
@@ -51,9 +20,29 @@ export async function login(page: Page, user: string, pass: string) {
     page.waitForLoadState("networkidle"),
     page.click('input[value="Login"]'),
   ]);
+}
 
-  // We should be at home page
-  await page.waitForSelector("#invitedBids");
+async function parseSolRow(row: Locator) {
+  const publishDate = sanitizeDateString(
+    await row.locator("> td:nth-child(3)").innerText()
+  );
+  const closingDate = sanitizeDateString(
+    await row.locator("> td:nth-child(4)").innerText()
+  );
+  return {
+    title: await row.locator("> td:nth-child(1)").innerText(),
+    issuer: await row.locator("> td:nth-child(2)").innerText(),
+    publishDate: publishDate || null,
+    closingDate: closingDate || null,
+    site: "publicpurchase",
+    siteId: await row.locator("> td:nth-child(7)").innerText(),
+    siteUrl:
+      "https://www.publicpurchase.com" +
+      (await row
+        .locator("> td:nth-child(1) > a[href]")
+        .first()
+        .getAttribute("href")),
+  };
 }
 
 export async function scrapeAllSols(page: Page) {
@@ -61,10 +50,15 @@ export async function scrapeAllSols(page: Page) {
   let lastPage = false;
 
   do {
-    const sols = await parseSolRows(
-      page.locator("#invitedBids tbody > tr:visible")
-    );
-    allSols = allSols.concat(sols);
+    const rows = page.locator("#invitedBids tbody > tr:visible");
+    // const sols = await parseSolRows(rows);
+    const rowCount = await rows.count();
+
+    for (let i = 0; i < rowCount; i++) {
+      const row = rows.nth(i);
+      const sol = await parseSolRow(row);
+      allSols.push(sol);
+    }
 
     const prevPage = page.locator(
       "#invitedBids > div:nth-child(2) a:nth-child(2)"
@@ -82,19 +76,6 @@ export async function scrapeAllSols(page: Page) {
   } while (lastPage !== true);
 
   return allSols;
-}
-
-async function isSolDuplicate(
-  sol: Record<string, any>,
-  baseUrl: string,
-  serviceKey: string
-) {
-  const respCheck = await solModel.get({
-    baseUrl,
-    filters: { siteId: sol.siteId },
-    token: serviceKey,
-  });
-  return respCheck.results?.length > 0;
 }
 
 export async function run(page: Page, env: Record<string, any> = {}) {
@@ -115,6 +96,9 @@ export async function run(page: Page, env: Record<string, any> = {}) {
 
   await login(page, USER, PASS);
 
+  // We should be at home page
+  await page.waitForSelector("#invitedBids");
+
   // Go to last page
   page.locator("#invitedBids > div:nth-child(2) a:last-child").click();
   await page.waitForTimeout(1000);
@@ -125,12 +109,10 @@ export async function run(page: Page, env: Record<string, any> = {}) {
   // Filter out expired
   sols = sols.filter((sol) => {
     if (sol.closingDate) {
-      if (isNotExpired(sol)) {
-        return true;
-      } else {
-        expiredCount++;
-        return false;
-      }
+      if (isNotExpired(sol)) return true;
+
+      expiredCount++;
+      return false;
     }
 
     return sol;
@@ -169,7 +151,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
       message: `Scraped ${successCount} solicitations from ${VENDOR}. ${
         failCount > 0 ? `Found ${failCount} failures. ` : ""
       } ${dupCount > 0 ? `Found ${dupCount} duplicates. ` : ""}`,
-      scriptName: "firefunctions/publicpurchase/invitedBids",
+      scriptName: `firefunctions/${VENDOR}/invitedBids`,
       dupCount,
       successCount,
       junkCount: expiredCount + nonItCount,

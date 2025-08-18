@@ -3,7 +3,7 @@ import { chromium, Browser, Page } from "playwright-core";
 import {
   login,
   scrapeAllSols,
-} from "../../../functions/src/playwright/rfpSearch/publicPurchase/invitedBids";
+} from "../../../functions/src/playwright/rfpSearch/publicPurchase/invitedSols";
 
 const USER = process.env.PUBLICPURCHASE_USER!;
 const PASS = process.env.PUBLICPURCHASE_PASS!;
@@ -16,6 +16,9 @@ async function run() {
   const page: Page = await context.newPage();
 
   await login(page, USER, PASS);
+
+  // We should be at home page
+  await page.waitForSelector("#invitedBids");
 
   // Go to last page
   page.locator("#invitedBids > div:nth-child(2) a:last-child").click();
