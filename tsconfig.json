@@ -22,6 +22,16 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  // Limit included source files to the Next.js application (exclude Firebase Functions package)
+  // so that Next build doesn't try to type-check Cloud Functions (which have their own tsconfig & deps).
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,tsx}",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "functions"]
 }

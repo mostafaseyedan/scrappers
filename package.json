@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "deploy": "pnpm run deploy:functions",
+    "deploy": "firebase deploy",
     "deploy:functions": "cd functions && pnpm run deploy",
     "start": "next start",
     "lint": "next lint"
