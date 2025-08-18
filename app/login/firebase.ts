@@ -28,15 +28,11 @@ export const getMicrosoftProvider = (auth: Auth) => {
   provider.addScope("email");
   provider.addScope("openid");
   setDeviceLanguage(auth);
-  provider.setCustomParameters({
+  const params = {
     // Use tenant-specific endpoint to avoid /common when app is single-tenant
-    tenant: process.env.NEXT_PUBLIC_MICROSOFT_TENANT_ID || "organizations",
-    // Enforce Authorization Code + PKCE
-    response_type: "code",
-    response_mode: "fragment",
-    // Optional: prompt account chooser for clarity
-    prompt: "select_account",
-  });
+    tenant: process.env.NEXT_PUBLIC_MICROSOFT_TENANT_ID || "",
+  };
+  provider.setCustomParameters(params);
   return provider;
 };
 
