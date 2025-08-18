@@ -7,6 +7,7 @@
     "build": "next build",
     "deploy": "firebase deploy",
     "deploy:functions": "cd functions && pnpm run deploy",
+    "serve": "tsc --watch & firebase emulators:start",
     "start": "next start",
     "lint": "next lint"
   },

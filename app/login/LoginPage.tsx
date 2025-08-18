@@ -235,15 +235,12 @@ export function LoginPage({
             >
               Log in with Email Link
             </Button>
-            <Button
-              onClick={handleLoginWithMicrosoft}
-              style={{ display: "none" }}
-            >
-              Log in with Microsoft (Popup)
-            </Button>
           </PasswordForm>
           <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
             Log in with Microsoft (Redirect)
+          </Button>
+          <Button onClick={handleLoginWithMicrosoft}>
+            Log in with Microsoft (Popup)
           </Button>
         </>
       )}

@@ -45,11 +45,11 @@ export async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.publicpurchase.com/gems/login/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[name=\"uname\"]", user);
-  await page.fill("input[name=\"pwd\"]", pass);
+  await page.fill('input[name="uname"]', user);
+  await page.fill('input[name="pwd"]', pass);
   await Promise.all([
     page.waitForLoadState("networkidle"),
-    page.click("input[value=\"Login\"]"),
+    page.click('input[value="Login"]'),
   ]);
 
   // We should be at home page
@@ -98,7 +98,7 @@ async function isSolDuplicate(
 }
 
 export async function run(page: Page, env: Record<string, any> = {}) {
-  const BASE_URL = env.BASE_URL || "http://localhost:5002";
+  const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
   const USER = env.DEV_PUBLICPURCHASE_USER!;
   const PASS = env.DEV_PUBLICPURCHASE_PASS!;
