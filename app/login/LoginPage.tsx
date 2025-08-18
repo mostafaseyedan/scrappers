@@ -44,6 +44,8 @@ export function LoginPage({
   const redirectAfterLogin = useRedirectAfterLogin();
 
   async function handleLogin(credential: UserCredential) {
+    console.log("handleLogin", credential);
+    debugger;
     await loginWithCredential(credential);
     redirectAfterLogin();
   }

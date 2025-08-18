@@ -66,5 +66,6 @@ export const loginWithProviderUsingRedirect = async (
   auth: Auth,
   provider: AuthProvider
 ): Promise<void> => {
+  console.log("loginWithProviderUsingRedirect", { auth, provider });
   await signInWithRedirect(auth, provider);
 };

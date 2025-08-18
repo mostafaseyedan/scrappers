@@ -45,11 +45,11 @@ export async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.publicpurchase.com/gems/login/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="uname"]', user);
-  await page.fill('input[name="pwd"]', pass);
+  await page.fill("input[name=\"uname\"]", user);
+  await page.fill("input[name=\"pwd\"]", pass);
   await Promise.all([
     page.waitForLoadState("networkidle"),
-    page.click('input[value="Login"]'),
+    page.click("input[value=\"Login\"]"),
   ]);
 
   // We should be at home page
@@ -169,7 +169,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
       message: `Scraped ${successCount} solicitations from ${VENDOR}. ${
         failCount > 0 ? `Found ${failCount} failures. ` : ""
       } ${dupCount > 0 ? `Found ${dupCount} duplicates. ` : ""}`,
-      scriptName: `firefunctions/publicpurchase/invitedBids`,
+      scriptName: "firefunctions/publicpurchase/invitedBids",
       dupCount,
       successCount,
       junkCount: expiredCount + nonItCount,
