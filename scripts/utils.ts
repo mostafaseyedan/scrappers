@@ -58,7 +58,7 @@ export async function endScript({
   await logModel.post({
     baseUrl,
     data: {
-      message: `Scrapped ${counts.success} solicitations from ${vendor}. 
+      message: `Scraped ${counts.success} solicitations from ${vendor}. 
         ${counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""}
         ${
           counts.duplicates > 0 ? `Found ${counts.duplicates} duplicates. ` : ""

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "deploy": "pnpm run deploy:functions",
+    "deploy:functions": "cd functions && pnpm run deploy",
     "start": "next start",
     "lint": "next lint"
   },
@@ -43,6 +45,7 @@
     "next-firebase-auth-edge": "^1.9.1",
     "next-themes": "^0.4.6",
     "playwright": "^1.54.1",
+    "playwright-core": "^1.54.2",
     "query-string": "^9.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

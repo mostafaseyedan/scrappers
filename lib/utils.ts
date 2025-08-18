@@ -24,7 +24,7 @@ export function sanitizeDateString(dateString: string): string | null {
     date = new Date(dateString);
     if (isNaN(date.getTime())) {
       console.warn(
-        `Failed to parse date string: ${dateString}. Invalid date format`
+        `Failed to parse date string: ${dateString}. Invalid date format`,
       );
       return null;
     }
@@ -39,7 +39,7 @@ export function sanitizeDateString(dateString: string): string | null {
 }
 
 export function sanitizeUniqueCommaValues(
-  input: string | string[] | undefined
+  input: string | string[] | undefined,
 ): string[] {
   if (!input) return [];
   const values = Array.isArray(input) ? input : input.split(",");
@@ -57,13 +57,13 @@ export function secToTimeStr(seconds: number): string {
   const secs = seconds % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
     2,
-    "0"
+    "0",
   )}:${String(secs).padStart(2, "0")}`;
 }
 
 export async function uidsToNames(
   uids: string[] = [],
-  getUser: (uid: string) => Promise<Record<string, any> | undefined>
+  getUser: (uid: string) => Promise<Record<string, any> | undefined>,
 ): Promise<string[]> {
   return Promise.all(
     uids.map(async (uid: string): Promise<string> => {
@@ -72,6 +72,6 @@ export async function uidsToNames(
         return user ? user.displayName || user.email || uid : uid;
       }
       return uid;
-    })
+    }),
   );
 }

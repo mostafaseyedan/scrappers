@@ -1,26 +1,61 @@
-Use user and pass for connecting to https://www.bidprime.com/login to search for future RFPs for ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, Oracle Database Managed Services in the USA. Focus on opportunities in the future only, not past or expired.
-user: will@leafmedium.com
-pass: bInnovation123!
+RFP Search
 
-Important Instructions for Robust Execution:
+Replace the following text:
+{{VENDOR_NAME}} = publicpurchase
+{{VENDOR_URL}} = https://www.publicpurchase.com/gems/login/login
+{{VENDOR_USER}} = idenis
+{{VENDOR_PASS}} = 3620NJosey!
 
-• Handle Obstacles Autonomously: During your search, handle common web automation challenges on your own. For example, if you encounter cookie consent banners, login prompts, or other pop-ups, accept or close them to proceed with the task.
-• Manage Search Failures: If a specific search query yields no results, automatically move on to the next keyword or search strategy.
-• Error Handling for Links: If you successfully find an RFP but cannot retrieve its specific Source Link (e.g., you encounter a blank link error or a broken redirect), do not stop the process. Simply leave the 'Source Link' cell for that particular entry blank in the final table and continue to the next RFP.
+Objective 
+Log in at {{VENDOR_URL}} and identify active or upcoming RFPs in the USA related to ERP and IT services. Extract structured information for each opportunity and append it to Google Sheet at https://docs.google.com/spreadsheets/d/14SGBI4p-01VSdHDkg9hMgKNSxO0BGLCpN1ExjHceyn8/edit?gid=0#gid=0.
 
-Output Formatting:
+Authentication 
+User: {{VENDOR_USER}} 
+Pass: {{VENDOR_PASS}}
 
-After gathering the results, format them into an json.
+Search Scope & Filters 
+Location: United States only. 
+Timing: Include only bids with a future closing date (strictly greater than the current date). Exclude past, expired or cancelled opportunities. 
+Keywords (match any; prioritize exact matches in title/description): ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration Infor Support, Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation Lawson Consulting, Lawson Managed Services Workday HCM, Workday Migration PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support Oracle ERP, Oracle Support, Oracle Database Managed Services IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT Services System Modernization
 
-Then, present all of the results you find in a table with these exact columns:
+Core Workflow
+Navigate to the All Bids list after logging in and accept any cookie or pop-up prompts.
+For each keyword:
+Use the search bar or scroll to locate relevant bids.
+Apply any available filters for Active/Upcoming and USA.
+Sort by closing date ascending, then iterate results.
+For each listing, open the bid detail page. Capture the detail page URL as siteUrl.
+Extract required fields from the detail page. Only process if closingDate is in the future.
+Skip duplicates based on [title, issuer, closingDate].
 
-title: RFP Title
-issuer: Agency
-location: Location
-closingDate: Bidding End Date (Deadline)
-description: Key Notes
-externalLinks: array of any external links or even direct url to the issuer website
-siteId: get from the title link. For example a4c9f99f-c56e-4d02-b334-fde94fceff8b is the ID from  https://app.bidsync.com/bid-detail/a4c9f99f-c56e-4d02-b334-fde94fceff8b?bidScore=1.0004
-siteUrl: title url link
+Resilience & Error Handling
+Dismiss cookie banners or pop-ups.
+If a search yields no results, continue to next keyword.
+Retry navigation or extraction up to 2 times for transient errors.
+If any field is missing (except siteId, site, siteUrl, extractedDate) leave it blank.
 
-For the 'description' column, provide a brief summary of what the buyer is looking for. For the 'siteUrl' column, provide the direct link to the RFP.
+Data Extraction Fields (in order)
+title – RFP title.
+description – 1–3 sentence summary.
+closingDate – ISO 8601 future deadline.
+issuer – Issuing organization.
+location – City/County/State or State alone.
+siteId – Explicit ID if present; else last meaningful URL path segment; else stable hash of title+issuer+closingDate.
+site – "chat{{VENDOR_NAME}}".
+siteUrl – Detail page URL.
+contactInfo – Emails or phone numbers (comma-separated) if present.
+externalLinks – Referenced links (comma-separated).
+extractedDate – Current timestamp ISO 8601.
+
+Output
+Append new rows to the Google Sheet in the exact column order above.
+Throttle requests (~1–2 pages per second) with slight random delay.
+Process at most 200 unique matches.
+
+Quality & Compliance
+Validate closingDate > now; discard otherwise.
+Use primary bid submission deadline if multiple dates.
+Use legal/procurement issuer name.
+
+Notes
+None

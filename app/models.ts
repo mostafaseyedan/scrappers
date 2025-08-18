@@ -300,10 +300,11 @@ const defaultCalls = {
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to fetch count. ${json.error} (defaultCalls.count/${collection})`
       );
+    }
 
     return json.count || 0;
   },
@@ -336,10 +337,11 @@ const defaultCalls = {
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to fetch data. ${json.error} (defaultCalls.get/${collection})`
       );
+    }
 
     return json;
   },
@@ -350,10 +352,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to fetch data by ID: ${id}. ${json.error} (defaultCalls.getById/${collection})`
       );
+    }
 
     return json;
   },
@@ -372,10 +375,11 @@ const defaultCalls = {
     );
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`
       );
+    }
 
     return json;
   },
@@ -394,10 +398,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to create data. ${json.error} (defaultCalls.post/${collection})`
       );
+    }
 
     return json;
   },
@@ -412,10 +417,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
       );
+    }
 
     return json;
   },
@@ -430,10 +436,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to update data with ID: ${id}. ${json.error} (defaultCalls.patch/${collection})`
       );
+    }
 
     return json;
   },
@@ -451,10 +458,11 @@ const defaultCalls = {
       baseUrl,
     });
 
-    if (!record)
+    if (!record) {
       throw new Error(
         `Document not found with key: ${key}. (defaultCalls.patchByKey/${collection})`
       );
+    }
 
     return await defaultCalls.patch({
       collection,
@@ -473,10 +481,11 @@ const defaultCalls = {
     });
     const json = await resp.json();
 
-    if (json.error)
+    if (json.error) {
       throw new Error(
         `Failed to delete data with ID: ${id}. ${json.error} (defaultCalls.remove/${collection})`
       );
+    }
 
     return id;
   },
@@ -527,6 +536,7 @@ const scriptLog: any = {
     failCount: z.number().default(0),
     junkCount: z.number().default(0),
     timeStr: z.string().default("00:00:00"), // hh:mm:ss
+    data: z.any().default({}),
   }),
   get: async ({ collection = "scriptLogs", ...options }: GetParams) =>
     await defaultCalls.get({ collection, ...options }),
@@ -596,7 +606,7 @@ const solicitation: any = {
       externalLinks: z.array(z.string()).default([]),
       issuer: z.string().min(1, "Issuer is required"),
       keywords: z.array(z.string()).default([]),
-      location: z.string().min(1, "Location is required"),
+      location: z.string().default(""),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
       publishDate: z.string().nullable().default(null),
       questionsDueByDate: z.string().nullable().default(null),
