@@ -757,8 +757,8 @@ const solicitation_log: any = {
     data: Record<string, any>;
   }) =>
     await defaultCalls.post({
-      collection: `solicitations/${solId}/logs`,
       ...options,
+      collection: `solicitations/${solId}/logs`,
     }),
 };
 

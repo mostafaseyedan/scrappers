@@ -42,7 +42,7 @@ async function parseSolRow(row: Locator) {
     issuer: await row.locator(".result-agency").first().innerText(),
     closingDate,
     site: "bidsync",
-    siteUrl,
+    siteUrl: siteUrl ? "https://app.bidsync.com/" + siteUrl : "",
     siteId,
     siteData: {
       uniqueId,
@@ -83,7 +83,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
   await login(page, USER, PASS);
   await page.waitForSelector("#matAllBidsContent");
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 10; i++) {
     page.locator("#loadMoreBids").click();
     await page.waitForTimeout(1000);
   }
@@ -95,7 +95,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
   sols = sols.filter((sol) => {
     if (sol.closingDate) {
       if (isNotExpired(sol)) return true;
-
+      logger.log(sol.closingDate, "is expired");
       expiredCount++;
       return false;
     }
@@ -121,7 +121,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
 
     const newRecord = await solModel.post({
       baseUrl: BASE_URL,
-      data: { ...sol, location: "" },
+      data: { location: "", ...sol },
       token: SERVICE_KEY,
     });
     logger.log(`Saved sol: ${newRecord.id}`);

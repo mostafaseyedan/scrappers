@@ -13,7 +13,7 @@ export function isNotExpired(record: Record<string, any>): boolean {
   const now = new Date();
   const closing = new Date(closingDate);
 
-  return closing.getTime() < now.getTime() + 60 * 60 * 24 * 3;
+  return closing.getTime() > now.getTime() + 60 * 60 * 24 * 3 * 1000; // 3 days
 }
 
 export async function isItRelated(

@@ -1,7 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import playwrightCore from "playwright-core";
 import chromium from "@sparticuz/chromium";
-import { run as ppInvitedSols } from "../playwright/rfpSearch/publicPurchase/invitedSols";
+import { run as ppInvitedSols } from "../playwright/rfpSearch/publicpurchase/invitedSols";
 import { run as bidsyncDashboardSols } from "../playwright/rfpSearch/bidsync/dashboardSols";
 import { logger } from "firebase-functions";
 
@@ -27,7 +27,7 @@ export const playwright = onRequest(
     const script = req.query.script as keyof typeof scripts;
     const browser = await playwrightCore.chromium.launch({
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: false,
       args: chromium.args,
     });
     let status = 200;
@@ -41,7 +41,11 @@ export const playwright = onRequest(
 
       const context = await browser.newContext();
       const page = await context.newPage();
-      results = await scripts[script](page, process.env);
+      const baseUrl = process.env.BASE_URL || "http://localhost:5002";
+      results = await scripts[script](page, {
+        ...process.env,
+        BASE_URL: baseUrl,
+      });
     } catch (e: any) {
       logger.error(e);
       status = 500;
