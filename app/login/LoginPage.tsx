@@ -44,8 +44,6 @@ export function LoginPage({
   const redirectAfterLogin = useRedirectAfterLogin();
 
   async function handleLogin(credential: UserCredential) {
-    console.log("handleLogin", credential);
-    debugger;
     await loginWithCredential(credential);
     redirectAfterLogin();
   }
@@ -184,7 +182,7 @@ export function LoginPage({
         </div>
       )}
       {!hasLogged && (
-        <PasswordForm
+        /* <PasswordForm
           loading={isEmailLoading || isLoginActionPending}
           onSubmit={handleLoginWithEmailAndPassword}
           actions={
@@ -231,10 +229,11 @@ export function LoginPage({
           <Button onClick={handleLoginWithMicrosoft}>
             Log in with Microsoft (Popup)
           </Button>
-          <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
-            Log in with Microsoft (Redirect)
-          </Button>
-        </PasswordForm>
+          
+        </PasswordForm> */
+        <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
+          Log in with Microsoft
+        </Button>
       )}
     </div>
   );
