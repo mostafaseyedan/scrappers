@@ -182,58 +182,70 @@ export function LoginPage({
         </div>
       )}
       {!hasLogged && (
-        /* <PasswordForm
-          loading={isEmailLoading || isLoginActionPending}
-          onSubmit={handleLoginWithEmailAndPassword}
-          actions={
-            // `firebase/auth` library is not yet compatible with Vercel's Edge environment
-            !process.env.VERCEL ? (
-              <div className={styles.loginWithAction}>
-                <Switch
-                  value={shouldLoginWithAction}
-                  onChange={setShouldLoginWithAction}
-                />
-              </div>
-            ) : undefined
-          }
-          error={
-            emailPasswordError ||
-            googleError ||
-            emailLinkError ||
-            googleUsingRedirectError ||
-            microsoftError ||
-            microsoftUsingRedirectError
-          }
-        >
-          <Link
-            className={styles.link}
-            href={appendRedirectParam("/reset-password", redirect)}
-          >
-            Reset password
-          </Link>
-          <Link href={appendRedirectParam("/register", redirect)}>
-            <Button className="w-full">Register</Button>
-          </Link>
-          <Button onClick={handleLoginWithGoogle}>
-            Log in with Google (Popup)
-          </Button>
-          <Button onClick={handleLoginWithGoogleUsingRedirect}>
-            Log in with Google (Redirect)
-          </Button>
-          <Button
+        <>
+          <PasswordForm
+            loading={isEmailLoading || isLoginActionPending}
+            onSubmit={handleLoginWithEmailAndPassword}
+            actions={
+              // `firebase/auth` library is not yet compatible with Vercel's Edge environment
+              !process.env.VERCEL ? (
+                <div className={styles.loginWithAction}>
+                  <Switch
+                    value={shouldLoginWithAction}
+                    onChange={setShouldLoginWithAction}
+                  />
+                </div>
+              ) : undefined
+            }
+            error={
+              emailPasswordError ||
+              googleError ||
+              emailLinkError ||
+              googleUsingRedirectError ||
+              microsoftError ||
+              microsoftUsingRedirectError
+            }
             style={{ display: "none" }}
-            onClick={handleLoginWithEmailLink}
           >
-            Log in with Email Link
+            <Link
+              className={styles.link}
+              href={appendRedirectParam("/reset-password", redirect)}
+              style={{ display: "none" }}
+            >
+              Reset password
+            </Link>
+            <Link
+              href={appendRedirectParam("/register", redirect)}
+              style={{ display: "none" }}
+            >
+              <Button className="w-full">Register</Button>
+            </Link>
+            <Button onClick={handleLoginWithGoogle} style={{ display: "none" }}>
+              Log in with Google (Popup)
+            </Button>
+            <Button
+              onClick={handleLoginWithGoogleUsingRedirect}
+              style={{ display: "none" }}
+            >
+              Log in with Google (Redirect)
+            </Button>
+            <Button
+              style={{ display: "none" }}
+              onClick={handleLoginWithEmailLink}
+            >
+              Log in with Email Link
+            </Button>
+            <Button
+              onClick={handleLoginWithMicrosoft}
+              style={{ display: "none" }}
+            >
+              Log in with Microsoft (Popup)
+            </Button>
+          </PasswordForm>
+          <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
+            Log in with Microsoft (Redirect)
           </Button>
-          <Button onClick={handleLoginWithMicrosoft}>
-            Log in with Microsoft (Popup)
-          </Button>
-          
-        </PasswordForm> */
-        <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
-          Log in with Microsoft
-        </Button>
+        </>
       )}
     </div>
   );
