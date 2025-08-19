@@ -20,6 +20,8 @@ export const playwright = onRequest(
       "DEV_PUBLICPURCHASE_USER",
       "DEV_PUBLICPURCHASE_PASS",
       "DEV_SERVICE_KEY",
+      "DEV_VENDORREGISTRY_USER",
+      "DEV_VENDORREGISTRY_PASS",
     ],
     timeoutSeconds: 3600,
   },

@@ -7,41 +7,49 @@ import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
 import type { Locator, Page } from "playwright-core";
 
-export async function login(page: Page, user: string, pass: string) {
+async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
 
-  await page.goto("https://www.publicpurchase.com/gems/login/login", {
+  await page.goto("https://vrapp.vendorregistry.com/Account/LogOn", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="uname"]', user);
-  await page.fill('input[name="pwd"]', pass);
-  await Promise.all([
-    page.waitForLoadState("networkidle"),
-    page.click('input[value="Login"]'),
-  ]);
+  await page.fill('input[name="UserName"]', user);
+  await page.fill('input[name="Password"]', pass);
+  await page.click("input#login");
+
+  await page.waitForSelector("#afterLoginModal");
+
+  const dismissButton = await page
+    .locator("#afterLoginModal button[data-dismiss]")
+    .first();
+  if (await dismissButton.isVisible()) {
+    await dismissButton.click();
+  }
 }
 
 async function parseSolRow(row: Locator) {
-  const publishDate = sanitizeDateString(
-    await row.locator("> td:nth-child(3)").innerText()
-  );
+  const siteUrl = await row
+    .locator("#description-item a[href]")
+    .getAttribute("href");
+  const siteId = siteUrl
+    ? siteUrl.match(/\/Bids\/View\/Bid\/([a-z0-9\-]+)\?/i)?.[1]
+    : "";
   const closingDate = sanitizeDateString(
-    await row.locator("> td:nth-child(4)").innerText()
+    await row.locator("#Deadline-item").innerText()
+  );
+  const publishDate = sanitizeDateString(
+    await row.locator("#Posted-item").innerText()
   );
   return {
-    title: await row.locator("> td:nth-child(1)").innerText(),
-    issuer: await row.locator("> td:nth-child(2)").innerText(),
-    publishDate: publishDate || null,
-    closingDate: closingDate || null,
-    site: "publicpurchase",
-    siteId: await row.locator("> td:nth-child(7)").innerText(),
-    siteUrl:
-      "https://www.publicpurchase.com" +
-      (await row
-        .locator("> td:nth-child(1) > a[href]")
-        .first()
-        .getAttribute("href")),
+    title: await row.locator("#description-item").innerText(),
+    issuer: await row.locator("#buyer-item").innerText(),
+    location: await row.locator("#state-item").innerText(),
+    site: "vendorregistry",
+    siteId,
+    siteUrl: siteUrl ? "https://vrapp.vendorregistry.com" + siteUrl : "",
+    closingDate,
+    publishDate,
   };
 }
 
@@ -50,7 +58,7 @@ export async function scrapeAllSols(page: Page) {
   let lastPage = false;
 
   do {
-    const rows = page.locator("#invitedBids tbody > tr:visible");
+    const rows = page.locator("#contractTable tbody > tr:visible");
     const rowCount = await rows.count();
 
     for (let i = 0; i < rowCount; i++) {
@@ -59,18 +67,14 @@ export async function scrapeAllSols(page: Page) {
       allSols.push(sol);
     }
 
-    const prevPage = page.locator(
-      "#invitedBids > div:nth-child(2) a:nth-child(2)"
-    );
-    const styles = await prevPage.getAttribute("style");
-    prevPage.click();
-    await page.waitForTimeout(3000);
+    const nextPage = page.locator(".pageSelector li.PagedList-skipToNext");
+    const classes = await nextPage.getAttribute("class");
 
-    const prevPageExists = (await prevPage.count()) > 0;
-
-    // Is this disabled?
-    if (styles?.includes("color:#999999") || !prevPageExists) {
+    if (classes?.includes("disabled")) {
       lastPage = true;
+    } else {
+      await nextPage.locator("> a").click();
+      await page.waitForTimeout(1000);
     }
   } while (lastPage !== true);
 
@@ -80,9 +84,9 @@ export async function scrapeAllSols(page: Page) {
 export async function run(page: Page, env: Record<string, any> = {}) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_PUBLICPURCHASE_USER!;
-  const PASS = env.DEV_PUBLICPURCHASE_PASS!;
-  const VENDOR = "publicpurchase";
+  const USER = env.DEV_VENDORREGISTRY_USER!;
+  const PASS = env.DEV_VENDORREGISTRY_PASS!;
+  const VENDOR = "vendorregistry";
   let results = {};
   const failCount = 0;
   let successCount = 0;
@@ -95,11 +99,10 @@ export async function run(page: Page, env: Record<string, any> = {}) {
 
   await login(page, USER, PASS);
 
-  // We should be at home page
-  await page.waitForSelector("#invitedBids");
-
-  // Go to last page
-  page.locator("#invitedBids > div:nth-child(2) a:last-child").click();
+  // Set to sort by date posted desc
+  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.waitForTimeout(1000);
+  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
   await page.waitForTimeout(1000);
 
   let sols = await scrapeAllSols(page);
@@ -109,7 +112,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
   sols = sols.filter((sol) => {
     if (sol.closingDate) {
       if (isNotExpired(sol)) return true;
-
+      logger.log(sol.closingDate, "is expired");
       expiredCount++;
       return false;
     }
@@ -135,7 +138,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
 
     const newRecord = await solModel.post({
       baseUrl: BASE_URL,
-      data: { ...sol, location: "" },
+      data: { location: "", ...sol },
       token: SERVICE_KEY,
     });
     logger.log(`Saved sol: ${newRecord.id}`);
