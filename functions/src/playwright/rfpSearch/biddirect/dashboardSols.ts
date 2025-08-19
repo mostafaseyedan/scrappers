@@ -11,54 +11,68 @@ async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
 
-  await page.goto("https://vrapp.vendorregistry.com/Account/LogOn", {
+  await page.goto("https://www.bidnetdirect.com/", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="UserName"]', user);
-  await page.fill('input[name="Password"]', pass);
-  await page.click("input#login");
+  await page.click("#header_btnLogin");
 
-  await page.waitForSelector("#afterLoginModal");
-
-  const dismissButton = await page
-    .locator("#afterLoginModal button[data-dismiss]")
-    .first();
-  if (await dismissButton.isVisible()) {
-    await dismissButton.click();
-  }
+  await page.waitForSelector('input[name="j_username"]');
+  await page.fill('input[name="j_username"]', user);
+  await page.fill('input[name="j_password"]', pass);
+  await page.click("#loginButton");
 }
 
 async function parseSolRow(row: Locator) {
   const siteUrl = await row
-    .locator("#description-item a[href]")
+    .locator(".solicitationTitle > a[href]")
     .getAttribute("href");
-  const siteId = siteUrl
-    ? siteUrl.match(/\/Bids\/View\/Bid\/([a-z0-9\-]+)\?/i)?.[1]
-    : "";
+  const siteId = siteUrl ? siteUrl.match(/[0-9]+/i)?.[0] : "";
   const closingDate = sanitizeDateString(
-    await row.locator("#Deadline-item").innerText()
+    await row.locator(".dateValue").innerText()
   );
-  const publishDate = sanitizeDateString(
-    await row.locator("#Posted-item").innerText()
-  );
+  const buyerEl = await row.locator(".buyerIdentification");
+  const issuer = (await buyerEl.isVisible())
+    ? await buyerEl
+        .first()
+        .innerText()
+        .catch((err: unknown) => console.warn(err))
+    : "";
+  const title = await row.locator(".solicitationTitle > a").innerText();
+  const publishDateEl = await row
+    .locator(".publicationDate")
+    .first()
+    .innerText();
+  const publishDate = sanitizeDateString(publishDateEl);
   return {
-    title: await row.locator("#description-item").innerText(),
-    issuer: await row.locator("#buyer-item").innerText(),
-    location: await row.locator("#state-item").innerText(),
-    site: "vendorregistry",
-    siteId,
-    siteUrl: siteUrl ? "https://vrapp.vendorregistry.com" + siteUrl : "",
+    title: title.replace(/\n/g, " "),
+    location: await row.locator(".regionValue").first().innerText(),
+    issuer,
+    description: await row.locator(".solicitationDescription").innerText(),
     closingDate,
     publishDate,
+    site: "biddirect",
+    siteUrl: siteUrl ? "https://www.bidnetdirect.com" + siteUrl : "",
+    siteId,
   };
 }
 
-export async function scrapeAllSols(page: Page) {
+async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
 
+  await page.goto(
+    "https://www.bidnetdirect.com/private/supplier/solicitations/search?target=init",
+    { waitUntil: "domcontentloaded" }
+  );
+  await page.waitForSelector("#solicitationsTable");
+
+  const cookieEl = page.locator("#cookieBannerAcceptBtn");
+  if (await cookieEl.isVisible()) {
+    await cookieEl.click();
+  }
+
   do {
-    const rows = page.locator("#contractTable tbody > tr:visible");
+    const rows = page.locator("#solicitationsTable tbody > tr:visible");
     const rowCount = await rows.count();
 
     for (let i = 0; i < rowCount; i++) {
@@ -69,16 +83,16 @@ export async function scrapeAllSols(page: Page) {
       if (sol?.siteId) allSols.push(sol);
     }
 
-    const nextPage = page.locator(".pageSelector li.PagedList-skipToNext");
+    const nextPage = page.locator(".mets-pagination-page-icon.next").first();
     const classes = await nextPage.getAttribute("class");
 
     if (classes?.includes("disabled")) {
       lastPage = true;
     } else {
-      await nextPage.locator("> a").click();
+      await nextPage.click();
       await page.waitForTimeout(1000);
     }
-  } while (lastPage !== true);
+  } while (!lastPage);
 
   return allSols;
 }
@@ -86,9 +100,9 @@ export async function scrapeAllSols(page: Page) {
 export async function run(page: Page, env: Record<string, any> = {}) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_VENDORREGISTRY_USER!;
-  const PASS = env.DEV_VENDORREGISTRY_PASS!;
-  const VENDOR = "vendorregistry";
+  const USER = env.DEV_BIDDIRECT_USER!;
+  const PASS = env.DEV_BIDDIRECT_PASS!;
+  const VENDOR = "biddirect";
   let results = {};
   const failCount = 0;
   let successCount = 0;
@@ -100,13 +114,6 @@ export async function run(page: Page, env: Record<string, any> = {}) {
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
-
-  // Set to sort by date posted desc
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
-  await page.waitForTimeout(1000);
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
-  await page.waitForTimeout(1000);
-
   let sols = await scrapeAllSols(page);
   const total = sols.length;
 

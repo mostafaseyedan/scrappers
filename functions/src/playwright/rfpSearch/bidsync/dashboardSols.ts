@@ -57,8 +57,10 @@ async function scrapeAllSols(page: Page) {
 
   for (let i = 0; i < rowCount; i++) {
     const row = rows.nth(i);
-    const sol = await parseSolRow(row);
-    allSols.push(sol);
+    const sol = await parseSolRow(row).catch((err: unknown) =>
+      console.warn(err)
+    );
+    if (sol?.siteId) allSols.push(sol);
   }
 
   return allSols;

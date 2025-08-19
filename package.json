@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:functions": "cd functions && pnpm run build",
     "deploy": "firebase deploy",
     "deploy:functions": "cd functions && pnpm run deploy",
-    "serve": "tsc --watch & firebase emulators:start",
+    "serve": "pnpm run build:functions & firebase emulators:start",
     "start": "next start",
     "lint": "next lint"
   },
