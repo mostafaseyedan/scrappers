@@ -1,11 +1,8 @@
 import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
-import {
-  solicitation as solModel,
-  scriptLog as logModel,
-} from "../../../models";
+import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
-import type { Locator, Page } from "playwright-core";
+import type { BrowserContext, Locator, Page } from "playwright-core";
 
 export async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
@@ -79,7 +76,11 @@ export async function scrapeAllSols(page: Page) {
   return allSols;
 }
 
-export async function run(page: Page, env: Record<string, any> = {}) {
+export async function run(
+  page: Page,
+  env: Record<string, any> = {},
+  context: BrowserContext
+) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
   const USER = env.DEV_PUBLICPURCHASE_USER!;
@@ -119,9 +120,7 @@ export async function run(page: Page, env: Record<string, any> = {}) {
     return sol;
   });
 
-  logger.log(
-    `Total solicitations found:${total}. ${expiredCount} expired, ${nonItCount} non-IT, ${dupCount} duplicates. Workable: ${sols.length}.`
-  );
+  logger.log(`${VENDOR} - Total solicitations found:${total}.`);
 
   // Save each sols
   for (const sol of sols) {
@@ -137,30 +136,28 @@ export async function run(page: Page, env: Record<string, any> = {}) {
 
     const newRecord = await solModel.post({
       baseUrl: BASE_URL,
-      data: { ...sol, location: "" },
+      data: { location: "", ...sol },
       token: SERVICE_KEY,
     });
     logger.log(`Saved sol: ${newRecord.id}`);
     successCount++;
   }
 
-  // Save log
-  const log = await logModel.post({
-    baseUrl: BASE_URL,
-    token: SERVICE_KEY,
-    data: {
-      message: `Scraped ${successCount} solicitations from ${VENDOR}. ${
-        failCount > 0 ? `Found ${failCount} failures. ` : ""
-      } ${dupCount > 0 ? `Found ${dupCount} duplicates. ` : ""}`,
-      scriptName: `firefunctions/${VENDOR}/invitedBids`,
-      dupCount,
-      successCount,
-      junkCount: expiredCount + nonItCount,
-      data: { sols },
-    },
-  });
+  logger.log(
+    `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${
+      expiredCount + nonItCount
+    }.`
+  );
 
-  results = { sols, log };
+  results = {
+    sols,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      dup: dupCount,
+      junk: expiredCount + nonItCount,
+    },
+  };
 
   return results;
 }

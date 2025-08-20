@@ -5,7 +5,9 @@ import { run as ppInvitedSols } from "../playwright/rfpSearch/publicpurchase/inv
 import { run as bidsyncDashboardSols } from "../playwright/rfpSearch/bidsync/dashboardSols";
 import { run as vendorRegistryDashboardSols } from "../playwright/rfpSearch/vendorregistry/dashboardSols";
 import { run as biddirectDashboardSols } from "../playwright/rfpSearch/biddirect/dashboardSols";
+import { run as vendorlineDashboardSols } from "../playwright/rfpSearch/vendorline/dashboardSols";
 import { logger } from "firebase-functions";
+import { scriptLog as logModel } from "../models";
 
 // import { chromium } from "playwright-core";
 
@@ -13,7 +15,18 @@ const scripts = {
   biddirect: biddirectDashboardSols,
   bidsync: bidsyncDashboardSols,
   publicpurchase: ppInvitedSols,
+  vendorline: vendorlineDashboardSols,
   vendorregistry: vendorRegistryDashboardSols,
+};
+
+type Results = {
+  counts?: {
+    success: number;
+    fail: number;
+    dup: number;
+    junk: number;
+  };
+  [key: string]: any;
 };
 
 export const playwright = onRequest(
@@ -30,11 +43,16 @@ export const playwright = onRequest(
       "DEV_SERVICE_KEY",
       "DEV_VENDORREGISTRY_USER",
       "DEV_VENDORREGISTRY_PASS",
+      "DEV_VENDORLINE_USER",
+      "DEV_VENDORLINE_PASS",
     ],
     timeoutSeconds: 3600,
   },
   async (req, res) => {
+    const baseUrl = process.env.BASE_URL || "http://localhost:5002";
     const script = req.query.script as keyof typeof scripts;
+    const SERVICE_KEY = process.env.DEV_SERVICE_KEY!;
+    const VENDOR = script;
     /*
     const browser = await chromium.launch({
       headless: false,
@@ -47,8 +65,9 @@ export const playwright = onRequest(
       args: chromium.args,
     });
     let status = 200;
-    let results;
+    let results: Results = {};
     let page;
+    let counts = { success: 0, dup: 0, junk: 0, fail: 0 };
 
     try {
       if (!scripts[script]) {
@@ -61,12 +80,15 @@ export const playwright = onRequest(
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
       });
       page = await context.newPage();
-
-      const baseUrl = process.env.BASE_URL || "http://localhost:5002";
-      results = await scripts[script](page, {
-        ...process.env,
-        BASE_URL: baseUrl,
-      });
+      results = await scripts[script](
+        page,
+        {
+          ...process.env,
+          BASE_URL: baseUrl,
+        },
+        context
+      );
+      counts = { ...counts, ...results.counts };
     } catch (e: any) {
       logger.error(e);
       status = 500;
@@ -74,6 +96,29 @@ export const playwright = onRequest(
       logger.debug("body.innerHTML", await page?.innerHTML("body"));
     } finally {
       await browser.close();
+
+      // Save log
+      await logModel.post({
+        baseUrl,
+        token: SERVICE_KEY,
+        data: {
+          message: `${status !== 200 && "Error: "}Scraped ${
+            counts.success
+          } solicitations from ${VENDOR}. ${
+            counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""
+          } ${counts.dup > 0 ? `Found ${counts.dup} duplicates. ` : ""}`,
+          scriptName: `firefunctions/${VENDOR}`,
+          status: status === 200 ? "success" : "error",
+          dupCount: counts.dup,
+          successCount: counts.success,
+          junkCount: counts.junk,
+          data: {
+            ...(results.sols ? { sols: results.sols } : {}),
+            ...(results.error ? { error: results.error } : {}),
+          },
+        },
+      });
+
       res.status(status).json(results);
     }
   }

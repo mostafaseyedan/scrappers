@@ -1,9 +1,8 @@
-import "dotenv/config";
-import { chromium, Browser, Page } from "playwright-core";
-import { sanitizeDateString } from "../../../functions/src/lib/utils";
-
-const USER = process.env.VENDORLINE_USER!;
-const PASS = process.env.VENDORLINE_PASS!;
+import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
+import { solicitation as solModel } from "../../../models";
+import { sanitizeDateString } from "../../../lib/utils";
+import { logger } from "firebase-functions";
+import type { BrowserContext, Locator, Page } from "playwright-core";
 
 function simpleStringHash(str: string): number {
   let hash = 0;
@@ -27,14 +26,14 @@ async function login(page: Page, user: string, pass: string) {
   await page.click("button.btn-primary.close-login");
 }
 
-async function parseSolRow(row, context) {
+async function parseSolRow(row: Locator, context: BrowserContext) {
   await row
     .locator(".bid-details-info .list-item-row")
     .first()
     .waitFor({ state: "visible" });
   const bidDetailsItems = await row.locator(".bid-details-info .list-item-row");
   const bidDetailsCount = await bidDetailsItems.count();
-  const bidDetails = {};
+  const bidDetails: Record<string, any> = {};
 
   for (let i = 0; i < bidDetailsCount; i++) {
     const bidDetailsItem = bidDetailsItems.nth(i);
@@ -74,7 +73,7 @@ async function parseSolRow(row, context) {
   };
 }
 
-async function scrapeAllSols(page: Page, context) {
+async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
 
   await page.waitForSelector(".MuiDataGrid-virtualScrollerRenderZone");
@@ -91,7 +90,7 @@ async function scrapeAllSols(page: Page, context) {
     .first()
     .click();
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 100; i++) {
     const row = await page.locator(".slide-container");
     const sol = await parseSolRow(row, context).catch((err: unknown) =>
       console.warn(err)
@@ -103,22 +102,80 @@ async function scrapeAllSols(page: Page, context) {
   return allSols;
 }
 
-async function run() {
-  const browser: Browser = await chromium.launch({
-    headless: false,
-    slowMo: 50, // Slow down for debugging
-  });
-  const context = await browser.newContext();
-  const page: Page = await context.newPage();
+export async function run(
+  page: Page,
+  env: Record<string, any> = {},
+  context: BrowserContext
+) {
+  const BASE_URL = env.BASE_URL!;
+  const SERVICE_KEY = env.DEV_SERVICE_KEY!;
+  const USER = env.DEV_VENDORLINE_USER!;
+  const PASS = env.DEV_VENDORLINE_PASS!;
+  const VENDOR = "vendorline";
+  let results = {};
+  const failCount = 0;
+  let successCount = 0;
+  let expiredCount = 0;
+  let nonItCount = 0;
+  let dupCount = 0;
+
+  if (!USER) throw new Error("Missing USER environment variable for run");
+  if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
-  const allSols = await scrapeAllSols(page, context);
-  console.log(allSols);
+  let sols = await scrapeAllSols(page, context);
+  const total = sols.length;
 
-  await browser.close();
+  // Filter out expired
+  sols = sols.filter((sol) => {
+    if (sol.closingDate) {
+      if (isNotExpired(sol)) return true;
+      logger.log(sol.closingDate, "is expired");
+      expiredCount++;
+      return false;
+    }
+
+    return sol;
+  });
+
+  logger.log(`${VENDOR} - Total solicitations found:${total}.`);
+
+  // Save each sols
+  for (const sol of sols) {
+    if (await isSolDuplicate(sol, BASE_URL, SERVICE_KEY)) {
+      dupCount++;
+      continue;
+    }
+
+    if ((await isItRelated(sol)) === false) {
+      nonItCount++;
+      continue;
+    }
+
+    const newRecord = await solModel.post({
+      baseUrl: BASE_URL,
+      data: { location: "", ...sol },
+      token: SERVICE_KEY,
+    });
+    logger.log(`Saved sol: ${newRecord.id}`);
+    successCount++;
+  }
+
+  logger.log(
+    `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${
+      expiredCount + nonItCount
+    }.`
+  );
+
+  results = {
+    sols,
+    counts: {
+      success: successCount,
+      fail: failCount,
+      dup: dupCount,
+      junk: expiredCount + nonItCount,
+    },
+  };
+
+  return results;
 }
-
-run().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
