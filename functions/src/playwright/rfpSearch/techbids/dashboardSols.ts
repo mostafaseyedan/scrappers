@@ -43,12 +43,16 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
       )
       .innerText()
       .catch(() => logger.warn(title, "no description"))) || "";
+  const issuer = await newPage
+    .locator(".relative p.mt-2.text-lg.text-gray-600 span.font-medium")
+    .innerText();
   await newPage.close();
 
   return {
     title,
     description,
-    issuer: await row.locator("td:nth-child(4)").innerText(),
+    issuer,
+    location: await row.locator("td:nth-child(4)").innerText(),
     closingDate: sanitizeDateString(closingDate),
     publishDate: sanitizeDateString(
       (await row.locator("td:nth-child(1)").innerText()) + " " + currYear
@@ -62,6 +66,8 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
 
 async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
+  const maxPage = 1;
+  let currPage = 1;
 
   const nextPage = await page
     .locator('nav[aria-label="Pagination Navigation"] button[dusk="nextPage"]')
@@ -72,6 +78,8 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
   let lastPage = false;
 
   do {
+    console.log(`Techbids - Page ${currPage}`);
+
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
       const sol = await parseSolRow(row, context).catch((err: unknown) =>
@@ -81,12 +89,13 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
     }
 
     const classes = await nextPage.getAttribute("class");
-    if (classes?.includes("disabled")) {
+    if (classes?.includes("disabled") || currPage === maxPage) {
       lastPage = true;
     } else {
       await nextPage.click();
       await page.waitForTimeout(1000);
     }
+    currPage++;
   } while (lastPage !== true);
 
   return allSols;
