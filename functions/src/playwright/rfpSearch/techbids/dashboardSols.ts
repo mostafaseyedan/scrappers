@@ -9,85 +9,85 @@ async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
 
-  await page.goto("https://vendorline.planetbids.com/login", {
+  await page.goto("https://techbids.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="userName"]', user);
+  await page.fill('input[name="email"]', user);
   await page.fill('input[name="password"]', pass);
-  await page.click("button.btn-primary.close-login");
+  await page.click("button:has-text('Sign In to Your Account')");
 }
 
 async function parseSolRow(row: Locator, context: BrowserContext) {
-  await row
-    .locator(".bid-details-info .list-item-row")
-    .first()
-    .waitFor({ state: "visible" });
-  const bidDetailsItems = await row.locator(".bid-details-info .list-item-row");
-  const bidDetailsCount = await bidDetailsItems.count();
-  const bidDetails: Record<string, any> = {};
-
-  for (let i = 0; i < bidDetailsCount; i++) {
-    const bidDetailsItem = bidDetailsItems.nth(i);
-    const label = await bidDetailsItem
-      .locator(".list-item-label")
-      .first()
-      .innerText();
-    const value = await bidDetailsItem
-      .locator(".list-item-value")
-      .first()
-      .innerText();
-    bidDetails[label] = value;
-  }
+  const currYear = new Date().getFullYear();
+  const closingDate =
+    (await row.locator("td:nth-child(5)").innerText()) + " " + currYear;
+  const siteLink = await row.locator("td:nth-child(2) a[href]");
+  const title = await siteLink.innerText();
+  const siteUrl = await siteLink.getAttribute("href");
+  const siteId =
+    siteUrl?.match(/https:\/\/techbids.com\/bids\/(\d+)\//i)?.[1] ||
+    "techbids-" + md5(title + closingDate);
 
   const newPagePromise = context.waitForEvent("page");
-  await row.locator(".bid-actions button:has-text('Open Details')").click();
+  await siteLink.click();
   const newPage = await newPagePromise;
   await newPage.waitForLoadState();
-  const siteUrl = newPage.url();
+  const sourceLink = await newPage
+    .locator('a:has-text(" View Full Details at Source ")')
+    .first()
+    .getAttribute("href");
+  const description =
+    (await newPage
+      .locator(
+        ".relative.overflow-hidden + .px-4.py-8 > div > div > div.rounded-xl.border-gray-100 .leading-relaxed"
+      )
+      .innerText()
+      .catch(() => logger.warn(title, "no description"))) || "";
   await newPage.close();
 
-  const title = await row.locator(".project-title").innerText();
-  const closingDate = await row.locator(".due-date-value").innerText();
   return {
     title,
-    description: await row.locator(".bid-details-description").innerText(),
-    issuer: bidDetails["Agency"],
+    description,
+    issuer: await row.locator("td:nth-child(4)").innerText(),
     closingDate: sanitizeDateString(closingDate),
-    site: "vendorline",
+    publishDate: sanitizeDateString(
+      (await row.locator("td:nth-child(1)").innerText()) + " " + currYear
+    ),
+    externalLinks: [sourceLink],
+    site: "techbids",
     siteUrl,
-    siteId:
-      bidDetails["Public Reference"] || "vendorline" + md5(title + closingDate),
-    siteData: {
-      bidDetails,
-    },
+    siteId: "techbids-" + siteId,
   };
 }
 
 async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
 
-  await page.waitForSelector(".MuiDataGrid-virtualScrollerRenderZone");
+  const nextPage = await page
+    .locator('nav[aria-label="Pagination Navigation"] button[dusk="nextPage"]')
+    .first();
+  const list = await page.locator(".sticky + .mt-0.hidden.px-0");
+  const rows = await list.locator("tbody > tr:visible");
+  const rowCount = await rows.count();
+  let lastPage = false;
 
-  const closeSurveyEl = page.locator(
-    ".productfruits--container-pr-fk .close-btn"
-  );
-  if (await closeSurveyEl.isVisible()) {
-    await closeSurveyEl.click();
-  }
+  do {
+    for (let i = 0; i < rowCount; i++) {
+      const row = rows.nth(i);
+      const sol = await parseSolRow(row, context).catch((err: unknown) =>
+        console.warn(err)
+      );
+      if (sol) allSols.push(sol);
+    }
 
-  await page
-    .locator(".MuiDataGrid-virtualScrollerRenderZone > div[data-id]")
-    .first()
-    .click();
-
-  for (let i = 0; i < 100; i++) {
-    const row = await page.locator(".slide-container");
-    const sol = await parseSolRow(row, context).catch((err: unknown) =>
-      console.warn(err)
-    );
-    if (sol) allSols.push(sol);
-    await page.locator(".footer-buttons .center-buttons + button").click();
-  }
+    const classes = await nextPage.getAttribute("class");
+    if (classes?.includes("disabled")) {
+      lastPage = true;
+    } else {
+      await nextPage.click();
+      await page.waitForTimeout(1000);
+    }
+  } while (lastPage !== true);
 
   return allSols;
 }
@@ -99,9 +99,9 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_VENDORLINE_USER!;
-  const PASS = env.DEV_VENDORLINE_PASS!;
-  const VENDOR = "vendorline";
+  const USER = env.DEV_TECHBIDS_USER!;
+  const PASS = env.DEV_TECHBIDS_PASS!;
+  const VENDOR = "techbids";
   let results = {};
   let failCount = 0;
   let successCount = 0;
@@ -113,6 +113,7 @@ export async function run(
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
+
   let sols = await scrapeAllSols(page, context);
   const total = sols.length;
 
