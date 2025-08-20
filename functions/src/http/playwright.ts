@@ -1,6 +1,6 @@
 import { onRequest } from "firebase-functions/v2/https";
-import playwrightCore from "playwright-core";
-import chromium from "@sparticuz/chromium";
+// import playwrightCore from "playwright-core";
+// import chromium from "@sparticuz/chromium";
 import { run as ppInvitedSols } from "../playwright/rfpSearch/publicpurchase/invitedSols";
 import { run as bidsyncDashboardSols } from "../playwright/rfpSearch/bidsync/dashboardSols";
 import { run as vendorRegistryDashboardSols } from "../playwright/rfpSearch/vendorregistry/dashboardSols";
@@ -9,7 +9,7 @@ import { run as vendorlineDashboardSols } from "../playwright/rfpSearch/vendorli
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 
-// import { chromium } from "playwright-core";
+import { chromium } from "playwright-core";
 
 const scripts = {
   biddirect: biddirectDashboardSols,
@@ -53,17 +53,17 @@ export const playwright = onRequest(
     const script = req.query.script as keyof typeof scripts;
     const SERVICE_KEY = process.env.DEV_SERVICE_KEY!;
     const VENDOR = script;
-    /*
     const browser = await chromium.launch({
       headless: false,
       slowMo: 50, // Slow down for debugging
     });
-    */
+    /*
     const browser = await playwrightCore.chromium.launch({
       executablePath: await chromium.executablePath(),
       headless: true,
       args: chromium.args,
     });
+    */
     let status = 200;
     let results: Results = {};
     let page;
@@ -93,7 +93,7 @@ export const playwright = onRequest(
       logger.error(e);
       status = 500;
       results = { error: e.message };
-      logger.debug("body.innerHTML", await page?.innerHTML("body"));
+      logger.debug("BODY OUTPUT", await page?.locator("body").innerText());
     } finally {
       await browser.close();
 
@@ -102,7 +102,7 @@ export const playwright = onRequest(
         baseUrl,
         token: SERVICE_KEY,
         data: {
-          message: `${status !== 200 && "Error: "}Scraped ${
+          message: `${status !== 200 ? "Error: " : ""}Scraped ${
             counts.success
           } solicitations from ${VENDOR}. ${
             counts.fail > 0 ? `Found ${counts.fail} failures. ` : ""

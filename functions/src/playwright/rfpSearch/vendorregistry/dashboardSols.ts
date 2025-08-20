@@ -54,6 +54,12 @@ export async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
 
+  // Set to sort by date posted desc
+  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.waitForTimeout(1000);
+  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.waitForTimeout(1000);
+
   do {
     const rows = page.locator("#contractTable tbody > tr:visible");
     const rowCount = await rows.count();
@@ -91,7 +97,7 @@ export async function run(
   const PASS = env.DEV_VENDORREGISTRY_PASS!;
   const VENDOR = "vendorregistry";
   let results = {};
-  const failCount = 0;
+  let failCount = 0;
   let successCount = 0;
   let expiredCount = 0;
   let nonItCount = 0;
@@ -101,12 +107,6 @@ export async function run(
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
-
-  // Set to sort by date posted desc
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
-  await page.waitForTimeout(1000);
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
-  await page.waitForTimeout(1000);
 
   let sols = await scrapeAllSols(page);
   const total = sols.length;
@@ -127,21 +127,36 @@ export async function run(
 
   // Save each sols
   for (const sol of sols) {
-    if (await isSolDuplicate(sol, BASE_URL, SERVICE_KEY)) {
+    const isDup = await isSolDuplicate(sol, BASE_URL, SERVICE_KEY).catch(
+      (err) => {
+        logger.error("isSolDuplicate failed", err, sol);
+        failCount++;
+      }
+    );
+    if (isDup) {
       dupCount++;
       continue;
     }
 
-    if ((await isItRelated(sol)) === false) {
+    const solIsIt = await isItRelated(sol).catch((err) => {
+      logger.error("isItRelated failed", err, sol);
+      failCount++;
+    });
+    if (solIsIt === false) {
       nonItCount++;
       continue;
     }
 
-    const newRecord = await solModel.post({
-      baseUrl: BASE_URL,
-      data: { location: "", ...sol },
-      token: SERVICE_KEY,
-    });
+    const newRecord = await solModel
+      .post({
+        baseUrl: BASE_URL,
+        data: { location: "", ...sol },
+        token: SERVICE_KEY,
+      })
+      .catch((err: unknown) => {
+        logger.error("Failed to save sol", err, sol);
+        failCount++;
+      });
     logger.log(`Saved sol: ${newRecord.id}`);
     successCount++;
   }

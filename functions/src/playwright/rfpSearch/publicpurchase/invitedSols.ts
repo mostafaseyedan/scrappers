@@ -87,7 +87,7 @@ export async function run(
   const PASS = env.DEV_PUBLICPURCHASE_PASS!;
   const VENDOR = "publicpurchase";
   let results = {};
-  const failCount = 0;
+  let failCount = 0;
   let successCount = 0;
   let expiredCount = 0;
   let nonItCount = 0;
@@ -124,21 +124,36 @@ export async function run(
 
   // Save each sols
   for (const sol of sols) {
-    if (await isSolDuplicate(sol, BASE_URL, SERVICE_KEY)) {
+    const isDup = await isSolDuplicate(sol, BASE_URL, SERVICE_KEY).catch(
+      (err) => {
+        logger.error("isSolDuplicate failed", err, sol);
+        failCount++;
+      }
+    );
+    if (isDup) {
       dupCount++;
       continue;
     }
 
-    if ((await isItRelated(sol)) === false) {
+    const solIsIt = await isItRelated(sol).catch((err) => {
+      logger.error("isItRelated failed", err, sol);
+      failCount++;
+    });
+    if (solIsIt === false) {
       nonItCount++;
       continue;
     }
 
-    const newRecord = await solModel.post({
-      baseUrl: BASE_URL,
-      data: { location: "", ...sol },
-      token: SERVICE_KEY,
-    });
+    const newRecord = await solModel
+      .post({
+        baseUrl: BASE_URL,
+        data: { location: "", ...sol },
+        token: SERVICE_KEY,
+      })
+      .catch((err: unknown) => {
+        logger.error("Failed to save sol", err, sol);
+        failCount++;
+      });
     logger.log(`Saved sol: ${newRecord.id}`);
     successCount++;
   }
