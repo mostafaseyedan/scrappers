@@ -12,8 +12,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://vendorline.planetbids.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="userName"]', user);
-  await page.fill('input[name="password"]', pass);
+  await page.fill("input[name=\"userName\"]", user);
+  await page.fill("input[name=\"password\"]", pass);
   await page.click("button.btn-primary.close-login");
 }
 

@@ -11,8 +11,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://vrapp.vendorregistry.com/Account/LogOn", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="UserName"]', user);
-  await page.fill('input[name="Password"]', pass);
+  await page.fill("input[name=\"UserName\"]", user);
+  await page.fill("input[name=\"Password\"]", pass);
   await page.click("input#login");
 
   await page.waitForSelector("#afterLoginModal");
@@ -30,7 +30,7 @@ async function parseSolRow(row: Locator) {
     .locator("#description-item a[href]")
     .getAttribute("href");
   const siteId = siteUrl
-    ? siteUrl.match(/\/Bids\/View\/Bid\/([a-z0-9\-]+)\?/i)?.[1]
+    ? siteUrl.match(/\/Bids\/View\/Bid\/([a-z0-9-]+)\?/i)?.[1]
     : "";
   const closingDate = sanitizeDateString(
     await row.locator("#Deadline-item").innerText()
@@ -56,9 +56,9 @@ export async function scrapeAllSols(page: Page) {
   let currPage = 1;
 
   // Set to sort by date posted desc
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.locator("#contractTable th[data-fieldname=\"datePosted\"]").click();
   await page.waitForTimeout(1000);
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.locator("#contractTable th[data-fieldname=\"datePosted\"]").click();
   await page.waitForTimeout(1000);
 
   do {

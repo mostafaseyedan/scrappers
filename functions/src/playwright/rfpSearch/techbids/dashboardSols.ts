@@ -12,8 +12,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://techbids.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="email"]', user);
-  await page.fill('input[name="password"]', pass);
+  await page.fill("input[name=\"email\"]", user);
+  await page.fill("input[name=\"password\"]", pass);
   await page.click("button:has-text('Sign In to Your Account')");
 }
 
@@ -33,7 +33,7 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
   const newPage = await newPagePromise;
   await newPage.waitForLoadState();
   const sourceLink = await newPage
-    .locator('a:has-text(" View Full Details at Source ")')
+    .locator("a:has-text(\" View Full Details at Source \")")
     .first()
     .getAttribute("href");
   const description =
@@ -70,7 +70,7 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
   let currPage = 1;
 
   const nextPage = await page
-    .locator('nav[aria-label="Pagination Navigation"] button[dusk="nextPage"]')
+    .locator("nav[aria-label=\"Pagination Navigation\"] button[dusk=\"nextPage\"]")
     .first();
   const list = await page.locator(".sticky + .mt-0.hidden.px-0");
   const rows = await list.locator("tbody > tr:visible");

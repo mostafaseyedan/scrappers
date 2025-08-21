@@ -33,7 +33,7 @@ export const daily = onSchedule(
       "DEV_VENDORLINE_PASS",
     ],
     memory: "1GiB",
-    timeoutSeconds: 5400,
+    timeoutSeconds: 3600,
   },
   async (event) => {
     logger.info("Hourly jobs triggered", {

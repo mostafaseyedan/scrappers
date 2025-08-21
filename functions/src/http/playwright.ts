@@ -112,9 +112,9 @@ export async function runVendor(
         },
       },
     });
-
-    return { status, results };
   }
+
+  return { status, results };
 }
 
 export const playwright = onRequest(
