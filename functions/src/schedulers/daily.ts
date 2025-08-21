@@ -7,7 +7,7 @@ const BASE_URL = "https://reconrfp.cendien.com";
 
 export const daily = onSchedule(
   {
-    schedule: "0 * * * *", // Every hour at minute 0 (UTC)
+    schedule: "0 0 * * *", // Every day at midnight (UTC)
     timeZone: "UTC",
     retryCount: 3,
     secrets: [
@@ -16,6 +16,8 @@ export const daily = onSchedule(
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
       "DEV_GEMINI_KEY",
+      "DEV_INSTANTMARKETS_USER",
+      "DEV_INSTANTMARKETS_PASS",
       "DEV_PUBLICPURCHASE_USER",
       "DEV_PUBLICPURCHASE_PASS",
       "DEV_SERVICE_KEY",
@@ -30,15 +32,14 @@ export const daily = onSchedule(
     timeoutSeconds: 3600,
   },
   async (event) => {
-    logger.info("Hourly jobs triggered", { scheduleTime: event.scheduleTime });
+    logger.info("Daily jobs triggered", { scheduleTime: event.scheduleTime });
 
-    // List of vendors to run each schedule tick
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      // "instantmarkets", // seems this can be run manually only
       "publicpurchase",
-      // Add more when ready:
-      // "techbids",
+      // "techbids", // trial
       "vendorregistry",
       "vendorline",
     ];

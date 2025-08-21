@@ -2,101 +2,98 @@ import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
 import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
-import { md5 } from "../../../lib/md5";
 import type { BrowserContext, Locator, Page } from "playwright-core";
 
 async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
 
-  await page.goto("https://techbids.com/login", {
+  await page.goto("https://www.instantmarkets.com/signin", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[name=\"email\"]", user);
-  await page.fill("input[name=\"password\"]", pass);
-  await page.click("button:has-text('Sign In to Your Account')");
+  await page.fill('input[placeholder="Enter your email address"]', user);
+  await page.fill('input[placeholder="Enter your password"]', pass);
+  await page.click("button:has-text('Login')");
 }
 
-async function parseSolRow(row: Locator, context: BrowserContext) {
-  const currYear = new Date().getFullYear();
-  const closingDate =
-    (await row.locator("td:nth-child(5)").innerText()) + " " + currYear;
-  const siteLink = await row.locator("td:nth-child(2) a[href]");
-  const title = await siteLink.innerText();
+async function parseSolRow(row: Locator) {
+  const siteLink = await row.locator("a.opptitle");
   const siteUrl = await siteLink.getAttribute("href");
-  const siteId =
-    siteUrl?.match(/https:\/\/techbids.com\/bids\/(\d+)\//i)?.[1] ||
-    "techbids-" + md5(title + closingDate);
-
-  const newPagePromise = context.waitForEvent("page");
-  await siteLink.click();
-  const newPage = await newPagePromise;
-  await newPage.waitForLoadState();
-  const sourceLink = await newPage
-    .locator("a:has-text(\" View Full Details at Source \")")
+  const title = await siteLink.getAttribute("title");
+  const siteId = siteUrl ? siteUrl.match(/\/view\/([a-z0-9]+)\//i)?.[1] : "";
+  const closingDate = await row
+    .locator("span:has-text(' Due Date ') + span")
     .first()
-    .getAttribute("href");
-  const description =
-    (await newPage
-      .locator(
-        ".relative.overflow-hidden + .px-4.py-8 > div > div > div.rounded-xl.border-gray-100 .leading-relaxed"
-      )
-      .innerText()
-      .catch(() => logger.warn(title, "no description"))) || "";
-  const issuer = await newPage
-    .locator(".relative p.mt-2.text-lg.text-gray-600 span.font-medium")
     .innerText();
-  await newPage.close();
-
+  let location = await row
+    .locator("span:has-text('Agency: ') + span + span")
+    .first()
+    .innerText();
+  location = location.trim();
+  const issuer = await row
+    .locator("span:has-text('Agency: ') + span")
+    .first()
+    .innerText();
   return {
     title,
-    description,
+    description: await row
+      .locator("> div > p.greyText.break-words")
+      .innerText(),
+    location: location.substr(1, location.length - 2),
     issuer,
-    location: await row.locator("td:nth-child(4)").innerText(),
     closingDate: sanitizeDateString(closingDate),
-    publishDate: sanitizeDateString(
-      (await row.locator("td:nth-child(1)").innerText()) + " " + currYear
-    ),
-    externalLinks: [sourceLink],
-    site: "techbids",
-    siteUrl,
-    siteId: "techbids-" + siteId,
+    site: "instantmarkets",
+    siteUrl: "https://www.instantmarkets.com" + siteUrl,
+    siteId,
   };
 }
 
-async function scrapeAllSols(page: Page, context: BrowserContext) {
+async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
-  const maxPage = 20;
+  let lastPage = false;
   let currPage = 1;
 
-  const nextPage = await page
-    .locator("nav[aria-label=\"Pagination Navigation\"] button[dusk=\"nextPage\"]")
-    .first();
-  const list = await page.locator(".sticky + .mt-0.hidden.px-0");
-  const rows = await list.locator("tbody > tr:visible");
-  const rowCount = await rows.count();
-  let lastPage = false;
+  await page.goto(
+    "https://www.instantmarkets.com/q/ERP%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
+    { waitUntil: "domcontentloaded" }
+  );
 
   do {
-    console.log(`Techbids - Page ${currPage}`);
+    console.log(`instantmarkets - page ${currPage}`);
+    await page.waitForSelector("app-opp-list-view li.collection-item-desc");
+    const rows = await page.locator(
+      "app-opp-list-view li.collection-item-desc"
+    );
+    const rowCount = await rows.count();
+    console.log(`Found ${rowCount} rows`);
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const sol = await parseSolRow(row, context).catch((err: unknown) =>
-        console.warn(err)
-      );
-      if (sol) allSols.push(sol);
+      const checkRow = await row.locator("a.opptitle");
+      if ((await checkRow.count()) === 0) continue;
+      const sol = await parseSolRow(row);
+      allSols.push(sol);
     }
 
-    const classes = await nextPage.getAttribute("class");
-    if (classes?.includes("disabled") || currPage === maxPage) {
+    const popupDismiss = await page.locator(
+      'button:has-text("Don\'t Ask Again")'
+    );
+    const popupDismissCount = await popupDismiss.count();
+    if (popupDismissCount > 0) await popupDismiss.click();
+
+    await page.waitForTimeout(1000);
+
+    const nextPage = page.locator('pagination-async button:has-text("Next ")');
+    const nextPageCount = await nextPage.count();
+
+    if (nextPageCount === 0) {
       lastPage = true;
     } else {
       await nextPage.click();
       await page.waitForTimeout(1000);
     }
     currPage++;
-  } while (lastPage !== true);
+  } while (!lastPage);
 
   return allSols;
 }
@@ -108,9 +105,9 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_TECHBIDS_USER!;
-  const PASS = env.DEV_TECHBIDS_PASS!;
-  const VENDOR = "techbids";
+  const USER = env.DEV_INSTANTMARKETS_USER!;
+  const PASS = env.DEV_INSTANTMARKETS_PASS!;
+  const VENDOR = "instantmarkets";
   let results = {};
   let failCount = 0;
   let successCount = 0;
@@ -123,7 +120,7 @@ export async function run(
 
   await login(page, USER, PASS);
 
-  let sols = await scrapeAllSols(page, context);
+  let sols = await scrapeAllSols(page);
   const total = sols.length;
 
   // Filter out expired

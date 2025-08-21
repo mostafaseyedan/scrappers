@@ -7,6 +7,7 @@ import { run as vendorRegistryDashboardSols } from "../playwright/rfpSearch/vend
 import { run as biddirectDashboardSols } from "../playwright/rfpSearch/biddirect/dashboardSols";
 import { run as vendorlineDashboardSols } from "../playwright/rfpSearch/vendorline/dashboardSols";
 import { run as techbidDashboardSols } from "../playwright/rfpSearch/techbids/dashboardSols";
+import { run as instantGetSols } from "../playwright/rfpSearch/instantmarkets/getSols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -19,6 +20,7 @@ const vendors = {
   publicpurchase: ppInvitedSols,
   techbids: techbidDashboardSols,
   vendorline: vendorlineDashboardSols,
+  instantmarkets: instantGetSols,
   vendorregistry: vendorRegistryDashboardSols,
 };
 
@@ -43,12 +45,13 @@ export async function runVendor(
   const browser = await chromium.launch({
     headless: false,
     slowMo: 50, // Slow down for debugging
+    args: ["--deny-permission-prompts"],
   });
   */
   const browser = await playwrightCore.chromium.launch({
     executablePath: await chromium.executablePath(),
     headless: true,
-    args: chromium.args,
+    args: [...chromium.args, "--deny-permission-prompts"],
   });
   let status = 200;
   let results: Results = {};
@@ -126,6 +129,8 @@ export const playwright = onRequest(
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
       "DEV_GEMINI_KEY",
+      "DEV_INSTANTMARKETS_USER",
+      "DEV_INSTANTMARKETS_PASS",
       "DEV_PUBLICPURCHASE_USER",
       "DEV_PUBLICPURCHASE_PASS",
       "DEV_SERVICE_KEY",
