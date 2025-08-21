@@ -3,6 +3,8 @@ import { logger } from "firebase-functions";
 import { runVendor } from "../http/playwright";
 import "../config/firebase";
 
+const BASE_URL = "https://reconrfp.cendien.com";
+
 export const daily = onSchedule(
   {
     schedule: "0 * * * *", // Every hour at minute 0 (UTC)
@@ -32,6 +34,6 @@ export const daily = onSchedule(
       scheduleTime: event.scheduleTime,
     });
 
-    await runVendor("biddirect", { ...process.env });
+    await runVendor("biddirect", { ...process.env, BASE_URL });
   }
 );
