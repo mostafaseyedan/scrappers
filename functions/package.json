@@ -17,6 +17,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@google-cloud/functions-framework": "^4.0.0",
+    "@google/generative-ai": "^0.24.1",
     "@openai/agents": "^0.0.16",
     "@openai/agents-core": "^0.0.16",
     "@openai/agents-openai": "^0.0.16",
