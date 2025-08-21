@@ -30,10 +30,73 @@ export const daily = onSchedule(
     timeoutSeconds: 3600,
   },
   async (event) => {
-    logger.info("Hourly jobs triggered", {
-      scheduleTime: event.scheduleTime,
+    logger.info("Hourly jobs triggered", { scheduleTime: event.scheduleTime });
+
+    // List of vendors to run each schedule tick
+    const vendors: Array<Parameters<typeof runVendor>[0]> = [
+      "biddirect",
+      "bidsync",
+      "publicpurchase",
+      // Add more when ready:
+      // "techbids",
+      "vendorregistry",
+      "vendorline",
+    ];
+
+    const limit = Math.max(
+      1,
+      parseInt(process.env.VENDOR_CONCURRENCY || "2", 10) || 3
+    );
+
+    logger.info("Starting vendor runs", {
+      vendors,
+      concurrency: limit,
     });
 
-    await runVendor("biddirect", { ...process.env, BASE_URL });
+    // Lightweight concurrency mapper (no external dep)
+    async function runWithConcurrency<T>(
+      items: string[],
+      fn: (item: string) => Promise<T>,
+      concurrency: number
+    ) {
+      const results: Record<string, { ok: boolean; data?: T; error?: any }> =
+        {};
+      let index = 0;
+      async function worker() {
+        while (index < items.length) {
+          const i = index++;
+          const item = items[i];
+          try {
+            logger.info("Vendor start", { vendor: item });
+            const data = await fn(item);
+            results[item] = { ok: true, data };
+            logger.info("Vendor done", {
+              vendor: item,
+              status: (data as any).status,
+            });
+          } catch (error: any) {
+            results[item] = {
+              ok: false,
+              error: error?.message || String(error),
+            };
+            logger.error("Vendor failed", { vendor: item, error });
+          }
+        }
+      }
+      const workers = Array.from(
+        { length: Math.min(concurrency, items.length) },
+        () => worker()
+      );
+      await Promise.all(workers);
+      return results;
+    }
+
+    const results = await runWithConcurrency(
+      vendors,
+      (vendor) => runVendor(vendor as any, { ...process.env, BASE_URL }),
+      limit
+    );
+
+    logger.info("All vendors finished", { results });
   }
 );
