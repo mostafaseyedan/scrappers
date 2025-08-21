@@ -45,8 +45,10 @@ async function parseSolRow(row: Locator) {
 export async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
+  let currPage = 1;
 
   do {
+    console.log(`PublicPurchase - Page ${currPage}`);
     const rows = page.locator("#invitedBids tbody > tr:visible");
     const rowCount = await rows.count();
 
@@ -71,6 +73,7 @@ export async function scrapeAllSols(page: Page) {
     if (styles?.includes("color:#999999") || !prevPageExists) {
       lastPage = true;
     }
+    currPage++;
   } while (lastPage !== true);
 
   return allSols;

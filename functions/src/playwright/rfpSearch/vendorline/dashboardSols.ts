@@ -42,7 +42,7 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
   const newPagePromise = context.waitForEvent("page");
   await row.locator(".bid-actions button:has-text('Open Details')").click();
   const newPage = await newPagePromise;
-  await newPage.waitForLoadState();
+  await newPage.waitForLoadState("domcontentloaded");
   const siteUrl = newPage.url();
   await newPage.close();
 
@@ -81,6 +81,7 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
     .click();
 
   for (let i = 0; i < 100; i++) {
+    if (i % 10 === 0) console.log(`Vendorline - Record ${i}`);
     const row = await page.locator(".slide-container");
     const sol = await parseSolRow(row, context).catch((err: unknown) =>
       console.warn(err)

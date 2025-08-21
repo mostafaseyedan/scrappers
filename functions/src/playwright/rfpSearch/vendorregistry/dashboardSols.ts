@@ -53,6 +53,7 @@ async function parseSolRow(row: Locator) {
 export async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
+  let currPage = 1;
 
   // Set to sort by date posted desc
   await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
@@ -61,6 +62,7 @@ export async function scrapeAllSols(page: Page) {
   await page.waitForTimeout(1000);
 
   do {
+    console.log(`VendorRegistry - Page ${currPage}`);
     const rows = page.locator("#contractTable tbody > tr:visible");
     const rowCount = await rows.count();
 
@@ -81,6 +83,7 @@ export async function scrapeAllSols(page: Page) {
       await nextPage.locator("> a").click();
       await page.waitForTimeout(1000);
     }
+    currPage++;
   } while (lastPage !== true);
 
   return allSols;

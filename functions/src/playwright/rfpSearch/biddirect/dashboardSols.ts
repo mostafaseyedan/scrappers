@@ -56,6 +56,7 @@ async function parseSolRow(row: Locator) {
 async function scrapeAllSols(page: Page) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
+  let currPage = 1;
 
   await page.goto(
     "https://www.bidnetdirect.com/private/supplier/solicitations/search?target=init",
@@ -69,6 +70,7 @@ async function scrapeAllSols(page: Page) {
   }
 
   do {
+    console.log(`BidDirect - Page ${currPage}`);
     const rows = page.locator("#solicitationsTable tbody > tr:visible");
     const rowCount = await rows.count();
 
@@ -89,6 +91,7 @@ async function scrapeAllSols(page: Page) {
       await nextPage.click();
       await page.waitForTimeout(1000);
     }
+    currPage++;
   } while (!lastPage);
 
   return allSols;

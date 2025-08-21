@@ -66,7 +66,7 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
 
 async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
-  const maxPage = 1;
+  const maxPage = 10;
   let currPage = 1;
 
   const nextPage = await page
