@@ -8,6 +8,7 @@ import { run as biddirectDashboardSols } from "../playwright/rfpSearch/biddirect
 import { run as vendorlineDashboardSols } from "../playwright/rfpSearch/vendorline/dashboardSols";
 import { run as techbidDashboardSols } from "../playwright/rfpSearch/techbids/dashboardSols";
 import { run as instantGetSols } from "../playwright/rfpSearch/instantmarkets/getSols";
+import { run as mygovwatch } from "../playwright/rfpSearch/mygovwatch/dashboardSols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -22,6 +23,7 @@ const vendors = {
   vendorline: vendorlineDashboardSols,
   instantmarkets: instantGetSols,
   vendorregistry: vendorRegistryDashboardSols,
+  mygovwatch,
 };
 
 type Results = {

@@ -2,98 +2,77 @@ import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
 import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
+import { md5 } from "../../../lib/md5";
 import type { BrowserContext, Locator, Page } from "playwright-core";
 
 async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
 
-  await page.goto("https://www.instantmarkets.com/signin", {
+  await page.goto("https://www.mygovwatch.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[placeholder=\"Enter your email address\"]", user);
-  await page.fill("input[placeholder=\"Enter your password\"]", pass);
-  await page.click("button:has-text('Login')");
+  await page.fill('input[name="userName"]', user);
+  await page.fill('input[name="password"]', pass);
+  await page.click("button:has-text('LOGIN')");
 }
 
-async function parseSolRow(row: Locator) {
-  const siteLink = await row.locator("a.opptitle");
-  const siteUrl = await siteLink.getAttribute("href");
-  const title = await siteLink.getAttribute("title");
-  const siteId = siteUrl ? siteUrl.match(/\/view\/([a-z0-9]+)\//i)?.[1] : "";
-  const closingDate = await row
-    .locator("span:has-text(' Due Date ') + span")
-    .first()
-    .innerText();
-  let location = await row
-    .locator("span:has-text('Agency: ') + span + span")
-    .first()
-    .innerText();
-  location = location.trim();
-  const issuer = await row
-    .locator("span:has-text('Agency: ') + span")
-    .first()
-    .innerText();
+async function parseSolRow(row: Locator, context: BrowserContext) {
+  const closingDate = await row.locator(".list-view-rfp-due-date").innerText();
+  const siteLink = await row.locator("a[href^='/opportunity/']").first();
+  const siteUrl =
+    "https://clients.mygovwatch.com/" + (await siteLink.getAttribute("href"));
+
+  const newPagePromise = context.waitForEvent("page");
+  await siteLink.click();
+  const newPage = await newPagePromise;
+  await newPage.waitForSelector('a:has-text("LEAD SOURCE")');
+  await newPage.locator('a:has-text("LEAD SOURCE")').click();
+  await newPage.close();
+  const newPagePromise2 = context.waitForEvent("page");
+  const newPage2 = await newPagePromise2;
+  await newPage2.waitForLoadState();
+  const sourceLink = newPage2.url();
+  await newPage2.close();
+
   return {
-    title,
-    description: await row
-      .locator("> div > p.greyText.break-words")
-      .innerText(),
-    location: location.substr(1, location.length - 2),
-    issuer,
+    title: await row.locator("h4.list-view-rfp-name").innerText(),
+    issuer: await row.locator("h3.list-view-buyer-name").innerText(),
     closingDate: sanitizeDateString(closingDate),
-    site: "instantmarkets",
-    siteUrl: "https://www.instantmarkets.com" + siteUrl,
-    siteId,
+    externalLinks: sourceLink ? [sourceLink] : [],
+    site: "mygovwatch",
+    siteUrl,
+    siteId: "mygovwatch-" + md5(siteUrl),
   };
 }
 
-async function scrapeAllSols(page: Page) {
+async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
-  let lastPage = false;
-  let currPage = 1;
 
-  await page.goto(
-    "https://www.instantmarkets.com/q/ERP%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
-    { waitUntil: "domcontentloaded" }
-  );
+  for (let currPage = 1; currPage <= 20; currPage++) {
+    console.log(`mygovwatch page ${currPage}`);
+    await page.waitForSelector(
+      '[ng-controller="RfpListViewController as data"] tbody:nth-child(2) > tr'
+    );
 
-  do {
-    console.log(`instantmarkets - page ${currPage}`);
-    await page.waitForSelector("app-opp-list-view li.collection-item-desc");
     const rows = await page.locator(
-      "app-opp-list-view li.collection-item-desc"
+      '[ng-controller="RfpListViewController as data"] tbody:nth-child(2) > tr'
     );
     const rowCount = await rows.count();
-    console.log(`Found ${rowCount} rows`);
 
-    for (let i = 0; i < rowCount; i++) {
+    for (let i = 1; i <= rowCount; i++) {
       const row = rows.nth(i);
-      const checkRow = await row.locator("a.opptitle");
-      if ((await checkRow.count()) === 0) continue;
-      const sol = await parseSolRow(row);
-      allSols.push(sol);
+      const sol = await parseSolRow(row, context).catch((err: unknown) =>
+        console.warn(err)
+      );
+      if (sol) allSols.push(sol);
     }
 
-    const popupDismiss = await page.locator(
-      "button:has-text(\"Don't Ask Again\")"
-    );
-    const popupDismissCount = await popupDismiss.count();
-    if (popupDismissCount > 0) await popupDismiss.click();
-
-    await page.waitForTimeout(1000);
-
-    const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
-    const nextPageCount = await nextPage.count();
-
-    if (nextPageCount === 0) {
-      lastPage = true;
-    } else {
-      await nextPage.click();
-      await page.waitForTimeout(1000);
-    }
-    currPage++;
-  } while (!lastPage);
+    await page
+      .locator('a[ng-click="selectPage(currentPage + 1);backToTop();"]')
+      .first()
+      .click();
+  }
 
   return allSols;
 }
@@ -105,9 +84,9 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_INSTANTMARKETS_USER!;
-  const PASS = env.DEV_INSTANTMARKETS_PASS!;
-  const VENDOR = "instantmarkets";
+  const USER = "will@leafmedium.com";
+  const PASS = "inno123!";
+  const VENDOR = "mygovwatch";
   let results = {};
   let failCount = 0;
   let successCount = 0;
@@ -119,8 +98,7 @@ export async function run(
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
-
-  let sols = await scrapeAllSols(page);
+  let sols = await scrapeAllSols(page, context);
   const total = sols.length;
 
   // Filter out expired

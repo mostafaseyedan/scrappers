@@ -9,7 +9,8 @@ export const daily = onSchedule(
   {
     schedule: "0 0 * * *", // Every day at midnight (UTC)
     timeZone: "UTC",
-    retryCount: 3,
+    // Disable retries to prevent Cloud Scheduler from re-invoking on failure
+    retryCount: 0,
     secrets: [
       "DEV_BIDDIRECT_USER",
       "DEV_BIDDIRECT_PASS",
