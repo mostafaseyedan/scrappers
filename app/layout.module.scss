@@ -2,7 +2,7 @@
 
 .layout {
   font-size: 15px;
-  padding: 20px;
+  padding: 0;
   padding-bottom: 0;
 
   a[href] {
@@ -22,6 +22,7 @@
     display: flex;
     align-items: baseline;
     margin-bottom: 10px;
+    padding: 20px 20px 0 20px;
     :global(h1) {
       font-weight: bold;
       font-size: 26px;
@@ -49,7 +50,12 @@
 
   &_userBox {
     position: absolute;
-    top: 20px;
+    top: 10px;
     right: 20px;
+
+    &_avatar {
+      width: 50px;
+      height: 50px;
+    }
   }
 }

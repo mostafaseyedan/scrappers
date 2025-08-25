@@ -7,9 +7,8 @@ const BASE_URL = "https://reconrfp.cendien.com";
 
 export const daily = onSchedule(
   {
-    schedule: "0 0 * * *", // Every day at midnight (UTC)
+    schedule: "0 0 * * 1,3,5", // Every Monday, Wednesday, and Friday at midnight (UTC)
     timeZone: "UTC",
-    // Disable retries to prevent Cloud Scheduler from re-invoking on failure
     retryCount: 0,
     secrets: [
       "DEV_BIDDIRECT_USER",
@@ -56,7 +55,6 @@ export const daily = onSchedule(
       concurrency: limit,
     });
 
-    // Lightweight concurrency mapper (no external dep)
     async function runWithConcurrency<T>(
       items: string[],
       fn: (item: string) => Promise<T>,

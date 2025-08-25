@@ -12,8 +12,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.mygovwatch.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="userName"]', user);
-  await page.fill('input[name="password"]', pass);
+  await page.fill("input[name=\"userName\"]", user);
+  await page.fill("input[name=\"password\"]", pass);
   await page.click("button:has-text('LOGIN')");
 }
 
@@ -26,8 +26,8 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
   const newPagePromise = context.waitForEvent("page");
   await siteLink.click();
   const newPage = await newPagePromise;
-  await newPage.waitForSelector('a:has-text("LEAD SOURCE")');
-  await newPage.locator('a:has-text("LEAD SOURCE")').click();
+  await newPage.waitForSelector("a:has-text(\"LEAD SOURCE\")");
+  await newPage.locator("a:has-text(\"LEAD SOURCE\")").click();
   await newPage.close();
   const newPagePromise2 = context.waitForEvent("page");
   const newPage2 = await newPagePromise2;
@@ -52,11 +52,11 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
   for (let currPage = 1; currPage <= 20; currPage++) {
     console.log(`mygovwatch page ${currPage}`);
     await page.waitForSelector(
-      '[ng-controller="RfpListViewController as data"] tbody:nth-child(2) > tr'
+      "[ng-controller=\"RfpListViewController as data\"] tbody:nth-child(2) > tr"
     );
 
     const rows = await page.locator(
-      '[ng-controller="RfpListViewController as data"] tbody:nth-child(2) > tr'
+      "[ng-controller=\"RfpListViewController as data\"] tbody:nth-child(2) > tr"
     );
     const rowCount = await rows.count();
 
@@ -69,7 +69,7 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
     }
 
     await page
-      .locator('a[ng-click="selectPage(currentPage + 1);backToTop();"]')
+      .locator("a[ng-click=\"selectPage(currentPage + 1);backToTop();\"]")
       .first()
       .click();
   }
