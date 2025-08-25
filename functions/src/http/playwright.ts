@@ -1,6 +1,4 @@
 import { onRequest } from "firebase-functions/v2/https";
-import playwrightCore from "playwright-core";
-import chromium from "@sparticuz/chromium";
 import { run as ppInvitedSols } from "../playwright/rfpSearch/publicpurchase/invitedSols";
 import { run as bidsyncDashboardSols } from "../playwright/rfpSearch/bidsync/dashboardSols";
 import { run as vendorRegistryDashboardSols } from "../playwright/rfpSearch/vendorregistry/dashboardSols";
@@ -12,8 +10,8 @@ import { run as mygovwatch } from "../playwright/rfpSearch/mygovwatch/dashboardS
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
-
-// import { chromium } from "playwright-core";
+import { chromium } from "playwright-core";
+import Browserbase from "@browserbasehq/sdk";
 
 const vendors = {
   biddirect: biddirectDashboardSols,
@@ -42,19 +40,21 @@ export async function runVendor(
 ) {
   const baseUrl = env.BASE_URL || "http://localhost:5002";
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
+  const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
 
-  /*
-  const browser = await chromium.launch({
-    headless: false,
-    slowMo: 50, // Slow down for debugging
-    args: ["--deny-permission-prompts"],
+  const bb = new Browserbase({
+    apiKey: BROWSERBASE_KEY,
   });
-  */
-  const browser = await playwrightCore.chromium.launch({
-    executablePath: await chromium.executablePath(),
-    headless: true,
-    args: [...chromium.args, "--deny-permission-prompts"],
+
+  const session = await bb.sessions.create({
+    projectId: "ab8af307-2e85-4ce6-86c4-a9d7751bf2a7",
+    userMetadata: {
+      vendor,
+    },
   });
+
+  const browser = await chromium.connectOverCDP(session.connectUrl);
+
   let status = 200;
   let results: Results = {};
   let page;
@@ -68,10 +68,9 @@ export async function runVendor(
       throw new Error("Invalid or missing script parameters");
     }
 
-    const context = await browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-    });
+    const context = browser.contexts()[0];
+    page = context.pages()[0];
+
     page = await context.newPage();
     results = await vendors[vendor](
       page,
@@ -130,6 +129,7 @@ export const playwright = onRequest(
       "DEV_BIDDIRECT_PASS",
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
+      "DEV_BROWSERBASE_KEY",
       "DEV_GEMINI_KEY",
       "DEV_INSTANTMARKETS_USER",
       "DEV_INSTANTMARKETS_PASS",

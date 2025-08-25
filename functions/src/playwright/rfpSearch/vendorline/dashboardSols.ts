@@ -12,8 +12,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://vendorline.planetbids.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[name=\"userName\"]", user);
-  await page.fill("input[name=\"password\"]", pass);
+  await page.fill('input[name="userName"]', user);
+  await page.fill('input[name="password"]', pass);
   await page.click("button.btn-primary.close-login");
 }
 
@@ -42,7 +42,6 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
   const newPagePromise = context.waitForEvent("page");
   await row.locator(".bid-actions button:has-text('Open Details')").click();
   const newPage = await newPagePromise;
-  await newPage.waitForLoadState("domcontentloaded");
   const siteUrl = newPage.url();
   await newPage.close();
 
@@ -66,7 +65,11 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
 async function scrapeAllSols(page: Page, context: BrowserContext) {
   let allSols: Record<string, any>[] = [];
 
-  await page.waitForSelector(".MuiDataGrid-virtualScrollerRenderZone");
+  await page.waitForTimeout(3000);
+  await page.reload();
+  await page.waitForSelector(".MuiDataGrid-virtualScrollerRenderZone", {
+    timeout: 120000,
+  });
 
   const closeSurveyEl = page.locator(
     ".productfruits--container-pr-fk .close-btn"
@@ -88,6 +91,7 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
     );
     if (sol) allSols.push(sol);
     await page.locator(".footer-buttons .center-buttons + button").click();
+    await page.waitForTimeout(1000);
   }
 
   return allSols;

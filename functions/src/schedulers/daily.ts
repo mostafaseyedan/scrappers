@@ -16,6 +16,7 @@ export const daily = onSchedule(
       "DEV_BIDDIRECT_PASS",
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
+      "DEV_BROWSERBASE_KEY",
       "DEV_GEMINI_KEY",
       "DEV_INSTANTMARKETS_USER",
       "DEV_INSTANTMARKETS_PASS",
@@ -38,7 +39,7 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
-      // "instantmarkets", // seems this can be run manually only
+      "instantmarkets",
       "publicpurchase",
       // "techbids", // trial
       "vendorregistry",

@@ -16,12 +16,12 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@browserbasehq/sdk": "^2.6.0",
     "@google-cloud/functions-framework": "^4.0.0",
     "@google/generative-ai": "^0.24.1",
     "@openai/agents": "^0.0.16",
     "@openai/agents-core": "^0.0.16",
     "@openai/agents-openai": "^0.0.16",
-    "@sparticuz/chromium": "^138.0.2",
     "clsx": "^2.1.1",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.4.0",
