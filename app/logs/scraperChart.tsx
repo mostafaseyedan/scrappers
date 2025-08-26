@@ -145,7 +145,7 @@ const ScraperChart = () => {
                 fill={`var(--chart-${i + 1})`}
               >
                 {i === vendors.length - 1 ? (
-                  <LabelList dataKey="total" position="top" />
+                  <LabelList dataKey="total" position="top" fill="#ccc" />
                 ) : null}
               </Bar>
             ))}
