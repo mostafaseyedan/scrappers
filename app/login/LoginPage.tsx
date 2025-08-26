@@ -291,13 +291,14 @@ export function LoginPage({
           </div>
         </div>
       </div>
-      <div className="relative hidden bg-muted lg:block overflow-hidden">
-        <img
-          src="http://localhost:5002/team2.png"
-          alt="Image of a team"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      </div>
+      <div
+        className="relative lg:block"
+        style={{
+          backgroundImage: "url('/team2.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
+        }}
+      ></div>
     </div>
   );
 }
