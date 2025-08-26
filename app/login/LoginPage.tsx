@@ -44,8 +44,6 @@ export function LoginPage({
   const redirectAfterLogin = useRedirectAfterLogin();
 
   async function handleLogin(credential: UserCredential) {
-    console.log("handleLogin", credential);
-    debugger;
     await loginWithCredential(credential);
     redirectAfterLogin();
   }
@@ -173,69 +171,126 @@ export function LoginPage({
   }, []);
 
   return (
-    <div className={styles.page}>
-      <h2>Login</h2>
-      {hasLogged && (
-        <div className={styles.info}>
-          <span>
-            Redirecting to <strong>{redirect || "/"}</strong>
-          </span>
-          <LoadingIcon />
+    <div id="loginContainer" className="grid min-h-screen lg:grid-cols-2">
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center md:justify-start">
+          <img
+            src="http://localhost:5002/cendien_corp_logo.jpg"
+            alt="logo"
+            className="w-[100px]"
+          />
         </div>
-      )}
-      {!hasLogged && (
-        <PasswordForm
-          loading={isEmailLoading || isLoginActionPending}
-          onSubmit={handleLoginWithEmailAndPassword}
-          actions={
-            // `firebase/auth` library is not yet compatible with Vercel's Edge environment
-            !process.env.VERCEL ? (
-              <div className={styles.loginWithAction}>
-                <Switch
-                  value={shouldLoginWithAction}
-                  onChange={setShouldLoginWithAction}
-                />
+        <div className="flex flex-1 items-center justify-center">
+          <div id="formContent" className="w-full max-w-xs">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h1 className="text-2xl font-bold">
+                  {hasLogged ? (
+                    <>
+                      <LoadingIcon /> Redirecting to{" "}
+                      <strong>{redirect || "/"}</strong>
+                    </>
+                  ) : (
+                    "Login to access the app"
+                  )}
+                </h1>
               </div>
-            ) : undefined
-          }
-          error={
-            emailPasswordError ||
-            googleError ||
-            emailLinkError ||
-            googleUsingRedirectError ||
-            microsoftError ||
-            microsoftUsingRedirectError
-          }
-        >
-          <Link
-            className={styles.link}
-            href={appendRedirectParam("/reset-password", redirect)}
-          >
-            Reset password
-          </Link>
-          <Link href={appendRedirectParam("/register", redirect)}>
-            <Button className="w-full">Register</Button>
-          </Link>
-          <Button onClick={handleLoginWithGoogle}>
-            Log in with Google (Popup)
-          </Button>
-          <Button onClick={handleLoginWithGoogleUsingRedirect}>
-            Log in with Google (Redirect)
-          </Button>
-          <Button
-            style={{ display: "none" }}
-            onClick={handleLoginWithEmailLink}
-          >
-            Log in with Email Link
-          </Button>
-          <Button onClick={handleLoginWithMicrosoft}>
-            Log in with Microsoft (Popup)
-          </Button>
-          <Button onClick={handleLoginWithMicrosoftUsingRedirect}>
-            Log in with Microsoft (Redirect)
-          </Button>
-        </PasswordForm>
-      )}
+
+              <div id="oauthSection" className="grid gap-2">
+                {!hasLogged && (
+                  <>
+                    <PasswordForm
+                      loading={isEmailLoading || isLoginActionPending}
+                      onSubmit={handleLoginWithEmailAndPassword}
+                      actions={
+                        // `firebase/auth` library is not yet compatible with Vercel's Edge environment
+                        !process.env.VERCEL ? (
+                          <div className={styles.loginWithAction}>
+                            <Switch
+                              value={shouldLoginWithAction}
+                              onChange={setShouldLoginWithAction}
+                            />
+                          </div>
+                        ) : undefined
+                      }
+                      error={
+                        emailPasswordError ||
+                        googleError ||
+                        emailLinkError ||
+                        googleUsingRedirectError ||
+                        microsoftError ||
+                        microsoftUsingRedirectError
+                      }
+                      style={{ display: "none" }}
+                    >
+                      <Link
+                        className={styles.link}
+                        href={appendRedirectParam("/reset-password", redirect)}
+                        style={{ display: "none" }}
+                      >
+                        Reset password
+                      </Link>
+                      <Link
+                        href={appendRedirectParam("/register", redirect)}
+                        style={{ display: "none" }}
+                      >
+                        <Button className="w-full">Register</Button>
+                      </Link>
+                      <Button
+                        onClick={handleLoginWithGoogle}
+                        style={{ display: "none" }}
+                      >
+                        Log in with Google (Popup)
+                      </Button>
+                      <Button
+                        onClick={handleLoginWithGoogleUsingRedirect}
+                        style={{ display: "none" }}
+                      >
+                        Log in with Google (Redirect)
+                      </Button>
+                      <Button
+                        style={{ display: "none" }}
+                        onClick={handleLoginWithEmailLink}
+                      >
+                        Log in with Email Link
+                      </Button>
+                    </PasswordForm>
+                    <Button
+                      variant="outline"
+                      onClick={handleLoginWithMicrosoftUsingRedirect}
+                    >
+                      <img
+                        src="/msft.svg"
+                        alt="Microsoft logo"
+                        className="size-4 shrink-0"
+                      />{" "}
+                      Log in with Microsoft (Redirect)
+                    </Button>
+                    <Button
+                      onClick={handleLoginWithMicrosoft}
+                      variant="outline"
+                    >
+                      <img
+                        src="/msft.svg"
+                        alt="Microsoft logo"
+                        className="size-4 shrink-0"
+                      />{" "}
+                      Log in with Microsoft (Popup)
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="relative hidden bg-muted lg:block overflow-hidden">
+        <img
+          src="http://localhost:5002/team2.png"
+          alt="Image of a team"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
     </div>
   );
 }

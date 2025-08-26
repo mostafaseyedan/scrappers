@@ -13,7 +13,7 @@ import {
 import jsdom from "jsdom";
 import { sanitizeDateString } from "@/lib/utils";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.BASE_URL;
 const VENDOR = "vendorregistry";
 const DEBUG = false;
 const HIDE_STEPS = true;

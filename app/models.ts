@@ -126,155 +126,6 @@ const dbSol: any = {
   }),
 };
 
-/*
-const defaultClientCalls = {
-  count: async ({ collection, filters }: CountParams) => {
-    const colRef = fCollection(db, collection);
-    let queryRef: any = colRef;
-
-    // TODO: fix this
-    Object.entries(filters || {}).forEach(([key, value]) => {
-      queryRef = query(queryRef, where(key, "==", value));
-    });
-
-    const snap = await getCountFromServer(queryRef);
-    return snap.data().count;
-  },
-  get: async ({ collection, startAfter, limit, sort, filters }: GetParams) => {
-    const finalLimit = limit || 20;
-    const finalSort = sort || "created desc";
-    const finalFilters = filters || {};
-    let results = {};
-    const colRef = fCollection(db, collection);
-    let q = query(colRef);
-    let records: Record<string, any>[] = [];
-
-    if (finalLimit) {
-      q = query(q, fLimit(finalLimit));
-    }
-
-    if (finalSort) {
-      const sortParts = finalSort.split(" ");
-      const order = sortParts[1] === "desc" ? "desc" : "asc";
-      q = query(q, orderBy(sortParts[0], order));
-    }
-
-    const rawFilterItems = Object.entries(finalFilters);
-    const filterItems = [];
-    for (const [field, value] of rawFilterItems) {
-      if (value.includes(" AND ")) {
-        const values = value.split(" AND ");
-        for (const val of values) {
-          // > or < operators
-          if (val.match(/^[><=]+ /)) {
-            const [operator, finalVal] = val.split(" ");
-            filterItems.push({
-              field,
-              operator: operator,
-              value: parseQueryValue(finalVal),
-            });
-          } else {
-            filterItems.push({
-              field,
-              operator: "==",
-              value: parseQueryValue(val),
-            });
-          }
-        }
-      } else {
-        filterItems.push({
-          field,
-          operator: "==",
-          value: parseQueryValue(value as string),
-        });
-      }
-    }
-
-    for (const item of filterItems) {
-      const { field, operator, value } = item;
-      q = query(q, where(field, operator, value));
-    }
-
-    if (startAfter) {
-      const startAfterDoc = doc(db, "scriptLogs", startAfter);
-      q = query(q, fStartAfter(startAfterDoc));
-    }
-
-    const docs = await getDocs(q);
-    docs.forEach((doc) => {
-      records.push({ id: doc.id, ...normalizeDoc(doc) });
-    });
-    results = {
-      results: records,
-      total: docs.size,
-    };
-
-    return { ...results };
-  },
-  getById: async ({ collection, id }: GetByIdParams) => {
-    const docRef = doc(db, collection, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists())
-      throw new Error("defaultCalls.getById - document not found");
-    return { id: docSnap.id, ...normalizeDoc(docSnap) };
-  },
-  getByKey: async ({ collection, key }: GetByKeyParams) => {
-    const colRef = fCollection(db, collection);
-    const q = query(colRef, where("key", "==", key));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty)
-      throw new Error("defaultCalls.getByKey - document not found");
-    return { id: snapshot.docs[0].id, ...normalizeDoc(snapshot.docs[0]) };
-  },
-  post: async ({ collection, data, schema }: PostParams) => {
-    const colRef = fCollection(db, collection);
-
-    if (schema?.parse) {
-      data = schema.parse(data);
-    }
-
-    data.created = new Date();
-    data.updated = new Date();
-
-    const docRef = await addDoc(colRef, data);
-    const docSnap = await getDoc(docRef);
-
-    return { id: docSnap.id, ...normalizeDoc(docSnap) };
-  },
-  put: async () => {},
-  patch: async ({ collection, id, data }: PatchParams) => {
-    const record = await defaultCalls.getById({ collection, id });
-    if (!record) throw new Error("defaultCalls.patch - document not found");
-    data.updated = new Date();
-    await updateDoc(doc(db, collection, id), data);
-    return await defaultCalls.getById({ collection, id });
-  },
-  patchByKey: async ({ collection, key, data }: PatchByKeyParams) => {
-    const record = await defaultCalls.getByKey({ collection, key });
-    return await defaultCalls.patch({ collection, id: record.id, data });
-  },
-  remove: async ({ collection, id }: RemoveParams) => {
-    const record = await defaultCalls.getById({ collection, id });
-    if (!record) throw new Error("defaultCalls.remove - document not found");
-    await deleteDoc(doc(db, collection, id));
-    return { id };
-  },
-  search: async () => {},
-  upsertByKey: async ({ collection, key, data }: UpsertByKeyParams) => {
-    const record = await defaultCalls
-      .getByKey({ collection, key })
-      .catch((error) => {
-        // Keep not found error silent
-        if (!error.message.match(/not found/)) throw error;
-      });
-    const id = record?.id;
-    delete data.id;
-    return id
-      ? await defaultCalls.patch({ collection, id, data })
-      : await defaultCalls.post({ collection, data });
-  },
-}; */
-
 const defaultCalls = {
   count: async ({
     collection,
@@ -604,7 +455,7 @@ const solicitation: any = {
       description: z.string().optional(),
       documents: z.array(z.string().url()).default([]),
       externalLinks: z.array(z.string()).default([]),
-      issuer: z.string().min(1, "Issuer is required"),
+      issuer: z.string().optional(),
       keywords: z.array(z.string()).default([]),
       location: z.string().default(""),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
@@ -627,9 +478,9 @@ const solicitation: any = {
       contactNote: z.string().optional(),
       description: z.string().optional(),
       externalLink: z.string().url().optional(),
-      issuer: z.string().min(1, "Issuer is required"),
+      issuer: z.string().optional(),
       keywords: z.string().optional(),
-      location: z.string().min(1, "Location is required"),
+      location: z.string().optional(),
       publishDate: z.string().optional(),
       title: z.string().min(1, "Title is required"),
     }),
@@ -757,8 +608,8 @@ const solicitation_log: any = {
     data: Record<string, any>;
   }) =>
     await defaultCalls.post({
-      collection: `solicitations/${solId}/logs`,
       ...options,
+      collection: `solicitations/${solId}/logs`,
     }),
 };
 

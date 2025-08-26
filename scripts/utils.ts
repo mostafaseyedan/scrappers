@@ -6,6 +6,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { scriptLog as logModel } from "@/app/models";
 import { secToTimeStr } from "@/lib/utils";
+import { createHash } from "node:crypto";
 
 type EndScriptParams = {
   agent: any;
@@ -190,6 +191,10 @@ ${JSON.stringify(record)}`; // and a short explanation
   const text = result.response.text().toLowerCase();
 
   return text === "yes";
+}
+
+export function md5(input: string): string {
+  return createHash("md5").update(input).digest("hex");
 }
 
 export async function withTimeout<T>(

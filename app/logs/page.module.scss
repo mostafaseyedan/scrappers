@@ -14,6 +14,9 @@
     &_main {
       flex: 1;
     }
+    &_scriptName {
+      color: #c7c7c7;
+    }
     &_timeStr {
       color: #c7c7c7;
     }
@@ -72,4 +75,8 @@
       flex: 1;
     }
   }
+}
+
+.page {
+  padding: 0 20px;
 }

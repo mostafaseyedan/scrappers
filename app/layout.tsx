@@ -98,6 +98,7 @@ export default function RootLayout({
                     Solicitations
                   </Link>
                   <Link
+                    className="hidden"
                     href="/contacts"
                     data-state={isActive("/contacts") ? "active" : undefined}
                   >
@@ -110,12 +111,14 @@ export default function RootLayout({
                     Logs
                   </Link>
                   <Link
+                    className="hidden"
                     href="/stats"
                     data-state={isActive("/stats") ? "active" : undefined}
                   >
                     Stats
                   </Link>
                   <Link
+                    className="hidden"
                     href="/settings"
                     data-state={isActive("/settings") ? "active" : undefined}
                   >
@@ -130,7 +133,7 @@ export default function RootLayout({
               <div className={styles.layout_userBox}>
                 <DropdownMenu>
                   <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
-                    <Avatar className="rounded-lg">
+                    <Avatar className={styles.layout_userBox_avatar}>
                       <AvatarImage
                         src="https://github.com/evilrabbit.png"
                         alt="@evilrabbit"

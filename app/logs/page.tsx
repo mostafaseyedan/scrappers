@@ -18,7 +18,7 @@ export default function Page() {
   useEffect(() => {}, []);
 
   return (
-    <>
+    <div className={styles.page}>
       <Tabs defaultValue="scripts">
         <TabsList>
           <TabsTrigger value="scripts">Script</TabsTrigger>
@@ -35,13 +35,16 @@ export default function Page() {
                 key={`logsList-item-${item.id}`}
               >
                 <div className={styles.logsList_item_created}>
-                  {$d(item.created, "M/d/yyyy H:mm a")}
+                  {$d(item.created, "M/d/yyyy h:mm a")}
                 </div>
                 <div className={styles.logsList_item_main}>
                   {item.message}{" "}
                   <span className={styles.logsList_item_timeStr}>
                     <var>{item.timeStr}</var>
                   </span>
+                  <div className={styles.logsList_item_scriptName}>
+                    {item.scriptName}
+                  </div>
                 </div>
                 <div className={styles.logsList_item_results}>
                   <span className={styles.logsList_item_results_success}>
@@ -133,6 +136,6 @@ export default function Page() {
           />
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   );
 }

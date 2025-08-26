@@ -11,11 +11,12 @@ async function run() {
     "yyyy-MM-dd"
   )}`;
   const dailyStats: Record<string, any> = {};
+  const baseUrl = process.env.BASE_URL;
 
   // Get all logs for the last 3 months
   const respLogs = await scriptLogModel.get({
-    baseUrl: "http://localhost:3000",
-    limit: 0,
+    baseUrl,
+    limit: 1000,
     filters: {
       created,
     },
@@ -32,28 +33,28 @@ async function run() {
 
   for (const log of logs) {
     const dateStr = $d(log.created, "yyyy-MM-dd");
-    const vendor = log.scriptName.substring(9);
+    const script = log.scriptName;
 
     if (!dailyStats[dateStr]) {
       dailyStats[dateStr] = {};
     }
 
-    if (!dailyStats[dateStr][vendor]) {
-      dailyStats[dateStr][vendor] = {
+    if (!dailyStats[dateStr][script]) {
+      dailyStats[dateStr][script] = {
         success: 0,
       };
     }
 
-    dailyStats[dateStr][vendor].success += log.successCount || 0;
+    dailyStats[dateStr][script].success += log.successCount || 0;
   }
 
   console.log("\nDaily stats:", dailyStats);
   for (const [dateStr, successCounts] of Object.entries(dailyStats)) {
-    for (const [vendor, data] of Object.entries(successCounts)) {
+    for (const [script, data] of Object.entries(successCounts)) {
       const statData = data as { success: number };
       if (statData.success === 0) continue;
 
-      const key = `scrapers/${vendor}/${dateStr}`;
+      const key = `${script}/${dateStr}`;
       const newData = {
         key,
         value: statData.success,
@@ -69,7 +70,7 @@ async function run() {
         ),
       };
       const checkStat = await statModel.upsertByKey({
-        baseUrl: "http://localhost:3000",
+        baseUrl,
         key,
         data: newData,
         token: process.env.SERVICE_KEY,

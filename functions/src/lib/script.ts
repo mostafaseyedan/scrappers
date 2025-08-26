@@ -1,5 +1,6 @@
 import { sanitizeDateString } from "./utils";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { solicitation as solModel } from "../models";
 
 const genAI = new GoogleGenerativeAI(process.env.DEV_GEMINI_KEY!);
 
@@ -12,7 +13,7 @@ export function isNotExpired(record: Record<string, any>): boolean {
   const now = new Date();
   const closing = new Date(closingDate);
 
-  return closing.getTime() < now.getTime() + 60 * 60 * 24 * 3;
+  return closing.getTime() > now.getTime() + 60 * 60 * 24 * 3 * 1000; // 3 days
 }
 
 export async function isItRelated(
@@ -30,4 +31,17 @@ ${JSON.stringify(record)}`; // and a short explanation
   const text = result.response.text().toLowerCase();
 
   return text === "yes";
+}
+
+export async function isSolDuplicate(
+  sol: Record<string, any>,
+  baseUrl: string,
+  serviceKey: string
+) {
+  const respCheck = await solModel.get({
+    baseUrl,
+    filters: { siteId: sol.siteId },
+    token: serviceKey,
+  });
+  return respCheck.results?.length > 0;
 }
