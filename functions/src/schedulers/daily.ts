@@ -7,7 +7,7 @@ const BASE_URL = "https://reconrfp.cendien.com";
 
 export const daily = onSchedule(
   {
-    schedule: "0 0 * * 1,3,5", // Every Monday, Wednesday, and Friday at midnight (UTC)
+    schedule: "0 0 * * 1,2,3,4,5", // 5 days a week at midnight (UTC)
     timeZone: "UTC",
     retryCount: 0,
     secrets: [
@@ -39,10 +39,13 @@ export const daily = onSchedule(
       "biddirect",
       "bidsync",
       "instantmarkets",
+      // "mygovwatch", // trial
       "publicpurchase",
       // "techbids", // trial
       "vendorregistry",
       "vendorline",
+      // findrfp
+      // vendor
     ];
 
     const limit = Math.max(

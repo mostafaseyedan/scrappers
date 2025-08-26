@@ -47,7 +47,7 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
     }
   }
 
-  for (let day = 0; day < 15; day++) {
+  for (let day = 0; day < 30; day++) {
     const dayStr = $d(subDays(endDate, day), "yyyy-MM-dd");
     const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
       acc[vendor] = 0;
@@ -108,7 +108,7 @@ const ScraperChart = () => {
     <Card className={styles.scraperChart}>
       <CardHeader>
         <CardTitle>Solicitations Success Count</CardTitle>
-        <CardDescription>last 15 days</CardDescription>
+        <CardDescription>last 30 days</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
