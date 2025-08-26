@@ -1,12 +1,11 @@
 "use client";
 
 import { stat as StatModel } from "@/app/models";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -68,6 +67,7 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
     data.push({
       date: $d(dateStr, "M/dd"),
       ...vendorData,
+      total: Object.values(vendorData).reduce((a, b) => a + b, 0),
     });
   }
 
@@ -81,10 +81,11 @@ const ScraperChart = () => {
   const [vendors, setVendors] = useState<string[]>([]);
 
   async function refresh() {
-    const startDate = subDays(new Date(), 15);
+    const startDate = subDays(new Date(), 30);
     const endDate = addDays(new Date(), 1);
     const statData = await StatModel.get({
       sort: "startDate desc",
+      limit: 1000,
       filters: {
         startDate: `> ${$d(startDate, "yyyy-MM-dd")} AND < ${$d(
           endDate,
@@ -95,6 +96,7 @@ const ScraperChart = () => {
 
     if (statData.results?.length) {
       const { data, vendors } = generateChartData(statData.results, endDate);
+      console.log({ data, vendors });
       setChartData(data);
       setVendors(vendors);
     }
@@ -133,7 +135,7 @@ const ScraperChart = () => {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
+              content={<ChartTooltipContent className="w-[180px]" />}
             />
             {vendors.map((vendor, i) => (
               <Bar
@@ -141,12 +143,15 @@ const ScraperChart = () => {
                 stackId="a"
                 dataKey={vendor}
                 fill={`var(--chart-${i + 1})`}
-              />
+              >
+                {i === vendors.length - 1 ? (
+                  <LabelList dataKey="total" position="top" />
+                ) : null}
+              </Bar>
             ))}
           </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm"></CardFooter>
     </Card>
   );
 };

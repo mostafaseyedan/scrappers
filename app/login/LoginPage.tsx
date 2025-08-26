@@ -27,6 +27,7 @@ import {
   loginWithProvider,
   loginWithProviderUsingRedirect,
 } from "./firebase";
+import Image from "next/image";
 import styles from "./login.module.css";
 
 const auth = getFirebaseAuth();
@@ -174,7 +175,7 @@ export function LoginPage({
     <div id="loginContainer" className="grid min-h-screen lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center md:justify-start">
-          <img
+          <Image
             src="http://localhost:5002/cendien_corp_logo.jpg"
             alt="logo"
             className="w-[100px]"
@@ -259,7 +260,7 @@ export function LoginPage({
                       variant="outline"
                       onClick={handleLoginWithMicrosoftUsingRedirect}
                     >
-                      <img
+                      <Image
                         src="/msft.svg"
                         alt="Microsoft logo"
                         className="size-4 shrink-0"
@@ -270,7 +271,7 @@ export function LoginPage({
                       onClick={handleLoginWithMicrosoft}
                       variant="outline"
                     >
-                      <img
+                      <Image
                         src="/msft.svg"
                         alt="Microsoft logo"
                         className="size-4 shrink-0"
@@ -285,7 +286,7 @@ export function LoginPage({
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block overflow-hidden">
-        <img
+        <Image
           src="http://localhost:5002/team2.png"
           alt="Image of a team"
           className="absolute inset-0 h-full w-full object-cover"
