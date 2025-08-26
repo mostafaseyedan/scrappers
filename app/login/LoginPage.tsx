@@ -179,6 +179,8 @@ export function LoginPage({
             src="http://localhost:5002/cendien_corp_logo.jpg"
             alt="logo"
             className="w-[100px]"
+            width={100}
+            height={100}
           />
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -264,6 +266,8 @@ export function LoginPage({
                         src="/msft.svg"
                         alt="Microsoft logo"
                         className="size-4 shrink-0"
+                        width={20}
+                        height={20}
                       />{" "}
                       Log in with Microsoft (Redirect)
                     </Button>
@@ -275,6 +279,8 @@ export function LoginPage({
                         src="/msft.svg"
                         alt="Microsoft logo"
                         className="size-4 shrink-0"
+                        width={20}
+                        height={20}
                       />{" "}
                       Log in with Microsoft (Popup)
                     </Button>
@@ -286,7 +292,7 @@ export function LoginPage({
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block overflow-hidden">
-        <Image
+        <img
           src="http://localhost:5002/team2.png"
           alt="Image of a team"
           className="absolute inset-0 h-full w-full object-cover"

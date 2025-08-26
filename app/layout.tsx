@@ -134,11 +134,8 @@ export default function RootLayout({
                 <DropdownMenu>
                   <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
                     <Avatar className={styles.layout_userBox_avatar}>
-                      <AvatarImage
-                        src="https://github.com/evilrabbit.png"
-                        alt="@evilrabbit"
-                      />
-                      <AvatarFallback>ER</AvatarFallback>
+                      <AvatarImage />
+                      <AvatarFallback></AvatarFallback>
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent

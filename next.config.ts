@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      new URL("http://localhost:5002/**", "https://reconrfp.cendien.com/**"),
+    ],
+  },
   async rewrites() {
     // Proxy Firebase Auth helper endpoints so redirect flows work on custom domains
     // See: https://firebase.google.com/docs/auth/web/redirect-best-practices#proxy-auth-requests
