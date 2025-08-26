@@ -1,7 +1,7 @@
 "use client";
 
 import { stat as StatModel } from "@/app/models";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -21,25 +21,18 @@ import { format as $d, addDays, subDays } from "date-fns";
 
 import styles from "./scraperChart.module.scss";
 
-export const description = "A line chart with a label";
-
 const chartConfig = {} satisfies ChartConfig;
 
-function generateChartData(
-  statData: Record<string, any>[],
-  startDate: Date,
-  endDate: Date
-) {
+function generateChartData(statData: Record<string, any>[], endDate: Date) {
   const data = [];
   const dailyStats: Record<string, Record<string, number>> = {};
   const vendors = new Set<string>();
 
-  // TODO: remove
-  console.log("ignore", endDate);
-
   for (const stat of statData) {
     if (stat.periodType === "day") {
-      const [, vendor, dateStr] = stat.key.split("/");
+      const statSegs = stat.key.split("/");
+      const vendor = statSegs[1];
+      const dateStr = statSegs[statSegs.length - 1];
       vendors.add(vendor);
 
       if (!dailyStats[dateStr]) {
@@ -55,7 +48,7 @@ function generateChartData(
   }
 
   for (let day = 0; day < 15; day++) {
-    const dayStr = $d(addDays(startDate, day), "yyyy-MM-dd");
+    const dayStr = $d(subDays(endDate, day), "yyyy-MM-dd");
     const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
       acc[vendor] = 0;
       return acc;
@@ -72,13 +65,8 @@ function generateChartData(
   }
 
   for (const [dateStr, vendorData] of Object.entries(dailyStats)) {
-    /*
-    const dayTotal = Object.values(vendorData).reduce(
-      (sum, count) => sum + count,
-      0
-    ); */
     data.push({
-      date: `${$d(dateStr, "M/d")}`,
+      date: $d(dateStr, "M/dd"),
       ...vendorData,
     });
   }
@@ -106,13 +94,7 @@ const ScraperChart = () => {
     });
 
     if (statData.results?.length) {
-      console.log("statData", statData.results);
-      const { data, vendors } = generateChartData(
-        statData.results,
-        startDate,
-        endDate
-      );
-      console.log({ data, vendors });
+      const { data, vendors } = generateChartData(statData.results, endDate);
       setChartData(data);
       setVendors(vendors);
     }
@@ -133,7 +115,7 @@ const ScraperChart = () => {
           className={styles.scraperChart_chart}
           config={chartConfig}
         >
-          <LineChart
+          <BarChart
             accessibilityLayer
             data={chartData}
             margin={{
@@ -154,21 +136,14 @@ const ScraperChart = () => {
               content={<ChartTooltipContent indicator="line" />}
             />
             {vendors.map((vendor, i) => (
-              <Line
+              <Bar
                 key={vendor}
+                stackId="a"
                 dataKey={vendor}
-                type="natural"
-                stroke={`var(--chart-${i + 1})`}
-                strokeWidth={2}
-                dot={{
-                  fill: `var(--chart-${i + 1})`,
-                }}
-                activeDot={{
-                  r: 6,
-                }}
+                fill={`var(--chart-${i + 1})`}
               />
             ))}
-          </LineChart>
+          </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm"></CardFooter>
