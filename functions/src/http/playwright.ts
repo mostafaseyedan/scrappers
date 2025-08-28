@@ -10,6 +10,7 @@ import { run as mygovwatch } from "../playwright/rfpSearch/mygovwatch/dashboardS
 import { run as governmentbidders } from "../playwright/rfpSearch/governmentbidders/sols";
 import { run as demandstar } from "../playwright/rfpSearch/demandstar/sols";
 import { run as highergov } from "../playwright/rfpSearch/highergov/sols";
+import { run as findrfp } from "../playwright/rfpSearch/findrfp/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -20,6 +21,7 @@ const vendors = {
   biddirect: biddirectDashboardSols,
   bidsync: bidsyncDashboardSols,
   demandstar,
+  findrfp,
   governmentbidders,
   highergov,
   instantmarkets: instantGetSols,
@@ -145,6 +147,8 @@ export const playwright = onRequest(
       "DEV_BROWSERBASE_KEY",
       "DEV_DEMANDSTAR_USER",
       "DEV_DEMANDSTAR_PASS",
+      "DEV_FINDRFP_USER",
+      "DEV_FINDRFP_PASS",
       "DEV_GEMINI_KEY",
       "DEV_HIGHERGOV_USER",
       "DEV_HIGHERGOV_PASS",

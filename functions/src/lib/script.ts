@@ -16,6 +16,18 @@ export function isNotExpired(record: Record<string, any>): boolean {
   return closing.getTime() > now.getTime() + 60 * 60 * 24 * 3 * 1000; // 3 days
 }
 
+export function isWithinDays(dateStr: string, days: number): boolean {
+  const date = sanitizeDateString(dateStr);
+  if (!date) return false;
+
+  const now = new Date();
+  const targetDate = new Date(date);
+  const diffTime = Math.abs(targetDate.getTime() - now.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays <= days;
+}
+
 export async function isItRelated(
   record: Record<string, any>
 ): Promise<boolean> {
