@@ -16,7 +16,11 @@ export const daily = onSchedule(
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
       "DEV_BROWSERBASE_KEY",
+      "DEV_DEMANDSTAR_USER",
+      "DEV_DEMANDSTAR_PASS",
       "DEV_GEMINI_KEY",
+      "DEV_HIGHERGOV_USER",
+      "DEV_HIGHERGOV_PASS",
       "DEV_INSTANTMARKETS_USER",
       "DEV_INSTANTMARKETS_PASS",
       "DEV_PUBLICPURCHASE_USER",
@@ -38,14 +42,13 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      "governmentbidders",
       "instantmarkets",
       // "mygovwatch", // trial
       "publicpurchase",
       // "techbids", // trial
       "vendorregistry",
       "vendorline",
-      // findrfp
-      // vendor
     ];
 
     const limit = Math.max(

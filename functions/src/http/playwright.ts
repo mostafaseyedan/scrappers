@@ -7,21 +7,27 @@ import { run as vendorlineDashboardSols } from "../playwright/rfpSearch/vendorli
 import { run as techbidDashboardSols } from "../playwright/rfpSearch/techbids/dashboardSols";
 import { run as instantGetSols } from "../playwright/rfpSearch/instantmarkets/getSols";
 import { run as mygovwatch } from "../playwright/rfpSearch/mygovwatch/dashboardSols";
+import { run as governmentbidders } from "../playwright/rfpSearch/governmentbidders/sols";
+import { run as demandstar } from "../playwright/rfpSearch/demandstar/sols";
+import { run as highergov } from "../playwright/rfpSearch/highergov/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
-import { chromium } from "playwright-core";
-import Browserbase from "@browserbasehq/sdk";
+import { chromium, Browser } from "playwright-core";
+// import Browserbase from "@browserbasehq/sdk";
 
 const vendors = {
   biddirect: biddirectDashboardSols,
   bidsync: bidsyncDashboardSols,
+  demandstar,
+  governmentbidders,
+  highergov,
+  instantmarkets: instantGetSols,
+  mygovwatch,
   publicpurchase: ppInvitedSols,
   techbids: techbidDashboardSols,
   vendorline: vendorlineDashboardSols,
-  instantmarkets: instantGetSols,
   vendorregistry: vendorRegistryDashboardSols,
-  mygovwatch,
 };
 
 type Results = {
@@ -40,8 +46,16 @@ export async function runVendor(
 ) {
   const baseUrl = env.BASE_URL || "http://localhost:5002";
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
+  // const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
 
+  let page;
+  let status = 200;
+  let results: Results = {};
+  let counts = { success: 0, dup: 0, junk: 0, fail: 0 };
+
+  performance.mark("start");
+
+  /*
   const bb = new Browserbase({
     apiKey: BROWSERBASE_KEY,
   });
@@ -54,13 +68,16 @@ export async function runVendor(
   });
 
   const browser = await chromium.connectOverCDP(session.connectUrl);
+  const context = browser.contexts()[0];
+  page = context.pages()[0];
+  */
 
-  let status = 200;
-  let results: Results = {};
-  let page;
-  let counts = { success: 0, dup: 0, junk: 0, fail: 0 };
-
-  performance.mark("start");
+  const browser: Browser = await chromium.launch({
+    headless: false,
+    slowMo: 50, // Slow down for debugging
+  });
+  const context = await browser.newContext();
+  page = await context.newPage();
 
   try {
     if (!vendors[vendor]) {
@@ -68,10 +85,6 @@ export async function runVendor(
       throw new Error("Invalid or missing script parameters");
     }
 
-    const context = browser.contexts()[0];
-    page = context.pages()[0];
-
-    page = await context.newPage();
     results = await vendors[vendor](
       page,
       {
@@ -130,7 +143,11 @@ export const playwright = onRequest(
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
       "DEV_BROWSERBASE_KEY",
+      "DEV_DEMANDSTAR_USER",
+      "DEV_DEMANDSTAR_PASS",
       "DEV_GEMINI_KEY",
+      "DEV_HIGHERGOV_USER",
+      "DEV_HIGHERGOV_PASS",
       "DEV_INSTANTMARKETS_USER",
       "DEV_INSTANTMARKETS_PASS",
       "DEV_PUBLICPURCHASE_USER",

@@ -11,8 +11,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.instantmarkets.com/signin", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[placeholder=\"Enter your email address\"]", user);
-  await page.fill("input[placeholder=\"Enter your password\"]", pass);
+  await page.fill('input[placeholder="Enter your email address"]', user);
+  await page.fill('input[placeholder="Enter your password"]', pass);
   await page.click("button:has-text('Login')");
 }
 
@@ -37,7 +37,7 @@ async function parseSolRow(row: Locator) {
   return {
     title,
     description: await row
-      .locator("> div > p.greyText.break-words")
+      .locator(".cursor-pointer p.greyText.break-words")
       .innerText(),
     location: location.substr(1, location.length - 2),
     issuer,
@@ -54,7 +54,7 @@ async function scrapeAllSols(page: Page) {
   let currPage = 1;
 
   await page.goto(
-    "https://www.instantmarkets.com/q/ERP%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
+    "https://www.instantmarkets.com/q/erp%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
     { waitUntil: "domcontentloaded" }
   );
 
@@ -76,14 +76,14 @@ async function scrapeAllSols(page: Page) {
     }
 
     const popupDismiss = await page.locator(
-      "button:has-text(\"Don't Ask Again\")"
+      'button:has-text("Don\'t Ask Again")'
     );
     const popupDismissCount = await popupDismiss.count();
     if (popupDismissCount > 0) await popupDismiss.click();
 
     await page.waitForTimeout(1000);
 
-    const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
+    const nextPage = page.locator('pagination-async button:has-text("Next ")');
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {
