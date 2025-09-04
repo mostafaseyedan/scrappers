@@ -1,4 +1,4 @@
-import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
+import { isItRelated, isSolDuplicate, isWithinDays } from "../../../lib/script";
 import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
@@ -11,30 +11,21 @@ let nonItCount = 0;
 let dupCount = 0;
 
 async function processRow(row: Locator, env: Record<string, any>) {
-  const siteLink = await row.locator(".bid-title a[href]");
+  const siteLink = await row.locator("td:nth-child(2) a[href]");
   const siteUrl = await siteLink.getAttribute("href");
-  const siteId = siteUrl
-    ? siteUrl.match(/\/government_bids\/detail\/([a-z0-9]+)\.htm/i)?.[1]
-    : "";
-  const publishDate = await row.locator(".bid-post").innerText();
-  const closingDate = await row.locator(".bid-due").first().innerText();
-  const [issuer, location] = (await row.locator(".bid-loc").innerText()).split(
-    ","
-  );
+  const siteId = siteUrl ? siteUrl.match(/([0-9]+)[a-z-.]+\.html$/i)?.[1] : "";
+  const publishDate = await row.locator("td:nth-child(1)").innerText();
+  const description = await row.locator("+ tr.row2 td").innerText();
   const sol = {
     title: await siteLink.innerText(),
-    description: await row.locator("+ tr .bid-desc").innerText(),
-    location: location.trim(),
-    issuer: issuer.trim(),
-    closingDate: sanitizeDateString(closingDate.replace("ADD", "")),
+    description: description.replace("Scope:", ""),
     publishDate: sanitizeDateString(publishDate),
-    site: "governmentbidders",
-    siteUrl: "https://governmentbidders.com" + siteUrl,
-    siteId,
+    site: "floridabids",
+    siteUrl,
+    siteId: "floridabids-" + siteId,
   };
 
-  if (sol.closingDate && !isNotExpired(sol)) {
-    logger.log(sol.closingDate, "is expired");
+  if (sol.publishDate && !isWithinDays(sol.publishDate, 14)) {
     expiredCount++;
     return false;
   }
@@ -75,33 +66,25 @@ async function processRow(row: Locator, env: Record<string, any>) {
   return newRecord;
 }
 
-async function scrapeAllSols(
-  keyword: string = "software",
-  page: Page,
-  env: Record<string, any>
-) {
+async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
   let currPage = 1;
 
-  await page.goto(
-    `https://governmentbidders.com/government_bids/search.htm?gov%5B%5D=&keyword=${encodeURIComponent(
-      keyword
-    )}`,
-    { waitUntil: "domcontentloaded" }
-  );
+  await page.goto(`https://www.floridabids.net/`, {
+    waitUntil: "domcontentloaded",
+  });
 
   do {
-    logger.log(`${env.VENDOR} - keyword:${keyword} page:${currPage}`);
+    logger.log(`${env.VENDOR} - page:${currPage}`);
     await page
-      .waitForSelector(".main-contents .list-contents table")
+      .waitForSelector("table.partialSolicDisplay tbody tr.row2")
       .catch(() => {
         lastPage = true;
       });
     const rows = await page.locator(
-      ".main-contents .list-contents table tbody tr:nth-child(odd)"
+      "table.partialSolicDisplay tbody tr.row2:nth-child(3n+2)"
     );
-
     const rowCount = await rows.count();
 
     if (rowCount === 0) {
@@ -117,19 +100,19 @@ async function scrapeAllSols(
       if (sol) allSols.push(sol);
     }
 
-    if (expiredCount >= 20) {
+    if (expiredCount >= 30) {
       lastPage = true;
       logger.info(`${env.VENDOR} - ended because too many expired dates`);
       continue;
     }
 
-    const nextPage = page.locator('.list-navi a:has-text("Next")');
+    const nextPage = page.locator("a:has-text('Next >>')");
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {
       lastPage = true;
     } else {
-      await nextPage.click();
+      await nextPage.first().click();
       await page.waitForTimeout(1000);
     }
     currPage++;
@@ -145,32 +128,17 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const VENDOR = "governmentbidders";
+  const VENDOR = "floridabids";
   let results = {};
 
-  const keywords = [
-    "erp",
-    "software",
-    "peoplesoft",
-    "lawson",
-    "it staffing",
-    "workday",
-    "oracle",
-    "infor",
-  ];
-
   let sols: string[] = [];
-  for (const keyword of keywords) {
-    logger.info(`${VENDOR} - keyword ${keyword}`);
-    expiredCount = 0;
-    const keywordSols = await scrapeAllSols(keyword, page, {
-      ...env,
-      BASE_URL,
-      VENDOR,
-      SERVICE_KEY,
-    });
-    sols = sols.concat(keywordSols.map((s) => s.id));
-  }
+  const currSols = await scrapeAllSols(page, {
+    ...env,
+    BASE_URL,
+    VENDOR,
+    SERVICE_KEY,
+  });
+  sols = sols.concat(currSols.map((s) => s.id));
 
   logger.log(
     `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${

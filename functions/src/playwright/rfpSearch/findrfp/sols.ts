@@ -67,7 +67,7 @@ async function processRow(
     externalLinks: sourceLink ? [sourceLink] : [],
     publishDate: sanitizeDateString(publishDate),
     site: "findrfp",
-    siteUrl: "https://www.findrfp.com/service" + siteUrl,
+    siteUrl: "https://www.findrfp.com/service/" + siteUrl,
     siteId,
   } as Record<string, any>;
 
@@ -115,10 +115,11 @@ async function processRow(
   successCount++;
   logger.log(`Saved sol: ${newRecord.id}`);
 
-  return sol;
+  return newRecord;
 }
 
 async function scrapeAllSols(
+  keyword: string = "software",
   page: Page,
   env: Record<string, any>,
   context: BrowserContext
@@ -128,23 +129,33 @@ async function scrapeAllSols(
   let currPage = 1;
 
   await page.goto(
-    "https://www.findrfp.com/service/search.aspx?s=it+staffing&t=FE&is=0",
+    `https://www.findrfp.com/service/search.aspx?s=${encodeURIComponent(
+      keyword
+    )}&t=FE&is=0`,
     {
       waitUntil: "domcontentloaded",
     }
   );
 
-  await page.waitForSelector(
-    "table.SectionContentBlack tbody tr:not(tr.SectionContentBlack)"
-  );
+  await page
+    .waitForSelector(
+      "table.SectionContentBlack tbody tr:not(tr.SectionContentBlack)"
+    )
+    .catch(() => {
+      lastPage = true;
+    });
 
   do {
-    logger.log(`${env.VENDOR} - page ${currPage}`);
+    logger.log(`${env.VENDOR} - keyword:${keyword} page:${currPage}`);
     const rows = await page.locator(
       "table.SectionContentBlack tbody tr:not(tr.SectionContentBlack)"
     );
     const rowCount = await rows.count();
-    logger.log(`Found ${rowCount} rows`);
+
+    if (rowCount === 0) {
+      lastPage = true;
+      continue;
+    }
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
@@ -195,16 +206,34 @@ export async function run(
 
   await login(page, USER, PASS);
 
-  let sols = await scrapeAllSols(
-    page,
-    {
-      ...env,
-      BASE_URL,
-      VENDOR,
-      SERVICE_KEY,
-    },
-    context
-  );
+  const keywords = [
+    "erp",
+    "software",
+    "peoplesoft",
+    "lawson",
+    "it staffing",
+    "workday",
+    "oracle",
+    "infor",
+  ];
+
+  let sols: string[] = [];
+  for (const keyword of keywords) {
+    logger.info(`${VENDOR} - keyword ${keyword}`);
+    expiredCount = 0;
+    const keywordSols = await scrapeAllSols(
+      keyword,
+      page,
+      {
+        ...env,
+        BASE_URL,
+        VENDOR,
+        SERVICE_KEY,
+      },
+      context
+    );
+    sols = sols.concat(keywordSols.map((s) => s.id));
+  }
 
   logger.log(
     `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${

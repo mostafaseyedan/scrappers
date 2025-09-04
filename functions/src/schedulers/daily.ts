@@ -42,18 +42,26 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      "commbuys",
+      "demandstar",
+      "findrfp",
+      "floridabids",
+      "govdirections",
       "governmentbidders",
+      "highergov",
       "instantmarkets",
+      "merx",
       // "mygovwatch", // trial
       "publicpurchase",
       // "techbids", // trial
-      "vendorregistry",
+      "txsmartbuy",
       "vendorline",
+      "vendorregistry",
     ];
 
     const limit = Math.max(
       1,
-      parseInt(process.env.VENDOR_CONCURRENCY || "2", 10) || 3
+      parseInt(process.env.VENDOR_CONCURRENCY || "2", 10)
     );
 
     logger.info("Starting vendor runs", {

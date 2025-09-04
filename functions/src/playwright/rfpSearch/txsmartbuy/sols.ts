@@ -10,44 +10,20 @@ let expiredCount = 0;
 let nonItCount = 0;
 let dupCount = 0;
 
-async function login(page: Page, user: string, pass: string) {
-  if (!pass) throw new Error("Password parameter is missing for login");
-  if (!user) throw new Error("User parameter is missing for login");
-
-  await page.goto("https://www.demandstar.com/app/login", {
-    waitUntil: "domcontentloaded",
-  });
-  await page.fill("input#userName", user);
-  await page.fill("input#password", pass);
-  await page.click("button[name='login']");
-
-  await page.waitForNavigation({ waitUntil: "domcontentloaded" });
-}
-
 async function processRow(row: Locator, env: Record<string, any>) {
-  const siteLink = await row.locator("a[href^='/app/suppliers/bids/']");
+  const siteLink = await row.locator(".esbd-result-title a[href]");
   const siteUrl = await siteLink.getAttribute("href");
-  const siteId = await row
-    .locator("ul.list-inline:last-child li:nth-child(1)")
-    .innerText();
-  const publishDate = await row
-    .locator("ul.list-inline:last-child li:nth-child(2)")
-    .innerText();
+  const siteId = siteUrl ? siteUrl.match(/[0-9]+/i)?.[0] : "";
   const closingDate = await row
-    .locator("ul.list-inline:last-child li:nth-child(3)")
+    .locator(".esbd-result-column p:nth-child(2)")
+    .first()
     .innerText();
-  const issuerLoc = await row.locator("h5[title] + ul p").first().innerText();
-  const issuer = issuerLoc.substring(0, issuerLoc.indexOf(",")).trim();
-  const location = issuerLoc.substring(issuerLoc.indexOf(",") + 1).trim();
   const sol = {
     title: await siteLink.innerText(),
-    location,
-    issuer,
-    closingDate: sanitizeDateString(closingDate.replace("Due: ", "")),
-    publishDate: sanitizeDateString(publishDate.replace("Broadcast: ", "")),
-    site: "demandstar",
-    siteUrl: "https://www.demandstar.com" + siteUrl,
-    siteId: siteId.replace("ID: ", ""),
+    closingDate: sanitizeDateString(closingDate),
+    site: "txsmartbuy",
+    siteUrl: "https://www.txsmartbuy.gov" + siteUrl,
+    siteId: "txsmartbuy-" + siteId,
   };
 
   if (sol.closingDate && !isNotExpired(sol)) {
@@ -92,35 +68,21 @@ async function processRow(row: Locator, env: Record<string, any>) {
   return newRecord;
 }
 
-async function scrapeAllSols(
-  keyword: string = "software",
-  page: Page,
-  env: Record<string, any>
-) {
+async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let allSols: Record<string, any>[] = [];
-  let lastPage;
+  let lastPage = false;
   let currPage = 1;
 
-  await page.goto("https://www.demandstar.com/app/suppliers/bids", {
+  await page.goto(`https://www.txsmartbuy.gov/esbd`, {
     waitUntil: "domcontentloaded",
   });
 
-  await page.locator('[placeholder="Bid Name"]').fill(keyword);
-  await page.locator('button[title="Search"]').click();
-
-  await page
-    .waitForSelector(
-      '[data-testid="bids.search.result.list"] .listGroupWrapper'
-    )
-    .catch(() => {
+  do {
+    logger.log(`${env.VENDOR} - page:${currPage}`);
+    await page.waitForSelector(".esbd-result-row").catch(() => {
       lastPage = true;
     });
-
-  do {
-    logger.log(`${env.VENDOR} - keyword:${keyword} page:${currPage}`);
-    const rows = await page.locator(
-      '[data-testid="bids.search.result.list"] .listGroupWrapper'
-    );
+    const rows = await page.locator(".esbd-result-row");
     const rowCount = await rows.count();
 
     if (rowCount === 0) {
@@ -136,16 +98,21 @@ async function scrapeAllSols(
       if (sol) allSols.push(sol);
     }
 
-    const nextPage = page.locator(".pagingWrapper li.active + li");
+    if (expiredCount >= 100) {
+      lastPage = true;
+      logger.info(`${env.VENDOR} - ended because too many expired dates`);
+      continue;
+    }
+
+    const nextPage = page.locator(".global-views-pagination-next a#Next");
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {
       lastPage = true;
     } else {
-      await nextPage.click();
+      await nextPage.first().click();
       await page.waitForTimeout(1000);
     }
-
     currPage++;
   } while (!lastPage);
 
@@ -159,39 +126,17 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_DEMANDSTAR_USER!;
-  const PASS = env.DEV_DEMANDSTAR_PASS!;
-  const VENDOR = "demandstar";
+  const VENDOR = "txsmartbuy";
   let results = {};
 
-  if (!USER) throw new Error("Missing USER environment variable for run");
-  if (!PASS) throw new Error("Missing PASS environment variable for run");
-
-  await login(page, USER, PASS);
-
-  const keywords = [
-    "erp",
-    "software",
-    "peoplesoft",
-    "lawson",
-    "it staffing",
-    "workday",
-    "oracle",
-    "infor",
-  ];
-
   let sols: string[] = [];
-  for (const keyword of keywords) {
-    logger.info(`${VENDOR} - keyword ${keyword}`);
-    expiredCount = 0;
-    const keywordSols = await scrapeAllSols(keyword, page, {
-      ...env,
-      BASE_URL,
-      VENDOR,
-      SERVICE_KEY,
-    });
-    sols = sols.concat(keywordSols.map((s) => s.id));
-  }
+  const currSols = await scrapeAllSols(page, {
+    ...env,
+    BASE_URL,
+    VENDOR,
+    SERVICE_KEY,
+  });
+  sols = sols.concat(currSols.map((s) => s.id));
 
   logger.log(
     `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${
