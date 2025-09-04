@@ -32,6 +32,8 @@ export const daily = onSchedule(
       "DEV_VENDORREGISTRY_PASS",
       "DEV_VENDORLINE_USER",
       "DEV_VENDORLINE_PASS",
+      "DEV_VENDORLINK_USER",
+      "DEV_VENDORLINK_PASS",
     ],
     memory: "1GiB",
     timeoutSeconds: 3600,
@@ -56,6 +58,7 @@ export const daily = onSchedule(
       // "techbids", // trial
       "txsmartbuy",
       "vendorline",
+      "vendorlink",
       "vendorregistry",
     ];
 

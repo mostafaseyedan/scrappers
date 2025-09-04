@@ -16,6 +16,7 @@ import { run as commbuys } from "../playwright/rfpSearch/commbuys/sols";
 import { run as txsmartbuy } from "../playwright/rfpSearch/txsmartbuy/sols";
 import { run as govdirections } from "../playwright/rfpSearch/govdirections/sols";
 import { run as floridabids } from "../playwright/rfpSearch/floridabids/sols";
+import { run as vendorlink } from "../playwright/rfpSearch/vendorlink/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -39,6 +40,7 @@ const vendors = {
   techbids,
   txsmartbuy,
   vendorline,
+  vendorlink,
   vendorregistry,
 };
 
@@ -211,6 +213,8 @@ export const playwright = onRequest(
       "DEV_VENDORREGISTRY_PASS",
       "DEV_VENDORLINE_USER",
       "DEV_VENDORLINE_PASS",
+      "DEV_VENDORLINK_USER",
+      "DEV_VENDORLINK_PASS",
     ],
     timeoutSeconds: 3600,
   },
