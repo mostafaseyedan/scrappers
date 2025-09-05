@@ -55,6 +55,7 @@ export const daily = onSchedule(
       "merx",
       // "mygovwatch", // trial
       "publicpurchase",
+      "rfpmart",
       // "techbids", // trial
       "txsmartbuy",
       "vendorline",

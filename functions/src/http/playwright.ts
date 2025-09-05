@@ -17,6 +17,8 @@ import { run as txsmartbuy } from "../playwright/rfpSearch/txsmartbuy/sols";
 import { run as govdirections } from "../playwright/rfpSearch/govdirections/sols";
 import { run as floridabids } from "../playwright/rfpSearch/floridabids/sols";
 import { run as vendorlink } from "../playwright/rfpSearch/vendorlink/sols";
+import { run as rfpmart } from "../playwright/rfpSearch/rfpmart/sols";
+import { run as cammnet } from "../playwright/rfpSearch/cammnet/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -26,6 +28,7 @@ import { chromium, Browser } from "playwright-core";
 const vendors = {
   biddirect,
   bidsync,
+  cammnet,
   commbuys,
   demandstar,
   findrfp,
@@ -37,6 +40,7 @@ const vendors = {
   merx,
   mygovwatch,
   publicpurchase,
+  rfpmart,
   techbids,
   txsmartbuy,
   vendorline,
@@ -88,7 +92,7 @@ export async function runVendor(
 
   const browser: Browser = await chromium.launch({
     headless: false,
-    slowMo: 50, // Slow down for debugging
+    // slowMo: 50, // Slow down for debugging
   });
   const context = await browser.newContext();
   page = await context.newPage();
