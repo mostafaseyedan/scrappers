@@ -65,7 +65,7 @@ export const daily = onSchedule(
 
     const limit = Math.max(
       1,
-      parseInt(process.env.VENDOR_CONCURRENCY || "2", 10)
+      parseInt(process.env.VENDOR_CONCURRENCY || "5", 10)
     );
 
     logger.info("Starting vendor runs", {

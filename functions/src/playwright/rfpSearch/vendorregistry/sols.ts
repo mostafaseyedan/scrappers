@@ -67,7 +67,6 @@ async function processRow(
   if (!sol) return false;
 
   if (sol.closingDate && !isNotExpired(sol)) {
-    logger.log(sol.closingDate, "is expired");
     expiredCount++;
     return false;
   }

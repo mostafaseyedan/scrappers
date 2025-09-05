@@ -17,7 +17,6 @@ import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 
 import "./globals.css";
 

@@ -22,8 +22,8 @@ import { run as cammnet } from "../playwright/rfpSearch/cammnet/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
-import { chromium, Browser } from "playwright-core";
-// import Browserbase from "@browserbasehq/sdk";
+import { chromium } from "playwright-core";
+import Browserbase from "@browserbasehq/sdk";
 
 const vendors = {
   biddirect,
@@ -64,7 +64,7 @@ export async function runVendor(
 ) {
   const baseUrl = env.BASE_URL || "http://localhost:5002";
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  // const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
+  const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
 
   let page;
   let status = 200;
@@ -73,13 +73,13 @@ export async function runVendor(
 
   performance.mark("start");
 
-  /*
   const bb = new Browserbase({
     apiKey: BROWSERBASE_KEY,
   });
 
   const session = await bb.sessions.create({
     projectId: "859b2230-84b0-449b-a2db-f9352988518c",
+    proxies: true,
     userMetadata: {
       vendor,
     },
@@ -88,14 +88,15 @@ export async function runVendor(
   const browser = await chromium.connectOverCDP(session.connectUrl);
   const context = browser.contexts()[0];
   page = context.pages()[0];
-  */
 
+  /*
   const browser: Browser = await chromium.launch({
     headless: false,
     // slowMo: 50, // Slow down for debugging
   });
   const context = await browser.newContext();
   page = await context.newPage();
+  */
 
   try {
     if (!vendors[vendor]) {
@@ -250,7 +251,7 @@ export const playwright = onRequest(
       ];
       const limit = Math.max(
         1,
-        parseInt(process.env.VENDOR_CONCURRENCY || "2", 10)
+        parseInt(process.env.VENDOR_CONCURRENCY || "5", 10)
       );
 
       logger.info("Starting vendor runs", {

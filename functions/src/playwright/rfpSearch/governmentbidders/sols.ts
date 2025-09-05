@@ -34,7 +34,6 @@ async function processRow(row: Locator, env: Record<string, any>) {
   };
 
   if (sol.closingDate && !isNotExpired(sol)) {
-    logger.log(sol.closingDate, "is expired");
     expiredCount++;
     return false;
   }
