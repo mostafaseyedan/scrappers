@@ -601,6 +601,8 @@ const solicitation_log: any = {
       collection: `solicitations/${solId}/logs`,
       ...options,
     }),
+  getAll: async ({ ...options }) =>
+    await defaultCalls.get({ collection: `solicitations/logs`, ...options }),
   post: async ({
     solId,
     ...options
@@ -618,6 +620,7 @@ const stat: any = {
   schema: {
     db: z.object({
       key: z.string(),
+      parentKey: z.string(),
       value: z.number(),
       periodType: z.enum(["", "day", "week", "month", "year"]).default(""),
       description: z.string().default(""),

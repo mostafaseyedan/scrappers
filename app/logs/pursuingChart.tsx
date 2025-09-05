@@ -24,68 +24,47 @@ const chartConfig = {} satisfies ChartConfig;
 
 function generateChartData(statData: Record<string, any>[], endDate: Date) {
   const data = [];
-  const dailyStats: Record<string, Record<string, number>> = {};
-  const vendors = new Set<string>();
+  const dailyStats: Record<string, number> = {};
 
   for (const stat of statData) {
     if (stat.periodType === "day") {
       const statSegs = stat.key.split("/");
-      const vendor = stat.key.includes("firefunctions")
-        ? statSegs[2]
-        : statSegs[1];
       const dateStr = statSegs[statSegs.length - 1];
 
-      if (vendor.match(/scrapers|undefined|firebasefunctions/)) {
-        continue;
-      }
-
-      vendors.add(vendor);
-
       if (!dailyStats[dateStr]) {
-        dailyStats[dateStr] = {};
+        dailyStats[dateStr] = 0;
       }
 
-      if (!dailyStats[dateStr][vendor]) {
-        dailyStats[dateStr][vendor] = 0;
-      }
-
-      dailyStats[dateStr][vendor] += stat.value;
+      dailyStats[dateStr] += stat.value || 0;
     }
   }
 
   for (let day = 0; day < 30; day++) {
     const dayStr = $d(subDays(endDate, day), "yyyy-MM-dd");
-    const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
-      acc[vendor] = 0;
-      return acc;
-    }, {} as Record<string, number>);
 
     if (!dailyStats[dayStr]) {
-      dailyStats[dayStr] = {};
+      dailyStats[dayStr] = 0;
     }
 
-    dailyStats[dayStr] = {
-      ...emptyVendorStats,
-      ...dailyStats[dayStr],
-    };
+    dailyStats[dayStr] += dailyStats[dayStr];
   }
 
-  for (const [dateStr, vendorData] of Object.entries(dailyStats)) {
+  console.log({ dailyStats });
+
+  for (const [dateStr, count] of Object.entries(dailyStats)) {
     data.push({
       date: $d(dateStr, "M/dd"),
-      ...vendorData,
-      total: Object.values(vendorData).reduce((a, b) => a + b, 0),
+      total: count,
     });
   }
 
   data.sort((a, b) => (a.date > b.date ? 1 : -1));
 
-  return { data, vendors: Array.from(vendors) };
+  return { data };
 }
 
-const ScraperChart = () => {
+const PursuingChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
-  const [vendors, setVendors] = useState<string[]>([]);
 
   async function refresh() {
     const startDate = subDays(new Date(), 30);
@@ -94,7 +73,7 @@ const ScraperChart = () => {
       sort: "startDate desc",
       limit: 1000,
       filters: {
-        parentKey: "scraperSuccess",
+        parentKey: "updateCnStatusToPursuing",
         periodType: "day",
         startDate: `> ${$d(startDate, "yyyy-MM-dd")} AND < ${$d(
           endDate,
@@ -104,10 +83,9 @@ const ScraperChart = () => {
     });
 
     if (statData.results?.length) {
-      const { data, vendors } = generateChartData(statData.results, endDate);
-      console.log({ data, vendors });
+      const { data } = generateChartData(statData.results, endDate);
+      console.log({ data });
       setChartData(data);
-      setVendors(vendors);
     }
   }
 
@@ -118,7 +96,7 @@ const ScraperChart = () => {
   return (
     <Card className={styles.scraperChart}>
       <CardHeader>
-        <CardTitle>Solicitations Success Count</CardTitle>
+        <CardTitle>Status Updated to Pursuing</CardTitle>
         <CardDescription>last 30 days</CardDescription>
       </CardHeader>
       <CardContent>
@@ -142,22 +120,9 @@ const ScraperChart = () => {
               axisLine={true}
               tickMargin={8}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent className="w-[180px]" />}
-            />
-            {vendors.map((vendor, i) => (
-              <Bar
-                key={vendor}
-                stackId="a"
-                dataKey={vendor}
-                fill={`var(--chart-${i + 1 >= 10 ? 3 : i + 1})`}
-              >
-                {i === vendors.length - 1 ? (
-                  <LabelList dataKey="total" position="top" fill="#ccc" />
-                ) : null}
-              </Bar>
-            ))}
+            <Bar dataKey="total" fill={`var(--chart-3`}>
+              <LabelList dataKey="total" position="top" fill="#ccc" />
+            </Bar>
           </BarChart>
         </ChartContainer>
       </CardContent>
@@ -165,4 +130,4 @@ const ScraperChart = () => {
   );
 };
 
-export { ScraperChart };
+export { PursuingChart };

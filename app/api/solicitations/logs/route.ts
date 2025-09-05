@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { initDb, normalizeDoc } from "@/lib/firebaseAdmin";
+import { initDb, normalizeDoc, parseQueryString } from "@/lib/firebaseAdmin";
 
 const COLLECTION = "solicitations";
 const db = initDb();
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);
-  // const queryOptions = parseQueryString(req.url);
+  const queryOptions = parseQueryString(req.url);
   let results = {};
   let status = 200;
+  const limit = parseInt(queryOptions.limit) || 50;
 
   try {
     if (!user) throw new Error("Unauthenticated");
 
     const dbCol = db.collectionGroup("logs");
-    // Only query documents that have the "created" field
-    const query = dbCol.limit(50);
+    const query = dbCol.limit(limit);
     const snapshot = await query.get();
     const logs = snapshot.docs
       .filter((doc) => doc.ref.parent.path.split("/")[0] === COLLECTION)
