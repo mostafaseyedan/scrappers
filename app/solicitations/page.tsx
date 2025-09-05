@@ -172,6 +172,7 @@ export default function Page() {
               setQ={setQ}
               setSort={setSort}
               setPage={setPage}
+              setTotalRecords={setTotalRecords}
               queryParams={{ q, filter, limit, page, sort }}
               expandedSolIds={expandedSolIds}
               setExpandedSolIds={setExpandedSolIds}

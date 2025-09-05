@@ -10,6 +10,7 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import styles from "./filterOptions.module.scss";
 
@@ -78,35 +79,22 @@ const FilterOptions = ({
       </section>
       <section>
         <label>Source</label>
-        <Select
-          defaultValue="none"
-          value={queryParams.filter.site || "none"}
-          onValueChange={(value) =>
+        <Input
+          value={queryParams.filter.site || ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            setPage(1);
             setFilter((prev) => {
-              if (value === "none") {
-                const newValues = { ...prev };
-                delete newValues.site;
-                return newValues;
-              } else {
-                return { ...prev, site: value };
+              const next = { ...prev };
+              if (!value) {
+                delete next.site;
+                return next;
               }
-            })
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="bidnetdirect">Bidnetdirect</SelectItem>
-              <SelectItem value="instantmarkets">Instant Markets</SelectItem>
-              <SelectItem value="manual">Manual</SelectItem>
-              <SelectItem value="publicpurchase">Public Purchase</SelectItem>
-              <SelectItem value="vendorregistry">Vendor Registry</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+              return { ...next, site: value };
+            });
+          }}
+          placeholder="i.e. bidnetdirect, rfpmart, highergov"
+        />
       </section>
       <section className={styles.filterOptions_other}>
         <label>Other</label>

@@ -176,7 +176,7 @@ export function LoginPage({
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center md:justify-start">
           <Image
-            src="http://localhost:5002/cendien_corp_logo.jpg"
+            src="/cendien_corp_logo.jpg"
             alt="logo"
             className="w-[100px]"
             width={100}

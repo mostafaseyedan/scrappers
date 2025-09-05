@@ -44,6 +44,7 @@ type TopBarProps = {
   setSort: Dispatch<React.SetStateAction<string>>;
   setPage: Dispatch<React.SetStateAction<number>>;
   setExpandedSolIds: Dispatch<React.SetStateAction<string[]>>;
+  setTotalRecords: Dispatch<React.SetStateAction<number>>;
 };
 
 const TopBar = forwardRef(
@@ -59,6 +60,7 @@ const TopBar = forwardRef(
       setSort,
       setPage,
       setExpandedSolIds,
+      setTotalRecords,
     }: TopBarProps,
     ref
   ) => {
@@ -72,6 +74,7 @@ const TopBar = forwardRef(
     async function refresh() {
       const counts = await getCounts();
       setCounts(counts);
+      setTotalRecords(counts?.total);
     }
 
     useEffect(() => {

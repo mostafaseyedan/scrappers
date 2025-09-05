@@ -459,6 +459,7 @@ const solicitation: any = {
       keywords: z.array(z.string()).default([]),
       location: z.string().default(""),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
+      mondayUrl: z.string().optional(),
       publishDate: z.string().nullable().default(null),
       questionsDueByDate: z.string().nullable().default(null),
       rfpType: z.string().optional(),

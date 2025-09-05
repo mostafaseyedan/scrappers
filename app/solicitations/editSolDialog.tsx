@@ -197,6 +197,20 @@ const EditSolDialog = ({
               />
             </div>
             <FormField
+              name="mondayUrl"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Monday URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
               name="contactNote"
               render={({ field }) => {
                 return (

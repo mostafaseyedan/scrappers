@@ -149,7 +149,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     <div className={styles.page}>
       {sol && (
         <>
-          <Link href="/solicitations">&lt; Back to solicitations</Link>
+          <Link href="/solicitations">&lt; Back to Solicitations</Link>
           <div className={styles.sol}>
             <SolActions
               sol={sol}
@@ -183,6 +183,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 <span className={styles.sol_description}>
                   {sol.description}
                 </span>
+
+                {sol.mondayUrl && (
+                  <div className={styles.sol_mondayUrl}>
+                    <label>Monday URL</label>
+                    <a href={sol.mondayUrl} target="_blank">
+                      {sol.mondayUrl}
+                    </a>
+                  </div>
+                )}
 
                 <div className={styles.sol_externalLinks}>
                   <label>External Links</label>
