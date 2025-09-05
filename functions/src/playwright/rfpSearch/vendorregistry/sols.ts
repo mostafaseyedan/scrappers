@@ -17,8 +17,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://vrapp.vendorregistry.com/Account/LogOn", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="UserName"]', user);
-  await page.fill('input[name="Password"]', pass);
+  await page.fill("input[name=\"UserName\"]", user);
+  await page.fill("input[name=\"Password\"]", pass);
   await page.click("input#login");
 
   await page.waitForSelector("#afterLoginModal");
@@ -117,9 +117,9 @@ export async function scrapeAllSols(
   let currPage = 1;
 
   // Set to sort by date posted desc
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.locator("#contractTable th[data-fieldname=\"datePosted\"]").click();
   await page.waitForTimeout(1000);
-  await page.locator('#contractTable th[data-fieldname="datePosted"]').click();
+  await page.locator("#contractTable th[data-fieldname=\"datePosted\"]").click();
   await page.waitForTimeout(1000);
 
   do {

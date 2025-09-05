@@ -71,7 +71,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
   let currPage = 1;
-  await page.goto(`https://cammnet.octa.net/procurements/`, {
+  await page.goto("https://cammnet.octa.net/procurements/", {
     waitUntil: "domcontentloaded",
   });
 

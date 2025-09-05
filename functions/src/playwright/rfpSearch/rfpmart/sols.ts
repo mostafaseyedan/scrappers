@@ -77,7 +77,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let lastPage = false;
   let currPage = 1;
   //rfpmart.com/bids/view/1061418126/Advanced_Development_of_Enhanced_Operator_Capabilities_ADEOC
-  https: await page.goto(`https://rfpmart.com/`, {
+  await page.goto("https://rfpmart.com/", {
     waitUntil: "domcontentloaded",
   });
 

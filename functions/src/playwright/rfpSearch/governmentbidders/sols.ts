@@ -122,7 +122,7 @@ async function scrapeAllSols(
       continue;
     }
 
-    const nextPage = page.locator('.list-navi a:has-text("Next")');
+    const nextPage = page.locator(".list-navi a:has-text(\"Next\")");
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {

@@ -17,8 +17,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://app.bidsync.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="email"]', user);
-  await page.fill('input[name="password"]', pass);
+  await page.fill("input[name=\"email\"]", user);
+  await page.fill("input[name=\"password\"]", pass);
   await page.click("button#loginButton");
 }
 
@@ -34,9 +34,9 @@ async function processRow(
   const bidNumber = await row.locator("[aria-label='bid number']");
   const uniqueId = (await bidNumber.isVisible())
     ? await bidNumber
-        .first()
-        .innerText()
-        .catch((err: unknown) => logger.warn(err))
+      .first()
+      .innerText()
+      .catch((err: unknown) => logger.warn(err))
     : "";
   const closingDate = sanitizeDateString(
     await row.locator(".result-bid-end-date").innerText()

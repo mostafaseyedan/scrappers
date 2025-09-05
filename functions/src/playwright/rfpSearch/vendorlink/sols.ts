@@ -96,7 +96,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   });
 
   await page
-    .locator('select[name*="ddlStatus"]')
+    .locator("select[name*=\"ddlStatus\"]")
     .selectOption({ label: "Active" });
   await page.locator("#ctl00_RegionMiddle_btnSearch").click();
 

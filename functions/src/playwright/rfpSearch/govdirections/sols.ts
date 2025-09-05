@@ -70,7 +70,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let lastPage = false;
   let currPage = 1;
   //govdirections.com/bids/view/1061418126/Advanced_Development_of_Enhanced_Operator_Capabilities_ADEOC
-  https: await page.goto(`https://govdirections.com/`, {
+  await page.goto("https://govdirections.com/", {
     waitUntil: "domcontentloaded",
   });
 

@@ -17,11 +17,11 @@ export async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.publicpurchase.com/gems/login/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="uname"]', user);
-  await page.fill('input[name="pwd"]', pass);
+  await page.fill("input[name=\"uname\"]", user);
+  await page.fill("input[name=\"pwd\"]", pass);
   await Promise.all([
     page.waitForLoadState("networkidle"),
-    page.click('input[value="Login"]'),
+    page.click("input[value=\"Login\"]"),
   ]);
 }
 

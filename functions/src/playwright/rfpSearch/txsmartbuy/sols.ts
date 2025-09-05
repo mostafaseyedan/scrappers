@@ -72,7 +72,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let lastPage = false;
   let currPage = 1;
 
-  await page.goto(`https://www.txsmartbuy.gov/esbd`, {
+  await page.goto("https://www.txsmartbuy.gov/esbd", {
     waitUntil: "domcontentloaded",
   });
 

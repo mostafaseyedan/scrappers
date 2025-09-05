@@ -104,12 +104,12 @@ async function scrapeAllSols(
     waitUntil: "domcontentloaded",
   });
 
-  await page.locator('[placeholder="Bid Name"]').fill(keyword);
-  await page.locator('button[title="Search"]').click();
+  await page.locator("[placeholder=\"Bid Name\"]").fill(keyword);
+  await page.locator("button[title=\"Search\"]").click();
 
   await page
     .waitForSelector(
-      '[data-testid="bids.search.result.list"] .listGroupWrapper'
+      "[data-testid=\"bids.search.result.list\"] .listGroupWrapper"
     )
     .catch(() => {
       lastPage = true;
@@ -118,7 +118,7 @@ async function scrapeAllSols(
   do {
     logger.log(`${env.VENDOR} - keyword:${keyword} page:${currPage}`);
     const rows = await page.locator(
-      '[data-testid="bids.search.result.list"] .listGroupWrapper'
+      "[data-testid=\"bids.search.result.list\"] .listGroupWrapper"
     );
     const rowCount = await rows.count();
 

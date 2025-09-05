@@ -13,7 +13,7 @@ let dupCount = 0;
 async function processRow(row: Locator, env: Record<string, any>) {
   const siteLink = await row.locator("td:nth-child(1) a[href]");
   const siteUrl = await siteLink.getAttribute("href");
-  const siteId = siteUrl ? siteUrl.match(/docId=([a-z0-9\-]+)/i)?.[1] : "";
+  const siteId = siteUrl ? siteUrl.match(/docId=([a-z0-9-]+)/i)?.[1] : "";
   const closingDate = await row.locator("td:nth-child(8)").innerText();
   const sol = {
     title: await row.locator("td:nth-child(7)").innerText(),

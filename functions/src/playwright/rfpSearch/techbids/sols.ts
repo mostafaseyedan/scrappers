@@ -18,8 +18,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://techbids.com/login", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[name="email"]', user);
-  await page.fill('input[name="password"]', pass);
+  await page.fill("input[name=\"email\"]", user);
+  await page.fill("input[name=\"password\"]", pass);
   await page.click("button:has-text('Sign In to Your Account')");
 }
 
@@ -42,7 +42,7 @@ async function parseSolRow(
   const newPage = await newPagePromise;
   await newPage.waitForLoadState();
   const sourceLink = await newPage
-    .locator('a:has-text(" View Full Details at Source ")')
+    .locator("a:has-text(\" View Full Details at Source \")")
     .first()
     .getAttribute("href");
   const description =
@@ -162,7 +162,7 @@ async function scrapeAllSols(
 
     const nextPage = page
       .locator(
-        'nav[aria-label="Pagination Navigation"] button[dusk="nextPage"]'
+        "nav[aria-label=\"Pagination Navigation\"] button[dusk=\"nextPage\"]"
       )
       .first();
     const classes = await nextPage.getAttribute("class");

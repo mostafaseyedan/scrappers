@@ -71,7 +71,7 @@ async function scrapeAllSols(page: Page, env: Record<string, any>) {
   let lastPage = false;
   let currPage = 1;
 
-  await page.goto(`https://www.floridabids.net/`, {
+  await page.goto("https://www.floridabids.net/", {
     waitUntil: "domcontentloaded",
   });
 

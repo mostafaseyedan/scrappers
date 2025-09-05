@@ -602,7 +602,7 @@ const solicitation_log: any = {
       ...options,
     }),
   getAll: async ({ ...options }) =>
-    await defaultCalls.get({ collection: `solicitations/logs`, ...options }),
+    await defaultCalls.get({ collection: "solicitations/logs", ...options }),
   post: async ({
     solId,
     ...options

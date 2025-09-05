@@ -19,9 +19,9 @@ async function login(page: Page, user: string, pass: string) {
   });
   await page.click("#header_btnLogin");
 
-  await page.waitForSelector('input[name="j_username"]');
-  await page.fill('input[name="j_username"]', user);
-  await page.fill('input[name="j_password"]', pass);
+  await page.waitForSelector("input[name=\"j_username\"]");
+  await page.fill("input[name=\"j_username\"]", user);
+  await page.fill("input[name=\"j_password\"]", pass);
   await page.click("#loginButton");
 }
 
@@ -40,9 +40,9 @@ async function processRow(
   const buyerEl = await row.locator(".buyerIdentification");
   const issuer = (await buyerEl.isVisible())
     ? await buyerEl
-        .first()
-        .innerText()
-        .catch((err: unknown) => console.warn(err))
+      .first()
+      .innerText()
+      .catch((err: unknown) => console.warn(err))
     : "";
   const title = await row.locator(".solicitationTitle > a").innerText();
   const publishDateEl = await row
