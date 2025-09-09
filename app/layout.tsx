@@ -95,6 +95,7 @@ export default function RootLayout({
                     width={30}
                     height={30}
                   />
+                  <a href="https://sales.cendien.com/">Analyze</a>
                   <a href="https://rag.cendien.com/">RAG Chatbot</a>
                   <a href="https://reconrfp.cendien.com/">Recon</a>
                   <a href="https://cendien.monday.com/boards/4374039553">
@@ -139,6 +140,12 @@ export default function RootLayout({
                       data-state={isActive("/settings") ? "active" : undefined}
                     >
                       Settings
+                    </Link>
+                    <Link
+                      href="/sources"
+                      data-state={isActive("/sources") ? "active" : undefined}
+                    >
+                      Sources
                     </Link>
                   </nav>
                 </div>

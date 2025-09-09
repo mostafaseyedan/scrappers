@@ -616,6 +616,30 @@ const solicitation_log: any = {
     }),
 };
 
+const source: any = {
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string(),
+      type: z
+        .enum(["", "aggregator", "city", "county", "school", "water"])
+        .default(""),
+      description: z.string().optional(),
+      url: z.string().url().optional(),
+    }),
+  },
+  get: async ({ collection = "sources", ...options }: GetParams) =>
+    await defaultCalls.get({ collection, ...options }),
+  post: async ({ collection = "sources", data, ...options }: PostParams) =>
+    await defaultCalls.post({
+      collection,
+      data,
+      ...options,
+    }),
+  remove: async ({ id, ...options }: RemoveParams) =>
+    await defaultCalls.remove({ ...options, collection: "sources", id }),
+};
+
 const stat: any = {
   schema: {
     db: z.object({
@@ -672,6 +696,7 @@ export {
   solicitation,
   solicitation_comment,
   solicitation_log,
+  source,
   scriptLog,
   stat,
 };
