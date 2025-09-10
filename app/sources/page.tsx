@@ -19,20 +19,15 @@ export default function Page() {
 
   return (
     <div className={styles.page}>
-      <Button onClick={() => setOpenCreateDialog(true)}>Create Source</Button>
-
-      <CreateSourceDialog
-        open={openCreateDialog}
-        onOpenChange={setOpenCreateDialog}
-        onSubmitSuccess={() => {
-          listRef.current?.refresh();
-        }}
-      />
-
       <CnList
         ref={listRef}
         className={styles.sourcesList}
         url="/api/sources"
+        headerTemplate={
+          <Button onClick={() => setOpenCreateDialog(true)}>
+            Create Source
+          </Button>
+        }
         itemTemplate={(item) => (
           <div className={styles.sourceItem}>
             <SourceActions source={item} />
@@ -53,6 +48,14 @@ export default function Page() {
             <span className={styles.sourceItem_type}>{item.type}</span>
           </div>
         )}
+      />
+
+      <CreateSourceDialog
+        open={openCreateDialog}
+        onOpenChange={setOpenCreateDialog}
+        onSubmitSuccess={() => {
+          listRef.current?.refresh();
+        }}
       />
     </div>
   );

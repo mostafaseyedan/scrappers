@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
@@ -30,6 +31,7 @@
     "components/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "hooks/**/*.{ts,tsx}",
+    "config/**/*.{ts,tsx}",
     "scripts/**/*.{ts,tsx}",
     ".next/types/**/*.ts"
   ],
