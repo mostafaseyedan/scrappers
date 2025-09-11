@@ -122,25 +122,6 @@ export default function Page() {
                       </SelectContent>
                     </Select>
                   </section>
-                  <section>
-                    <label>Type</label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="aggregator">Aggregator</SelectItem>
-                        <SelectItem value="city">City</SelectItem>
-                        <SelectItem value="county">County</SelectItem>
-                        <SelectItem value="federal">Federal</SelectItem>
-                        <SelectItem value="school">School</SelectItem>
-                        <SelectItem value="state">State</SelectItem>
-                        <SelectItem value="water">Water</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </section>
                   <Button variant="outline">Clear filters</Button>
                 </PopoverContent>
               </Popover>
