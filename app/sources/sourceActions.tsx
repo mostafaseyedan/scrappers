@@ -1,12 +1,4 @@
-import {
-  Braces,
-  ChevronsUpDown,
-  ChevronsDownUp,
-  EllipsisVertical,
-  Heart,
-  Pencil,
-  Trash,
-} from "lucide-react";
+import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

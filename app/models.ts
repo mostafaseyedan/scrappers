@@ -622,7 +622,17 @@ const source: any = {
       name: z.string(),
       key: z.string(),
       type: z
-        .enum(["", "aggregator", "city", "county", "school", "water"])
+        .enum([
+          "",
+          "aggregator",
+          "city",
+          "county",
+          "federal",
+          "other",
+          "school",
+          "state",
+          "water",
+        ])
         .default(""),
       description: z.string().optional(),
       url: z.string().url().optional(),

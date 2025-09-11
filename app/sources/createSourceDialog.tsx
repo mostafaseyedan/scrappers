@@ -37,7 +37,16 @@ type CreateSourceDialogProps = {
   onSubmitSuccess?: () => void;
 };
 
-const typeOptions = ["aggregator", "city", "county", "school", "water"];
+const typeOptions = [
+  "aggregator",
+  "city",
+  "county",
+  "federal",
+  "other",
+  "school",
+  "state",
+  "water",
+];
 
 const CreateSourceDialog = ({
   open,

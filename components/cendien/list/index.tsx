@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import React, {
@@ -15,7 +15,13 @@ import styles from "./index.module.scss";
 
 type ListParams = {
   className?: string;
-  headerTemplate?: React.ReactNode;
+  headerTemplate?: (params: {
+    filters?: Record<string, any>;
+    setFilters?: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+    sort?: string;
+    setSort?: React.Dispatch<React.SetStateAction<string>>;
+    setPage?: React.Dispatch<React.SetStateAction<number>>;
+  }) => React.ReactNode;
   itemTemplate?: (item: any) => React.ReactNode;
   onPreResults?: (results: any[]) => Promise<any[]> | any[];
   url: string;
@@ -42,10 +48,17 @@ const List = forwardRef<ListHandle, ListParams>(
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
+    const [filters, setFilters] = useState<Record<string, any>>({});
+    const [sort, setSort] = useState("created desc");
     const totalPages = Math.ceil(totalItems / limit);
 
     async function refresh() {
-      const queryObject = { page, limit };
+      const flattenedFilters = {} as Record<string, any>;
+      for (const [key, value] of Object.entries(filters)) {
+        flattenedFilters[`filters.${key}`] = value;
+      }
+
+      const queryObject = { page, limit, sort, ...flattenedFilters };
       const urlQueryString = queryString.stringify(queryObject);
       const results = await fetch(`${url}?${urlQueryString}`);
       const json = await results.json();
@@ -64,23 +77,19 @@ const List = forwardRef<ListHandle, ListParams>(
     useEffect(() => {
       refresh();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page]);
+    }, [filters, page, sort]);
 
     return (
       <div className={className}>
         <div className={styles.header}>
-          <div className={styles.header_leftCol}>
-            {Boolean(headerTemplate) && headerTemplate}
-          </div>
-          <div className={styles.header_rightCol}>
-            <Button variant="outline">
-              <Filter />
-            </Button>
-            <Input className={styles.searchInput} placeholder="Search" />
-          </div>
+          {headerTemplate?.({ filters, setFilters, setPage, sort, setSort })}
         </div>
         <div className={styles.list}>
-          {items?.length > 0 && items.map((item) => itemTemplate(item))}
+          {items?.length > 0 ? (
+            items.map((item) => itemTemplate(item))
+          ) : (
+            <div className={styles.emptyState}>No items available.</div>
+          )}
         </div>
         <div className={styles.footer}>
           <div className="itemsTotal">{totalItems} items</div>

@@ -49,29 +49,29 @@ const FilterOptions = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="closingDate desc">
-                Closing Date <ArrowDown />
-              </SelectItem>
               <SelectItem value="closingDate asc">
                 Closing Date <ArrowUp />
               </SelectItem>
-              <SelectItem value="created desc">
-                Extracted Date <ArrowDown />
+              <SelectItem value="closingDate desc">
+                Closing Date <ArrowDown />
               </SelectItem>
               <SelectItem value="created asc">
                 Extracted Date <ArrowUp />
               </SelectItem>
-              <SelectItem value="publishDate desc">
-                Published Date <ArrowDown />
+              <SelectItem value="created desc">
+                Extracted Date <ArrowDown />
               </SelectItem>
               <SelectItem value="publishDate asc">
                 Published Date <ArrowUp />
               </SelectItem>
-              <SelectItem value="updated desc">
-                Updated <ArrowDown />
+              <SelectItem value="publishDate desc">
+                Published Date <ArrowDown />
               </SelectItem>
               <SelectItem value="updated asc">
                 Updated <ArrowUp />
+              </SelectItem>
+              <SelectItem value="updated desc">
+                Updated <ArrowDown />
               </SelectItem>
             </SelectGroup>
           </SelectContent>
