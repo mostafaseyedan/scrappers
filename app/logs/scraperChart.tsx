@@ -91,7 +91,10 @@ function generateChartData(
 
   data.sort((a, b) => (a.date > b.date ? 1 : -1));
 
-  return { data, vendors: Array.from(vendors) };
+  return {
+    data,
+    vendors: Array.from(vendors).sort((a, b) => (a > b ? 1 : -1)),
+  };
 }
 
 const ScraperChart = () => {
