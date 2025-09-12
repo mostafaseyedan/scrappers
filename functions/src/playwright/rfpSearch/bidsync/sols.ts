@@ -25,7 +25,7 @@ async function login(page: Page, user: string, pass: string) {
 async function processRow(
   row: Locator,
   env: Record<string, any>,
-  context: BrowserContext
+  _context: BrowserContext
 ) {
   const siteUrl = await row
     .locator(".result-title a[href]")
@@ -98,7 +98,7 @@ async function processRow(
 async function scrapeAllSols(
   page: Page,
   env: Record<string, any>,
-  context: BrowserContext
+  _context: BrowserContext
 ) {
   let allSols: Record<string, any>[] = [];
 
@@ -114,7 +114,7 @@ async function scrapeAllSols(
 
   for (let i = 0; i < rowCount; i++) {
     const row = rows.nth(i);
-    const sol = await processRow(row, env, context).catch((err: unknown) =>
+    const sol = await processRow(row, env, _context).catch((err: unknown) =>
       logger.error("processRow failed", err)
     );
     if (sol && sol?.siteId) allSols.push(sol);
@@ -131,7 +131,7 @@ async function scrapeAllSols(
 export async function run(
   page: Page,
   env: Record<string, any> = {},
-  context: BrowserContext
+  _context: BrowserContext
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
@@ -153,7 +153,7 @@ export async function run(
       VENDOR,
       SERVICE_KEY,
     },
-    context
+    _context
   );
 
   logger.log(
