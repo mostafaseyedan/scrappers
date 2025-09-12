@@ -193,6 +193,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 )}
 
+                {sol.sharepointUrl && (
+                  <div className={styles.sol_sharepointUrl}>
+                    <label>Sharepoint URL</label>
+                    <a href={sol.sharepointUrl} target="_blank">
+                      {sol.sharepointUrl}
+                    </a>
+                  </div>
+                )}
+
                 <div className={styles.sol_externalLinks}>
                   <label>External Links</label>
                   <div>

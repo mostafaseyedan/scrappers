@@ -46,7 +46,7 @@ const List = forwardRef<ListHandle, ListParams>(
   ) => {
     const [items, setItems] = useState<any[]>([]);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
     const [filters, setFilters] = useState<Record<string, any>>({});
     const [sort, setSort] = useState("created desc");
@@ -76,7 +76,6 @@ const List = forwardRef<ListHandle, ListParams>(
 
     useEffect(() => {
       refresh();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, page, sort]);
 
     return (
@@ -99,7 +98,7 @@ const List = forwardRef<ListHandle, ListParams>(
                 aria-label="Previous Page"
                 size={"sm"}
                 variant={"ghost"}
-                onClick={(e) => setPage(page - 1)}
+                onClick={() => setPage(page - 1)}
               >
                 <ChevronLeft />
               </Button>
@@ -118,7 +117,7 @@ const List = forwardRef<ListHandle, ListParams>(
                 aria-label="Next Page"
                 size={"sm"}
                 variant={"ghost"}
-                onClick={(e) => {
+                onClick={() => {
                   setPage(page + 1);
                 }}
               >
@@ -131,5 +130,7 @@ const List = forwardRef<ListHandle, ListParams>(
     );
   }
 );
+
+List.displayName = "List";
 
 export { List };

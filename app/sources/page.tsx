@@ -1,8 +1,7 @@
 "use client";
 
 import { format as $d } from "date-fns";
-import { useContext, useEffect, useRef, useState } from "react";
-import { UserContext } from "@/app/userContext";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateSourceDialog } from "./createSourceDialog";
 import { List as CnList, type ListHandle } from "@/components/cendien/list";
@@ -26,11 +25,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 import styles from "./page.module.scss";
 
 export default function Page() {
-  const userContext = useContext(UserContext);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const listRef = useRef<ListHandle>(null);
 
@@ -125,7 +124,10 @@ export default function Page() {
                   <Button variant="outline">Clear filters</Button>
                 </PopoverContent>
               </Popover>
-              <Input className={styles.searchInput} placeholder="Search" />
+              <Input
+                className={cn(styles.searchInput, "hidden")}
+                placeholder="Search"
+              />
             </div>
           </div>
         )}

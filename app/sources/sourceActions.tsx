@@ -1,12 +1,6 @@
 import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { source as sourceModel } from "../models";
-import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dispatch, SetStateAction } from "react";
 
 import styles from "./sourceActions.module.scss";
 
@@ -40,7 +33,7 @@ type SourceActionsProps = {
 const SourceActions = ({
   className,
   source,
-  refreshSols,
+  // refreshSols,
   onEditClick,
   onDeleteSuccess,
 }: SourceActionsProps) => {
@@ -54,6 +47,7 @@ const SourceActions = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className={styles.sourceActions_moreDropdown}>
           <DropdownMenuItem
+            className="hidden"
             onClick={(e) => {
               e.stopPropagation();
               if (onEditClick) onEditClick(source.id);

@@ -89,43 +89,6 @@ type UpsertByKeyParams = {
   baseUrl?: string;
 };
 
-const dbSol: any = {
-  schema: z.object({
-    categories: z.array(z.string()).default([]),
-    closingDate: z.date().nullable(),
-    cnData: z.object({}).default({}),
-    cnLiked: z.boolean().default(false),
-    cnModified: z.boolean().default(false),
-    cnStatus: z
-      .enum(Object.keys(cnStatuses) as [string, ...string[]])
-      .default("new"),
-    comments: z.array(z.object({})).default([]).describe("[submodel]"),
-    commentsCount: z.number().default(0),
-    contactEmail: z.string().optional(),
-    contactName: z.string().optional(),
-    contactNote: z.string().optional(),
-    contactPhone: z.string().optional(),
-    created: z.date(),
-    description: z.string(),
-    documents: z.array(z.string().url()).default([]),
-    externalLinks: z.array(z.string()).default([]),
-    issuer: z.string(),
-    keywords: z.array(z.string()).default([]),
-    location: z.string(),
-    logs: z.array(z.any()).default([]).describe("[submodel]"),
-    publishDate: z.date().optional(),
-    questionsDueByDate: z.date().optional(),
-    rfpType: z.string().optional(),
-    site: z.string(),
-    siteData: z.any().default({}),
-    siteId: z.string(),
-    siteUrl: z.string().optional(),
-    title: z.string(),
-    updated: z.date(),
-    url: z.string().optional(),
-  }),
-};
-
 const defaultCalls = {
   count: async ({
     collection,
@@ -463,6 +426,7 @@ const solicitation: any = {
       publishDate: z.string().nullable().default(null),
       questionsDueByDate: z.string().nullable().default(null),
       rfpType: z.string().optional(),
+      sharepointUrl: z.string().default(""),
       site: z.string().default("unknown"),
       siteData: z.any().default({}),
       siteId: z.string().optional(),
@@ -702,7 +666,6 @@ const stat: any = {
 };
 
 export {
-  dbSol,
   solicitation,
   solicitation_comment,
   solicitation_log,
