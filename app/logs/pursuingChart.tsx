@@ -10,14 +10,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+import {
+  Select,
+  SelectTrigger,
+  SelectItem,
+  SelectValue,
+  SelectContent,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { format as $d, addDays, subDays } from "date-fns";
 
-import styles from "./scraperChart.module.scss";
+import styles from "./pursuingChart.module.scss";
 
 const chartConfig = {} satisfies ChartConfig;
 
-function generateChartData(statData: Record<string, any>[], endDate: Date) {
+function generateChartData(
+  statData: Record<string, any>[],
+  endDate: Date,
+  days: number
+) {
   const data = [];
   const dailyStats: Record<string, number> = {};
 
@@ -34,7 +45,7 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
     }
   }
 
-  for (let day = 0; day < 30; day++) {
+  for (let day = 0; day < days; day++) {
     const dayStr = $d(subDays(endDate, day), "yyyy-MM-dd");
 
     if (!dailyStats[dayStr]) {
@@ -60,9 +71,10 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
 
 const PursuingChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
+  const [days, setDays] = useState<number>(30);
 
   async function refresh() {
-    const startDate = subDays(new Date(), 30);
+    const startDate = subDays(new Date(), days);
     const endDate = addDays(new Date(), 1);
     const statData = await StatModel.get({
       sort: "startDate desc",
@@ -78,7 +90,7 @@ const PursuingChart = () => {
     });
 
     if (statData.results?.length) {
-      const { data } = generateChartData(statData.results, endDate);
+      const { data } = generateChartData(statData.results, endDate, days);
       console.log({ data });
       setChartData(data);
     }
@@ -86,17 +98,32 @@ const PursuingChart = () => {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [days]);
 
   return (
-    <Card className={styles.scraperChart}>
+    <Card className={styles.pursuingChart}>
       <CardHeader>
         <CardTitle>Status Updated to Pursuing</CardTitle>
-        <CardDescription>last 30 days</CardDescription>
+        <CardDescription className={styles.pursuingChart_cardDescription}>
+          last{" "}
+          <Select
+            value={days.toString()}
+            onValueChange={(value) => setDays(Number(value))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">30</SelectItem>
+              <SelectItem value="60">60</SelectItem>
+            </SelectContent>
+          </Select>{" "}
+          days
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
-          className={styles.scraperChart_chart}
+          className={styles.pursuingChart_chart}
           config={chartConfig}
         >
           <BarChart
@@ -115,8 +142,25 @@ const PursuingChart = () => {
               axisLine={true}
               tickMargin={8}
             />
-            <Bar dataKey="total" fill={`var(--chart-3`}>
-              <LabelList dataKey="total" position="top" fill="#ccc" />
+            <Bar dataKey="total" fill={`var(--chart-3)`}>
+              <LabelList
+                dataKey="total"
+                position="top"
+                fill="#ccc"
+                content={(props: any) => {
+                  const { value, x, y, width } = props;
+                  if (!value) return null; // hide when total is 0 or falsy
+                  const cx =
+                    typeof x === "number" && typeof width === "number"
+                      ? x + width / 2
+                      : x;
+                  return (
+                    <text x={cx} y={y - 4} fill="#ccc" textAnchor="middle">
+                      {value}
+                    </text>
+                  );
+                }}
+              />
             </Bar>
           </BarChart>
         </ChartContainer>

@@ -7,8 +7,8 @@ const BASE_URL = "https://reconrfp.cendien.com";
 
 export const daily = onSchedule(
   {
-    schedule: "0 0 * * 1,2,3,4,5", // 5 days a week at midnight (UTC)
-    timeZone: "UTC",
+    schedule: "0 23 * * 1-5", // 11 PM Monday-Friday (America/Chicago)
+    timeZone: "America/Chicago",
     retryCount: 0,
     secrets: [
       "DEV_BIDDIRECT_USER",

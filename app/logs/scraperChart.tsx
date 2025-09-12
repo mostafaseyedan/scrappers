@@ -17,12 +17,23 @@ import {
 } from "@/components/ui/chart";
 import { useEffect, useState } from "react";
 import { format as $d, addDays, subDays } from "date-fns";
+import {
+  Select,
+  SelectTrigger,
+  SelectItem,
+  SelectValue,
+  SelectContent,
+} from "@/components/ui/select";
 
 import styles from "./scraperChart.module.scss";
 
 const chartConfig = {} satisfies ChartConfig;
 
-function generateChartData(statData: Record<string, any>[], endDate: Date) {
+function generateChartData(
+  statData: Record<string, any>[],
+  endDate: Date,
+  days: number
+) {
   const data = [];
   const dailyStats: Record<string, Record<string, number>> = {};
   const vendors = new Set<string>();
@@ -53,7 +64,7 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
     }
   }
 
-  for (let day = 0; day < 30; day++) {
+  for (let day = 0; day < days; day++) {
     const dayStr = $d(subDays(endDate, day), "yyyy-MM-dd");
     const emptyVendorStats = Array.from(vendors).reduce((acc, vendor) => {
       acc[vendor] = 0;
@@ -86,9 +97,10 @@ function generateChartData(statData: Record<string, any>[], endDate: Date) {
 const ScraperChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
   const [vendors, setVendors] = useState<string[]>([]);
+  const [days, setDays] = useState<number>(30);
 
   async function refresh() {
-    const startDate = subDays(new Date(), 30);
+    const startDate = subDays(new Date(), days);
     const endDate = addDays(new Date(), 1);
     const statData = await StatModel.get({
       sort: "startDate desc",
@@ -104,7 +116,11 @@ const ScraperChart = () => {
     });
 
     if (statData.results?.length) {
-      const { data, vendors } = generateChartData(statData.results, endDate);
+      const { data, vendors } = generateChartData(
+        statData.results,
+        endDate,
+        days
+      );
       console.log({ data, vendors });
       setChartData(data);
       setVendors(vendors);
@@ -113,13 +129,30 @@ const ScraperChart = () => {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [days]);
 
   return (
     <Card className={styles.scraperChart}>
       <CardHeader>
         <CardTitle>Solicitations Success Count</CardTitle>
-        <CardDescription>last 30 days</CardDescription>
+        <CardDescription className={styles.scraperChart_cardDescription}>
+          last{" "}
+          <Select
+            value={days.toString()}
+            onValueChange={(value) => {
+              setDays(Number(value));
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">30</SelectItem>
+              <SelectItem value="60">60</SelectItem>
+            </SelectContent>
+          </Select>{" "}
+          days
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
@@ -154,7 +187,24 @@ const ScraperChart = () => {
                 fill={`var(--chart-${i + 1 >= 10 ? 3 : i + 1})`}
               >
                 {i === vendors.length - 1 ? (
-                  <LabelList dataKey="total" position="top" fill="#ccc" />
+                  <LabelList
+                    dataKey="total"
+                    position="top"
+                    fill="#ccc"
+                    content={(props: any) => {
+                      const { value, x, y, width } = props;
+                      if (!value) return null; // hide when total is 0 or falsy
+                      const cx =
+                        typeof x === "number" && typeof width === "number"
+                          ? x + width / 2
+                          : x;
+                      return (
+                        <text x={cx} y={y - 4} fill="#ccc" textAnchor="middle">
+                          {value}
+                        </text>
+                      );
+                    }}
+                  />
                 ) : null}
               </Bar>
             ))}
