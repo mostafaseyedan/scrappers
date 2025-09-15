@@ -25,15 +25,67 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import queryString from "query-string";
+import { useDebouncedCallback } from "use-debounce";
 
 import styles from "./page.module.scss";
 
-export default function Page() {
-  const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const listRef = useRef<ListHandle>(null);
+type SearchParams = {
+  q?: string;
+  limit?: number;
+  page?: number;
+  sort?: string;
+  filter?: Record<string, any>;
+};
 
-  useEffect(() => {}, []);
+export default function Page() {
+  const [dbMode, setDbMode] = useState<string>("firestore");
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [q, setQ] = useState("");
+  const listRef = useRef<ListHandle>(null);
+  const debouncedSearch = useDebouncedCallback(async (params: SearchParams) => {
+    await search(params);
+  }, 500);
+
+  async function search({ q, limit, page, sort }: SearchParams) {
+    const queryObject = {
+      q,
+      limit,
+      page,
+      sort,
+    } as Record<string, any>;
+    const urlQueryString = queryString.stringify(queryObject);
+    const resp = await fetch(`/api/sources/search?${urlQueryString}`);
+    const data = await resp.json();
+    const total = data.hits?.total?.value || 0;
+    const hits = data.hits?.hits.length ? data.hits.hits : [];
+    const dbSols = hits.length
+      ? hits.map((hit: Record<string, any>) => ({
+          ...hit._source,
+          id: hit._id,
+          viewedBy: hit._source.viewedBy || [],
+        }))
+      : [];
+
+    if (listRef.current) {
+      listRef.current.setItems(dbSols);
+      listRef.current.setTotalItems?.(total);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      if (q) {
+        await debouncedSearch({ q });
+        setDbMode("elasticsearch");
+      } else {
+        await listRef.current?.refresh();
+        setDbMode("firestore");
+      }
+    })();
+
+    return () => {};
+  }, [q]);
 
   return (
     <div className={styles.page}>
@@ -125,8 +177,13 @@ export default function Page() {
                 </PopoverContent>
               </Popover>
               <Input
-                className={cn(styles.searchInput, "hidden")}
+                className={styles.searchInput}
                 placeholder="Search"
+                value={q}
+                onChange={(e) => {
+                  setPage?.(1);
+                  setQ(e.target.value);
+                }}
               />
             </div>
           </div>
