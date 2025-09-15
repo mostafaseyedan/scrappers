@@ -598,6 +598,7 @@ const source: any = {
           "water",
         ])
         .default(""),
+      cnNote: z.string().optional(),
       description: z.string().optional(),
       url: z.string().url().optional(),
     }),
