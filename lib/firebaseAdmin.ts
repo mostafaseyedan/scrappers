@@ -49,7 +49,10 @@ export function initStorage() {
   return getStorage(getApps().length ? getApp() : init());
 }
 
-export async function count(dbPath: string, options: Partial<GetOptions> = {}) {
+export async function count(
+  dbPath: string,
+  options: { filters?: Record<string, any> } = {}
+) {
   const filters = options?.filters || {};
   const collectionRef = client.collection(dbPath);
   let queryChain: FirebaseFirestore.Query = collectionRef;
@@ -155,7 +158,9 @@ export function parseQueryValue(value: string) {
 }
 
 export async function get(dbPath: string, options: GetOptions = {}) {
-  const limit = parseInt(options?.limit as string) ?? 20;
+  let limit = parseInt(options?.limit as string) ?? 20;
+  if (isNaN(limit)) limit = 20;
+
   const page = parseInt(options?.page as string) || 1;
   const sort = options?.sort ?? "created desc";
   const filters = options?.filters || {};

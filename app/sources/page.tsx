@@ -1,13 +1,12 @@
 "use client";
 
 import { format as $d } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateSourceDialog } from "./createSourceDialog";
 import { List as CnList, type ListHandle } from "@/components/cendien/list";
 import { SourceActions } from "./sourceActions";
 import { ArrowUp, ArrowDown, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -25,67 +24,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import queryString from "query-string";
-import { useDebouncedCallback } from "use-debounce";
 
 import styles from "./page.module.scss";
 
-type SearchParams = {
-  q?: string;
-  limit?: number;
-  page?: number;
-  sort?: string;
-  filter?: Record<string, any>;
-};
-
 export default function Page() {
-  const [dbMode, setDbMode] = useState<string>("firestore");
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const [q, setQ] = useState("");
   const listRef = useRef<ListHandle>(null);
-  const debouncedSearch = useDebouncedCallback(async (params: SearchParams) => {
-    await search(params);
-  }, 500);
-
-  async function search({ q, limit, page, sort }: SearchParams) {
-    const queryObject = {
-      q,
-      limit,
-      page,
-      sort,
-    } as Record<string, any>;
-    const urlQueryString = queryString.stringify(queryObject);
-    const resp = await fetch(`/api/sources/search?${urlQueryString}`);
-    const data = await resp.json();
-    const total = data.hits?.total?.value || 0;
-    const hits = data.hits?.hits.length ? data.hits.hits : [];
-    const dbSols = hits.length
-      ? hits.map((hit: Record<string, any>) => ({
-          ...hit._source,
-          id: hit._id,
-          viewedBy: hit._source.viewedBy || [],
-        }))
-      : [];
-
-    if (listRef.current) {
-      listRef.current.setItems(dbSols);
-      listRef.current.setTotalItems?.(total);
-    }
-  }
-
-  useEffect(() => {
-    (async () => {
-      if (q) {
-        await debouncedSearch({ q });
-        setDbMode("elasticsearch");
-      } else {
-        await listRef.current?.refresh();
-        setDbMode("firestore");
-      }
-    })();
-
-    return () => {};
-  }, [q]);
 
   return (
     <div className={styles.page}>
@@ -93,31 +37,42 @@ export default function Page() {
         ref={listRef}
         className={styles.sourcesList}
         url="/api/sources"
-        headerTemplate={({ sort, setFilters, setPage, setSort }) => (
+        searchable={true}
+        headerTemplate={({
+          filters,
+          q,
+          sort,
+          setFilters,
+          setPage,
+          setSort,
+        }) => (
           <div className={styles.header}>
             <div className={styles.header_leftCol}>
-              <Select
-                defaultValue="all"
-                onValueChange={(value) => {
-                  setPage?.(1);
-                  setFilters?.(value === "all" ? {} : { type: value });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="aggregator">Aggregator</SelectItem>
-                  <SelectItem value="city">City</SelectItem>
-                  <SelectItem value="county">County</SelectItem>
-                  <SelectItem value="federal">Federal</SelectItem>
-                  <SelectItem value="school">School</SelectItem>
-                  <SelectItem value="state">State</SelectItem>
-                  <SelectItem value="water">Water</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              {!Boolean(q) && (
+                <Select
+                  defaultValue="all"
+                  value={filters?.type || "all"}
+                  onValueChange={(value) => {
+                    setPage?.(1);
+                    setFilters?.(value === "all" ? {} : { type: value });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="aggregator">Aggregator</SelectItem>
+                    <SelectItem value="city">City</SelectItem>
+                    <SelectItem value="county">County</SelectItem>
+                    <SelectItem value="federal">Federal</SelectItem>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="state">State</SelectItem>
+                    <SelectItem value="water">Water</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Button onClick={() => setOpenCreateDialog(true)}>
                 Create Source
               </Button>
@@ -176,15 +131,6 @@ export default function Page() {
                   <Button variant="outline">Clear filters</Button>
                 </PopoverContent>
               </Popover>
-              <Input
-                className={styles.searchInput}
-                placeholder="Search"
-                value={q}
-                onChange={(e) => {
-                  setPage?.(1);
-                  setQ(e.target.value);
-                }}
-              />
             </div>
           </div>
         )}

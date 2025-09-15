@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
     if (!user) throw new Error("Unauthenticated");
 
     const records = await fireGet(COLLECTION, queryOptions);
-    const total = await count(COLLECTION);
+    const total = await count(COLLECTION, {
+      filters: { ...queryOptions.filters },
+    });
     results = {
       total,
       count: records.length,
