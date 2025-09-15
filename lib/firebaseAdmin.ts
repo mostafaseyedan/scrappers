@@ -155,7 +155,7 @@ export function parseQueryValue(value: string) {
 }
 
 export async function get(dbPath: string, options: GetOptions = {}) {
-  const limit = parseInt(options?.limit as string) || 20;
+  const limit = parseInt(options?.limit as string) ?? 20;
   const page = parseInt(options?.page as string) || 1;
   const sort = options?.sort ?? "created desc";
   const filters = options?.filters || {};

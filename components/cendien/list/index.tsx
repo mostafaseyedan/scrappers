@@ -44,7 +44,7 @@ function List({
 }: ListProps) {
   const [items, setItems] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [sort, setSort] = useState("created desc");
