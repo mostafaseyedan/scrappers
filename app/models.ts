@@ -520,6 +520,7 @@ const solicitation_comment: any = {
     body: z.string(),
     attachments: z.array(z.string().url()).default([]),
     authorId: z.string(),
+    parentCollection: z.string().default("solicitations"),
   }),
   get: async (solId: string) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`);
@@ -550,6 +551,7 @@ const solicitation_log: any = {
         .enum(["", "create", "comment", "update", "delete", "view"])
         .default(""),
       actionData: z.object({}).default({}),
+      parentCollection: z.string().default("solicitations"),
     }),
   },
   get: async ({

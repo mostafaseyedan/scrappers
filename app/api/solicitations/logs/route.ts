@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!user) throw new Error("Unauthenticated");
 
     const dbCol = db.collectionGroup("logs");
-    const query = dbCol.limit(limit);
+    const query = dbCol.orderBy("created", "desc").limit(limit);
     const snapshot = await query.get();
     const logs = snapshot.docs
       .filter((doc) => doc.ref.parent.path.split("/")[0] === COLLECTION)
