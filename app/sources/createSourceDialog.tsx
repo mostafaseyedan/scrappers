@@ -48,6 +48,14 @@ const typeOptions = [
   "water",
 ];
 
+// Helper to generate a URL-safe slug for the key
+const slugify = (str: string) =>
+  (str || "")
+    .toLowerCase()
+    .trim()
+    .replace(/([^a-z-]|\s)+/g, "-")
+    .replace(/--+/g, "-");
+
 const CreateSourceDialog = ({
   open,
   onOpenChange,
@@ -61,11 +69,27 @@ const CreateSourceDialog = ({
       type: "",
       description: "",
       url: "",
+      cnNotes: "",
     } as any,
   });
 
   const saveButtonRef = useRef<HTMLButtonElement>(null);
   const [formError, setFormError] = useState<string>("");
+  // Track if user manually edited the key so we don't overwrite it
+  const keyManuallyEditedRef = useRef(false);
+
+  // Watch name and key
+  const nameValue = form.watch("name");
+
+  // Auto-sync key from name unless manually edited
+  useEffect(() => {
+    if (!keyManuallyEditedRef.current) {
+      form.setValue("key", slugify(nameValue || ""), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [nameValue]);
 
   async function onSubmit(values: Record<string, any>) {
     try {
@@ -93,6 +117,7 @@ const CreateSourceDialog = ({
         description: "",
         url: "",
       } as any);
+      keyManuallyEditedRef.current = false;
       setFormError("");
     }
   }, [open]);
@@ -123,7 +148,16 @@ const CreateSourceDialog = ({
                 <FormItem>
                   <FormLabel>Key</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g., city-of-springfield" />
+                    <Input
+                      {...field}
+                      onChange={(e) => {
+                        keyManuallyEditedRef.current = true;
+                        field.onChange(e);
+                        if (e.target.value === "")
+                          keyManuallyEditedRef.current = false;
+                      }}
+                      placeholder="e.g., city-of-springfield"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -172,6 +206,21 @@ const CreateSourceDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Short description of the source"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="cnNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}

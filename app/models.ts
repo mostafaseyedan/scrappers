@@ -587,8 +587,8 @@ const solicitation_log: any = {
 const source: any = {
   schema: {
     db: z.object({
-      name: z.string(),
-      key: z.string(),
+      name: z.string().min(1),
+      key: z.string().min(1),
       type: z
         .enum([
           "",
@@ -602,9 +602,9 @@ const source: any = {
           "water",
         ])
         .default(""),
-      cnNote: z.string().optional(),
+      cnNotes: z.string().optional(),
       description: z.string().optional(),
-      url: z.string().url().optional(),
+      url: z.string().url().or(z.literal("")).default(""),
     }),
   },
   get: async ({ collection = "sources", ...options }: GetParams) =>
