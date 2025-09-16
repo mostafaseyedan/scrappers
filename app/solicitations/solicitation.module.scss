@@ -23,7 +23,8 @@
       }
     }
     &[data-status="rfps"],
-    &[data-status="monitor"] {
+    &[data-status="monitor"],
+    &[data-status="foia"] {
       > button {
         @extend .sol_statusItem_rfps;
         border-color: map.get(variables.$statusColors, "rfps");
@@ -166,7 +167,8 @@
   color: map.get(variables.$statusColors, "submitted");
 }
 .sol_statusItem_rfps,
-.sol_statusItem_monitor {
+.sol_statusItem_monitor,
+.sol_statusItem_foia {
   color: map.get(variables.$statusColors, "rfps");
 }
 .sol_statusItem_erp {

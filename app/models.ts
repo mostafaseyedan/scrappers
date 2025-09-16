@@ -534,7 +534,7 @@ const solicitation_comment: any = {
   ) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, parentCollection: "solicitations" }),
     });
     const json = await resp.json();
     if (json.error) throw new Error("Failed to create comment");
@@ -571,6 +571,7 @@ const solicitation_log: any = {
     await defaultCalls.get({ collection: "solicitations/logs", ...options }),
   post: async ({
     solId,
+    data,
     ...options
   }: {
     solId: string;
@@ -578,6 +579,7 @@ const solicitation_log: any = {
   }) =>
     await defaultCalls.post({
       ...options,
+      data: { ...data, parentCollection: "solicitations" },
       collection: `solicitations/${solId}/logs`,
     }),
 };

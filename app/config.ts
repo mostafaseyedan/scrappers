@@ -7,6 +7,7 @@ export const cnStatuses = {
   negotiation: "Negotiation",
   awarded: "Awarded",
   monitor: "Monitor",
+  foia: "FOIA",
   notWon: "Not Won",
   notPursuing: "Not Pursuing",
 };
