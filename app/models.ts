@@ -520,6 +520,7 @@ const solicitation_comment: any = {
     body: z.string(),
     attachments: z.array(z.string().url()).default([]),
     authorId: z.string(),
+    parentCollection: z.string().default("solicitations"),
   }),
   get: async (solId: string) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`);
@@ -533,7 +534,7 @@ const solicitation_comment: any = {
   ) => {
     const resp = await fetch(`/api/solicitations/${solId}/comments`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, parentCollection: "solicitations" }),
     });
     const json = await resp.json();
     if (json.error) throw new Error("Failed to create comment");
@@ -550,6 +551,7 @@ const solicitation_log: any = {
         .enum(["", "create", "comment", "update", "delete", "view"])
         .default(""),
       actionData: z.object({}).default({}),
+      parentCollection: z.string().default("solicitations"),
     }),
   },
   get: async ({
@@ -569,6 +571,7 @@ const solicitation_log: any = {
     await defaultCalls.get({ collection: "solicitations/logs", ...options }),
   post: async ({
     solId,
+    data,
     ...options
   }: {
     solId: string;
@@ -576,6 +579,7 @@ const solicitation_log: any = {
   }) =>
     await defaultCalls.post({
       ...options,
+      data: { ...data, parentCollection: "solicitations" },
       collection: `solicitations/${solId}/logs`,
     }),
 };
@@ -583,8 +587,8 @@ const solicitation_log: any = {
 const source: any = {
   schema: {
     db: z.object({
-      name: z.string(),
-      key: z.string(),
+      name: z.string().min(1),
+      key: z.string().min(1),
       type: z
         .enum([
           "",
@@ -598,9 +602,9 @@ const source: any = {
           "water",
         ])
         .default(""),
-      cnNote: z.string().optional(),
+      cnNotes: z.string().optional(),
       description: z.string().optional(),
-      url: z.string().url().optional(),
+      url: z.string().url().or(z.literal("")).default(""),
     }),
   },
   get: async ({ collection = "sources", ...options }: GetParams) =>

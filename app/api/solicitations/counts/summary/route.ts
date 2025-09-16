@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
       monitor: await fireCount(COLLECTION, {
         filters: { cnStatus: "monitor" },
       }),
+      foia: await fireCount(COLLECTION, {
+        filters: { cnStatus: "foia" },
+      }),
       awarded: await fireCount(COLLECTION, {
         filters: { cnStatus: "awarded" },
       }),

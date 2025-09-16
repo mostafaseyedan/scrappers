@@ -14,7 +14,8 @@
     }
   }
   &[data-status="rfps"],
-  &[data-status="monitor"] {
+  &[data-status="monitor"],
+  &[data-status="foia"] {
     > button {
       @extend .sol_statusItem_rfps;
       border-color: map.get(variables.$statusColors, "rfps");
@@ -66,6 +67,9 @@
     &__awarded {
       color: map.get(variables.$statusColors, "awarded");
     }
+    &__foia {
+      color: map.get(variables.$statusColors, "foia");
+    }
     &__monitor {
       color: map.get(variables.$statusColors, "monitor");
     }
@@ -87,7 +91,8 @@
   color: map.get(variables.$statusColors, "submitted");
 }
 .sol_statusItem_rfps,
-.sol_statusItem_monitor {
+.sol_statusItem_monitor,
+.sol_statusItem_foia {
   color: map.get(variables.$statusColors, "rfps");
 }
 .sol_statusItem_erp {

@@ -93,6 +93,7 @@ export default function Page() {
       ...flattenedFilter,
     } as Record<string, any>;
     if (q) delete queryObject["filter.cnStatus"];
+    queryObject.contains = true;
     const urlQueryString = queryString.stringify(queryObject);
 
     const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);

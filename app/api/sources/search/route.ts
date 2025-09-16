@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "20", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const sort = searchParams.get("sort") || "created desc";
+  const contains = searchParams.get("contains") === "true" ? true : false;
 
   const must: any[] = [];
   const filterArr: any[] = [];
@@ -43,20 +44,63 @@ export async function GET(req: NextRequest) {
   }
 
   if (q) {
-    must.push({
-      multi_match: {
-        query: q,
-        fields: ["id", "name", "key", "type", "cnNotes", "description", "url"],
-      },
-    });
-    queryObj = {
-      query: {
-        bool: {
-          must,
-          filter: filterArr,
+    if (contains) {
+      // "contains" search: approximate infix match using wildcard per term across fields.
+      // Note: This is slower on large datasets and matches within single tokens.
+      // For true infix across tokens, add an n-gram subfield in the index mapping.
+      const fields = [
+        "id",
+        "name",
+        "key",
+        "type",
+        "cnNote",
+        "description",
+        "url",
+      ];
+      const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+      // Each term must appear (infix) in at least one of the fields
+      for (const term of terms) {
+        must.push({
+          bool: {
+            should: fields.map((f) => ({
+              wildcard: {
+                [f]: {
+                  value: `*${term}*`,
+                  case_insensitive: true,
+                },
+              },
+            })),
+            minimum_should_match: 1,
+          },
+        });
+      }
+
+      queryObj = {
+        query: {
+          bool: {
+            must,
+            filter: filterArr,
+          },
         },
-      },
-    };
+      };
+    } else {
+      must.push({
+        multi_match: {
+          query: q,
+          fields: ["id", "name", "key", "type", "cnNote", "description", "url"],
+          fuzziness: "AUTO",
+        },
+      });
+      queryObj = {
+        query: {
+          bool: {
+            must,
+            filter: filterArr,
+          },
+        },
+      };
+    }
   } else if (filterArr.length > 0) {
     queryObj = {
       query: {

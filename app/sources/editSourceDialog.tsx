@@ -76,6 +76,7 @@ export const EditSourceDialog = ({
             type: src.type ?? "",
             url: src.url ?? "",
             description: src.description ?? "",
+            cnNotes: src.cnNotes ?? "",
           } as any);
         } catch (err) {
           console.error("Failed to load source", err);
@@ -183,6 +184,18 @@ export const EditSourceDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="cnNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
