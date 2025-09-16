@@ -607,6 +607,13 @@ const source: any = {
     await defaultCalls.get({ collection, ...options }),
   getById: async ({ id, ...options }: GetByIdParams) =>
     await defaultCalls.getById({ ...options, collection: "sources", id }),
+  patch: async ({ id, data, ...options }: PatchParams) =>
+    await defaultCalls.patch({
+      ...options,
+      collection: "sources",
+      id,
+      data,
+    }),
   post: async ({ collection = "sources", data, ...options }: PostParams) =>
     await defaultCalls.post({
       collection,

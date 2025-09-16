@@ -25,10 +25,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useContext } from "react";
+import { UserContext } from "@/app/userContext";
+import { uidsToNames } from "@/lib/utils";
 
 import styles from "./page.module.scss";
 
 export default function Page() {
+  const userContext = useContext(UserContext);
+  const getUser = userContext?.getUser;
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editSourceId, setEditSourceId] = useState<string | null>(null);
@@ -160,12 +165,30 @@ export default function Page() {
                 {item.url}
               </a>
               <span className={styles.sourceItem_created}>
-                {$d(item.created, "M/d/yyyy h:mm a")} by {item.authorId}
+                {$d(item.created, "M/d/yyyy h:mm a")} by {item.authorName}
               </span>
             </div>
             <span className={styles.sourceItem_type}>{item.type}</span>
           </div>
         )}
+        onPreResults={async (sources) => {
+          if (!getUser) return sources;
+
+          const authorIds = new Set<string>();
+          sources.forEach((source) => {
+            if (source.authorId) authorIds.add(source.authorId as string);
+          });
+          const authorIdsArr: string[] = Array.from(authorIds);
+          const authorNames = await uidsToNames(authorIdsArr, getUser);
+          const authorMap = new Map(
+            authorIdsArr.map((id, idx) => [id, authorNames[idx]])
+          );
+
+          return sources.map((source) => ({
+            ...source,
+            authorName: authorMap.get(source.authorId) || source.authorId,
+          }));
+        }}
       />
 
       <CreateSourceDialog

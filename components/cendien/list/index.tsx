@@ -150,7 +150,7 @@ function List({
       </div>
       <div className={styles.list}>
         {items?.length > 0 ? (
-          items.map((item) => itemTemplate(item))
+          items.map((item) => <div key={item.id}>{itemTemplate(item)}</div>)
         ) : (
           <div className={styles.emptyState}>No items available.</div>
         )}
