@@ -1,0 +1,33 @@
+.emptyState {
+  padding: 10px 20px;
+}
+
+.footer {
+  display: flex;
+  padding: 10px 20px;
+}
+
+.header {
+  display: flex;
+  gap: 10px;
+}
+
+.list {
+  border: 1px solid #eee;
+}
+
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  &_input {
+    display: inline-block;
+    text-align: center;
+    width: 50px;
+  }
+}
+
+.searchInput {
+  width: 200px;
+}

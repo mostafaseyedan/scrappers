@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import {
+  count,
   get as fireGet,
   parseQueryString,
   post as firePost,
@@ -19,7 +20,9 @@ export async function GET(req: NextRequest) {
     if (!user) throw new Error("Unauthenticated");
 
     const records = await fireGet(COLLECTION, queryOptions);
+    const total = await count(COLLECTION);
     results = {
+      total,
       count: records.length,
       results: records,
     };

@@ -1,0 +1,40 @@
+.sourceActions {
+  float: left;
+  margin-right: 5px;
+  text-align: center;
+  width: 38px;
+
+  button {
+    border-radius: 50%;
+    color: gray;
+    margin-bottom: 5px;
+    a[href] {
+      color: gray;
+    }
+  }
+
+  &_delete {
+    color: red;
+    svg {
+      color: red;
+    }
+  }
+
+  &_likeButton {
+    &__active {
+      border: 1px solid red;
+    }
+  }
+
+  &_moreDropdown {
+    [role="menuitem"] {
+      a > * {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      a > svg {
+        margin-right: 10px;
+      }
+    }
+  }
+}

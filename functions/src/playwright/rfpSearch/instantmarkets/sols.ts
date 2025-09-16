@@ -4,6 +4,12 @@ import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
 import type { BrowserContext, Locator, Page } from "playwright-core";
 
+let failCount = 0;
+let successCount = 0;
+let expiredCount = 0;
+let nonItCount = 0;
+let dupCount = 0;
+
 async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
@@ -16,7 +22,11 @@ async function login(page: Page, user: string, pass: string) {
   await page.click("button:has-text('Login')");
 }
 
-async function parseSolRow(row: Locator) {
+async function processRow(
+  row: Locator,
+  env: Record<string, any>,
+  context: BrowserContext
+) {
   const siteLink = await row.locator("a.opptitle");
   const siteUrl = await siteLink.getAttribute("href");
   const title = await siteLink.getAttribute("title");
@@ -34,10 +44,10 @@ async function parseSolRow(row: Locator) {
     .locator("span:has-text('Agency: ') + span")
     .first()
     .innerText();
-  return {
+  const sol = {
     title,
     description: await row
-      .locator("> div > p.greyText.break-words")
+      .locator(".cursor-pointer p.greyText.break-words")
       .innerText(),
     location: location.substr(1, location.length - 2),
     issuer,
@@ -46,20 +56,64 @@ async function parseSolRow(row: Locator) {
     siteUrl: "https://www.instantmarkets.com" + siteUrl,
     siteId,
   };
+
+  if (sol.closingDate && !isNotExpired(sol)) {
+    expiredCount++;
+    return false;
+  }
+
+  const isDup = await isSolDuplicate(sol, env.BASE_URL, env.SERVICE_KEY).catch(
+    (err) => {
+      logger.error("isSolDuplicate failed", err, sol);
+      failCount++;
+    }
+  );
+  if (isDup) {
+    dupCount++;
+    return false;
+  }
+
+  const solIsIt = await isItRelated(sol).catch((err) => {
+    logger.error("isItRelated failed", err, sol);
+    failCount++;
+  });
+  if (solIsIt === false) {
+    nonItCount++;
+    return false;
+  }
+
+  const newRecord = await solModel
+    .post({
+      baseUrl: env.BASE_URL,
+      data: sol,
+      token: env.SERVICE_KEY,
+    })
+    .catch((err: unknown) => {
+      logger.error("Failed to save sol", err, sol);
+      failCount++;
+    });
+  successCount++;
+  logger.log(`Saved sol: ${newRecord.id}`);
+
+  return sol;
 }
 
-async function scrapeAllSols(page: Page) {
+async function scrapeAllSols(
+  page: Page,
+  env: Record<string, any>,
+  context: BrowserContext
+) {
   let allSols: Record<string, any>[] = [];
   let lastPage = false;
   let currPage = 1;
 
   await page.goto(
-    "https://www.instantmarkets.com/q/ERP%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
+    "https://www.instantmarkets.com/q/erp%3Fot%3DBid%2520Notification,Pre-Bid%2520Notification&os%3DActive",
     { waitUntil: "domcontentloaded" }
   );
 
   do {
-    console.log(`instantmarkets - page ${currPage}`);
+    logger.log(`${env.VENDOR} - page ${currPage}`);
     await page.waitForSelector("app-opp-list-view li.collection-item-desc");
     const rows = await page.locator(
       "app-opp-list-view li.collection-item-desc"
@@ -71,8 +125,10 @@ async function scrapeAllSols(page: Page) {
       const row = rows.nth(i);
       const checkRow = await row.locator("a.opptitle");
       if ((await checkRow.count()) === 0) continue;
-      const sol = await parseSolRow(row);
-      allSols.push(sol);
+      const sol = await processRow(row, env, context).catch((err: unknown) =>
+        logger.error("processRow failed", err)
+      );
+      if (sol) allSols.push(sol);
     }
 
     const popupDismiss = await page.locator(
@@ -109,69 +165,22 @@ export async function run(
   const PASS = env.DEV_INSTANTMARKETS_PASS!;
   const VENDOR = "instantmarkets";
   let results = {};
-  let failCount = 0;
-  let successCount = 0;
-  let expiredCount = 0;
-  let nonItCount = 0;
-  let dupCount = 0;
 
   if (!USER) throw new Error("Missing USER environment variable for run");
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
 
-  let sols = await scrapeAllSols(page);
-  const total = sols.length;
-
-  // Filter out expired
-  sols = sols.filter((sol) => {
-    if (sol.closingDate) {
-      if (isNotExpired(sol)) return true;
-      logger.log(sol.closingDate, "is expired");
-      expiredCount++;
-      return false;
-    }
-
-    return sol;
-  });
-
-  logger.log(`${VENDOR} - Total solicitations found:${total}.`);
-
-  // Save each sols
-  for (const sol of sols) {
-    const isDup = await isSolDuplicate(sol, BASE_URL, SERVICE_KEY).catch(
-      (err) => {
-        logger.error("isSolDuplicate failed", err, sol);
-        failCount++;
-      }
-    );
-    if (isDup) {
-      dupCount++;
-      continue;
-    }
-
-    const solIsIt = await isItRelated(sol).catch((err) => {
-      logger.error("isItRelated failed", err, sol);
-      failCount++;
-    });
-    if (solIsIt === false) {
-      nonItCount++;
-      continue;
-    }
-
-    const newRecord = await solModel
-      .post({
-        baseUrl: BASE_URL,
-        data: { location: "", ...sol },
-        token: SERVICE_KEY,
-      })
-      .catch((err: unknown) => {
-        logger.error("Failed to save sol", err, sol);
-        failCount++;
-      });
-    logger.log(`Saved sol: ${newRecord.id}`);
-    successCount++;
-  }
+  let sols = await scrapeAllSols(
+    page,
+    {
+      ...env,
+      BASE_URL,
+      VENDOR,
+      SERVICE_KEY,
+    },
+    context
+  );
 
   logger.log(
     `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${

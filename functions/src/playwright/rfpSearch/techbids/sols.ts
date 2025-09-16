@@ -5,6 +5,12 @@ import { logger } from "firebase-functions";
 import { md5 } from "../../../lib/md5";
 import type { BrowserContext, Locator, Page } from "playwright-core";
 
+let failCount = 0;
+let successCount = 0;
+let expiredCount = 0;
+let nonItCount = 0;
+let dupCount = 0;
+
 async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
@@ -17,16 +23,19 @@ async function login(page: Page, user: string, pass: string) {
   await page.click("button:has-text('Sign In to Your Account')");
 }
 
-async function parseSolRow(row: Locator, context: BrowserContext) {
+async function parseSolRow(
+  row: Locator,
+  context: BrowserContext
+): Promise<Record<string, any>> {
   const currYear = new Date().getFullYear();
   const closingDate =
     (await row.locator("td:nth-child(5)").innerText()) + " " + currYear;
   const siteLink = await row.locator("td:nth-child(2) a[href]");
   const title = await siteLink.innerText();
   const siteUrl = await siteLink.getAttribute("href");
-  const siteId =
+  const siteIdPart =
     siteUrl?.match(/https:\/\/techbids.com\/bids\/(\d+)\//i)?.[1] ||
-    "techbids-" + md5(title + closingDate);
+    md5(title + closingDate);
 
   const newPagePromise = context.waitForEvent("page");
   await siteLink.click();
@@ -60,35 +69,104 @@ async function parseSolRow(row: Locator, context: BrowserContext) {
     externalLinks: [sourceLink],
     site: "techbids",
     siteUrl,
-    siteId: "techbids-" + siteId,
+    siteId: "techbids-" + siteIdPart,
   };
 }
 
-async function scrapeAllSols(page: Page, context: BrowserContext) {
-  let allSols: Record<string, any>[] = [];
+async function processRow(
+  row: Locator,
+  env: Record<string, any>,
+  context: BrowserContext
+): Promise<Record<string, any> | false> {
+  const sol = await parseSolRow(row, context).catch((err: unknown) => {
+    logger.error("parseSolRow failed", err);
+  });
+  if (!sol) return false;
+
+  if (sol.closingDate && !isNotExpired(sol)) {
+    expiredCount++;
+    return false;
+  }
+
+  const isDup = await isSolDuplicate(sol, env.BASE_URL, env.SERVICE_KEY).catch(
+    (err) => {
+      logger.error("isSolDuplicate failed", err, sol);
+      failCount++;
+    }
+  );
+  if (isDup) {
+    dupCount++;
+    return false;
+  }
+
+  const solIsIt = await isItRelated(sol).catch((err) => {
+    logger.error("isItRelated failed", err, sol);
+    failCount++;
+  });
+  if (solIsIt === false) {
+    nonItCount++;
+    return false;
+  }
+
+  const newRecord = await solModel
+    .post({
+      baseUrl: env.BASE_URL,
+      data: sol,
+      token: env.SERVICE_KEY,
+    })
+    .catch((err: unknown) => {
+      logger.error("Failed to save sol", err, sol);
+      failCount++;
+    });
+  successCount++;
+  logger.log(`Saved sol: ${newRecord.id}`);
+
+  return sol as Record<string, any>;
+}
+
+async function scrapeAllSols(
+  page: Page,
+  env: Record<string, any>,
+  context: BrowserContext
+) {
   const maxPage = 20;
+  let allSols: Record<string, any>[] = [];
+  let lastPage = false;
   let currPage = 1;
 
-  const nextPage = await page
-    .locator("nav[aria-label=\"Pagination Navigation\"] button[dusk=\"nextPage\"]")
-    .first();
-  const list = await page.locator(".sticky + .mt-0.hidden.px-0");
-  const rows = await list.locator("tbody > tr:visible");
-  const rowCount = await rows.count();
-  let lastPage = false;
+  // Wait for the dashboard table to be present after login
+  await page.waitForSelector(".sticky + .mt-0.hidden.px-0");
 
   do {
-    console.log(`Techbids - Page ${currPage}`);
+    logger.log(`${env.VENDOR} - page ${currPage}`);
+
+    const list = page.locator(".sticky + .mt-0.hidden.px-0");
+    const rows = list.locator("tbody > tr:visible");
+    const rowCount = await rows.count();
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const sol = await parseSolRow(row, context).catch((err: unknown) =>
-        console.warn(err)
+      const sol = await processRow(row, env, context).catch((err: unknown) =>
+        logger.error("processRow failed", err)
       );
-      if (sol) allSols.push(sol);
+      if (sol && sol?.siteId) {
+        allSols.push(sol);
+      }
     }
 
+    if (expiredCount >= 20) {
+      lastPage = true;
+      logger.info(`${env.VENDOR} - ended because too many expired dates`);
+      continue;
+    }
+
+    const nextPage = page
+      .locator(
+        "nav[aria-label=\"Pagination Navigation\"] button[dusk=\"nextPage\"]"
+      )
+      .first();
     const classes = await nextPage.getAttribute("class");
+
     if (classes?.includes("disabled") || currPage === maxPage) {
       lastPage = true;
     } else {
@@ -96,7 +174,7 @@ async function scrapeAllSols(page: Page, context: BrowserContext) {
       await page.waitForTimeout(1000);
     }
     currPage++;
-  } while (lastPage !== true);
+  } while (!lastPage);
 
   return allSols;
 }
@@ -112,69 +190,22 @@ export async function run(
   const PASS = env.DEV_TECHBIDS_PASS!;
   const VENDOR = "techbids";
   let results = {};
-  let failCount = 0;
-  let successCount = 0;
-  let expiredCount = 0;
-  let nonItCount = 0;
-  let dupCount = 0;
 
   if (!USER) throw new Error("Missing USER environment variable for run");
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
   await login(page, USER, PASS);
 
-  let sols = await scrapeAllSols(page, context);
-  const total = sols.length;
-
-  // Filter out expired
-  sols = sols.filter((sol) => {
-    if (sol.closingDate) {
-      if (isNotExpired(sol)) return true;
-      logger.log(sol.closingDate, "is expired");
-      expiredCount++;
-      return false;
-    }
-
-    return sol;
-  });
-
-  logger.log(`${VENDOR} - Total solicitations found:${total}.`);
-
-  // Save each sols
-  for (const sol of sols) {
-    const isDup = await isSolDuplicate(sol, BASE_URL, SERVICE_KEY).catch(
-      (err) => {
-        logger.error("isSolDuplicate failed", err, sol);
-        failCount++;
-      }
-    );
-    if (isDup) {
-      dupCount++;
-      continue;
-    }
-
-    const solIsIt = await isItRelated(sol).catch((err) => {
-      logger.error("isItRelated failed", err, sol);
-      failCount++;
-    });
-    if (solIsIt === false) {
-      nonItCount++;
-      continue;
-    }
-
-    const newRecord = await solModel
-      .post({
-        baseUrl: BASE_URL,
-        data: { location: "", ...sol },
-        token: SERVICE_KEY,
-      })
-      .catch((err: unknown) => {
-        logger.error("Failed to save sol", err, sol);
-        failCount++;
-      });
-    logger.log(`Saved sol: ${newRecord.id}`);
-    successCount++;
-  }
+  const sols = await scrapeAllSols(
+    page,
+    {
+      ...env,
+      BASE_URL,
+      VENDOR,
+      SERVICE_KEY,
+    },
+    context
+  );
 
   logger.log(
     `${VENDOR} - Finished saving sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${

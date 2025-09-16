@@ -56,6 +56,9 @@ const EditSolDialog = ({
             ? $d(sol.closingDate, "M/dd/yyyy h:mm a")
             : "",
           contactInfo: sol.contactInfo ?? "",
+          mondayUrl: sol.mondayUrl ?? "",
+          sharepointUrl: sol.sharepointUrl ?? "",
+          contactNote: sol.contactNote ?? "",
           publishDate: sol.publishDate
             ? $d(sol.publishDate, "M/dd/yyyy h:mm a")
             : "",
@@ -196,6 +199,34 @@ const EditSolDialog = ({
                 }}
               />
             </div>
+            <FormField
+              name="mondayUrl"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Monday URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              name="sharepointUrl"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Sharepoint URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
             <FormField
               name="contactNote"
               render={({ field }) => {

@@ -1,0 +1,54 @@
+.filterOptions {
+  section {
+    margin-bottom: 10px;
+  }
+}
+
+.header {
+  display: flex;
+  margin-bottom: 10px;
+  gap: 10px;
+  width: 100%;
+  &_leftCol {
+    display: flex;
+    gap: 10px;
+  }
+  &_rightCol {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+  }
+}
+
+.page {
+  padding: 0 20px;
+}
+
+.sourceItem {
+  padding: 10px 20px 10px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+
+  &_created {
+    color: #c7c7c7;
+    display: block;
+    font-size: 12px;
+  }
+
+  &_main {
+    flex: 1 1 auto;
+  }
+
+  &_name {
+    margin-right: 10px;
+  }
+
+  &_type {
+    color: #c7c7c7;
+    float: right;
+  }
+}
+
+.sourcesList {
+  padding: 0;
+}

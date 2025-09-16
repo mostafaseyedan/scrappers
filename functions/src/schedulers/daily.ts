@@ -7,8 +7,8 @@ const BASE_URL = "https://reconrfp.cendien.com";
 
 export const daily = onSchedule(
   {
-    schedule: "0 0 * * 1,2,3,4,5", // 5 days a week at midnight (UTC)
-    timeZone: "UTC",
+    schedule: "0 23 * * 1-5", // 11 PM Monday-Friday (America/Chicago)
+    timeZone: "America/Chicago",
     retryCount: 0,
     secrets: [
       "DEV_BIDDIRECT_USER",
@@ -16,7 +16,11 @@ export const daily = onSchedule(
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
       "DEV_BROWSERBASE_KEY",
+      "DEV_DEMANDSTAR_USER",
+      "DEV_DEMANDSTAR_PASS",
       "DEV_GEMINI_KEY",
+      "DEV_HIGHERGOV_USER",
+      "DEV_HIGHERGOV_PASS",
       "DEV_INSTANTMARKETS_USER",
       "DEV_INSTANTMARKETS_PASS",
       "DEV_PUBLICPURCHASE_USER",
@@ -28,6 +32,8 @@ export const daily = onSchedule(
       "DEV_VENDORREGISTRY_PASS",
       "DEV_VENDORLINE_USER",
       "DEV_VENDORLINE_PASS",
+      "DEV_VENDORLINK_USER",
+      "DEV_VENDORLINK_PASS",
     ],
     memory: "1GiB",
     timeoutSeconds: 3600,
@@ -38,19 +44,28 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      "commbuys",
+      "demandstar",
+      "findrfp",
+      "floridabids",
+      "govdirections",
+      "governmentbidders",
+      "highergov",
       "instantmarkets",
+      "merx",
       // "mygovwatch", // trial
       "publicpurchase",
+      "rfpmart",
       // "techbids", // trial
-      "vendorregistry",
+      "txsmartbuy",
       "vendorline",
-      // findrfp
-      // vendor
+      "vendorlink",
+      "vendorregistry",
     ];
 
     const limit = Math.max(
       1,
-      parseInt(process.env.VENDOR_CONCURRENCY || "2", 10) || 3
+      parseInt(process.env.VENDOR_CONCURRENCY || "5", 10)
     );
 
     logger.info("Starting vendor runs", {

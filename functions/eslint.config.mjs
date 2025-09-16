@@ -1,43 +1,33 @@
+// Flat ESLint config for Firebase Functions (separate from Next.js root)
 import js from "@eslint/js";
+import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 
-// Flat config version – remove legacy .eslintrc.js when this is active.
 export default [
-  // 1. Ignore build + generated artifacts
-  { ignores: ["lib/**", "generated/**", "eslint.config.mjs"] },
-
-  // 2. Base JS recommended rules applied to all JS/TS source files
+  js.configs.recommended,
   {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js"],
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: ["tsconfig.json", "tsconfig.dev.json"],
+        project: ["./tsconfig.json", "./tsconfig.dev.json"],
         sourceType: "module",
-        ecmaVersion: "latest",
+        ecmaVersion: 2022,
       },
       globals: {
-        // Node globals
-        process: "readonly",
-        console: "readonly",
-        // Runtime high-resolution timer (Cloud Functions Node 18+ / 20+ / 22+)
-        performance: "readonly",
-        // fetch is available in Node 18+ experimental and 21+ stable; Node 22 used per engines
-        fetch: "readonly",
-        Request: "readonly",
-        Response: "readonly",
-        Headers: "readonly",
+        ...globals.node,
       },
     },
-    plugins: { "@typescript-eslint": tsPlugin },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
-      ...js.configs.recommended.rules,
-      ...tsPlugin.configs.recommended.rules,
+      ...tsPlugin.configs["recommended"].rules,
+      quotes: ["error", "double"],
+      indent: ["error", 2, { SwitchCase: 1 }],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
-      quotes: ["error", "double"],
-      indent: ["error", 2],
     },
   },
 ];

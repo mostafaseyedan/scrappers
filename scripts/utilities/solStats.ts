@@ -49,14 +49,16 @@ async function run() {
   }
 
   console.log("\nDaily stats:", dailyStats);
+
   for (const [dateStr, successCounts] of Object.entries(dailyStats)) {
     for (const [script, data] of Object.entries(successCounts)) {
       const statData = data as { success: number };
       if (statData.success === 0) continue;
 
-      const key = `${script}/${dateStr}`;
+      const key = `scraperSuccess/${script}/${dateStr}`;
       const newData = {
         key,
+        parentKey: "scraperSuccess",
         value: statData.success,
         periodType: "day",
         startDate: dSet(new Date(dateStr), {

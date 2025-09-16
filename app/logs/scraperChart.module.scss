@@ -4,6 +4,12 @@
   box-shadow: none;
   margin-bottom: 10px;
 
+  &_cardDescription {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
   &_chart {
     height: 200px;
     width: 100%;

@@ -16,6 +16,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
+import Image from "next/image";
 
 import "./globals.css";
 
@@ -84,47 +85,70 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <div className={styles.layout}>
-            {user?.uid && (
+            {user?.uid && !pathname.startsWith("/login") && (
               <header className={styles.layout_header}>
-                <h1>Recon</h1>
+                <div className={styles.layout_header_1stRow}>
+                  <Image
+                    src="/cendien_corp_logo.jpg"
+                    alt="logo"
+                    className={styles.cendienLogo}
+                    width={30}
+                    height={30}
+                  />
+                  <a href="https://sales.cendien.com/">Analyze</a>
+                  <a href="https://rag.cendien.com/">RAG Chatbot</a>
+                  <a href="https://reconrfp.cendien.com/">Recon</a>
+                  <a href="https://cendien.monday.com/boards/4374039553">
+                    Monday
+                  </a>
+                </div>
+                <div className={styles.layout_header_2ndRow}>
+                  <h1>Recon</h1>
 
-                <nav className={styles.layout_nav}>
-                  <Link
-                    href="/solicitations"
-                    data-state={
-                      isActive("/solicitations") ? "active" : undefined
-                    }
-                  >
-                    Solicitations
-                  </Link>
-                  <Link
-                    className="hidden"
-                    href="/contacts"
-                    data-state={isActive("/contacts") ? "active" : undefined}
-                  >
-                    Contacts
-                  </Link>
-                  <Link
-                    href="/logs"
-                    data-state={isActive("/logs") ? "active" : undefined}
-                  >
-                    Logs
-                  </Link>
-                  <Link
-                    className="hidden"
-                    href="/stats"
-                    data-state={isActive("/stats") ? "active" : undefined}
-                  >
-                    Stats
-                  </Link>
-                  <Link
-                    className="hidden"
-                    href="/settings"
-                    data-state={isActive("/settings") ? "active" : undefined}
-                  >
-                    Settings
-                  </Link>
-                </nav>
+                  <nav className={styles.layout_nav}>
+                    <Link
+                      href="/solicitations"
+                      data-state={
+                        isActive("/solicitations") ? "active" : undefined
+                      }
+                    >
+                      Solicitations
+                    </Link>
+                    <Link
+                      className="hidden"
+                      href="/contacts"
+                      data-state={isActive("/contacts") ? "active" : undefined}
+                    >
+                      Contacts
+                    </Link>
+                    <Link
+                      href="/logs"
+                      data-state={isActive("/logs") ? "active" : undefined}
+                    >
+                      Logs
+                    </Link>
+                    <Link
+                      className="hidden"
+                      href="/stats"
+                      data-state={isActive("/stats") ? "active" : undefined}
+                    >
+                      Stats
+                    </Link>
+                    <Link
+                      className="hidden"
+                      href="/settings"
+                      data-state={isActive("/settings") ? "active" : undefined}
+                    >
+                      Settings
+                    </Link>
+                    <Link
+                      href="/sources"
+                      data-state={isActive("/sources") ? "active" : undefined}
+                    >
+                      Sources
+                    </Link>
+                  </nav>
+                </div>
               </header>
             )}
             <main>{children}</main>

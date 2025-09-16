@@ -30,6 +30,7 @@
     "components/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "hooks/**/*.{ts,tsx}",
+    "config/**/*.{ts,tsx}",
     "scripts/**/*.{ts,tsx}",
     ".next/types/**/*.ts"
   ],

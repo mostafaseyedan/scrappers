@@ -2,8 +2,9 @@
 
 import { List as CnList } from "@/components/cendien/list";
 import { ScraperChart } from "./scraperChart";
+import { PursuingChart } from "./pursuingChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { format as $d } from "date-fns";
 import { UserContext } from "@/app/userContext";
 import { uidsToNames } from "@/lib/utils";
@@ -14,8 +15,6 @@ import styles from "./page.module.scss";
 export default function Page() {
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
-
-  useEffect(() => {}, []);
 
   return (
     <div className={styles.page}>
@@ -65,6 +64,7 @@ export default function Page() {
           />
         </TabsContent>
         <TabsContent value="solicitations">
+          <PursuingChart />
           <CnList
             className={styles.solsList}
             url="/api/solicitations/logs"
@@ -95,7 +95,6 @@ export default function Page() {
                 })
               );
               const solsMap = new Map(solsEntries);
-              console.log({ solsMap });
 
               return logs
                 .sort(

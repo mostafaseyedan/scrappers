@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import {
+  count,
   get as fireGet,
   parseQueryString,
   post as firePost,
 } from "@/lib/firebaseAdmin";
+
+const COLLECTION = "scriptLogs";
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);
@@ -15,8 +18,10 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
-    const records = await fireGet("scriptLogs", queryOptions);
+    const records = await fireGet(COLLECTION, queryOptions);
+    const total = await count(COLLECTION);
     results = {
+      total,
       count: records.length,
       results: records,
     };
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;
 
-    const fireDoc = await firePost("scriptLogs", bodyJson, user);
+    const fireDoc = await firePost(COLLECTION, bodyJson, user);
 
     results = fireDoc;
   } catch (error) {
