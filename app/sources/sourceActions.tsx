@@ -25,16 +25,16 @@ import styles from "./sourceActions.module.scss";
 type SourceActionsProps = {
   className?: string;
   source: Record<string, any>;
-  refreshSols?: (options?: { list?: boolean; topBar?: boolean }) => void;
+  refresh?: (options?: { list?: boolean; topBar?: boolean }) => void;
   onDeleteSuccess?: (options?: { list?: boolean; topBar?: boolean }) => void;
-  onEditClick?: (sourceId: string) => void;
+  onEdit?: (sourceId: string) => void;
 };
 
 const SourceActions = ({
   className,
   source,
-  // refreshSols,
-  onEditClick,
+  // refresh,
+  onEdit,
   onDeleteSuccess,
 }: SourceActionsProps) => {
   return (
@@ -47,10 +47,9 @@ const SourceActions = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className={styles.sourceActions_moreDropdown}>
           <DropdownMenuItem
-            className="hidden"
             onClick={(e) => {
               e.stopPropagation();
-              if (onEditClick) onEditClick(source.id);
+              onEdit?.(source.id);
             }}
           >
             <a>

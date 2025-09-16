@@ -4,6 +4,7 @@ import { format as $d } from "date-fns";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateSourceDialog } from "./createSourceDialog";
+import { EditSourceDialog } from "./editSourceDialog";
 import { List as CnList, type ListHandle } from "@/components/cendien/list";
 import { SourceActions } from "./sourceActions";
 import { ArrowUp, ArrowDown, Filter } from "lucide-react";
@@ -29,6 +30,8 @@ import styles from "./page.module.scss";
 
 export default function Page() {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [editSourceId, setEditSourceId] = useState<string | null>(null);
   const listRef = useRef<ListHandle>(null);
 
   return (
@@ -141,6 +144,10 @@ export default function Page() {
               onDeleteSuccess={() => {
                 listRef.current?.refresh();
               }}
+              onEdit={() => {
+                setEditSourceId(item.id);
+                setOpenEditDialog(true);
+              }}
             />
             <div className={styles.sourceItem_main}>
               <span className={styles.sourceItem_name}>{item.name}</span>
@@ -167,6 +174,15 @@ export default function Page() {
         onSubmitSuccess={() => {
           listRef.current?.refresh();
         }}
+      />
+      <EditSourceDialog
+        sourceId={editSourceId}
+        open={openEditDialog}
+        onOpenChange={(o) => {
+          setOpenEditDialog(o);
+          if (!o) setEditSourceId(null);
+        }}
+        onSubmitSuccess={() => listRef.current?.refresh()}
       />
     </div>
   );
