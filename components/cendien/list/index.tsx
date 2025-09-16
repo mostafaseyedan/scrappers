@@ -88,6 +88,7 @@ function List({
       page,
       sort,
     } as Record<string, any>;
+    queryObject.contains = true;
     const urlQueryString = queryString.stringify(queryObject);
     const resp = await fetch(`${url}/search?${urlQueryString}`);
     const data = await resp.json();
