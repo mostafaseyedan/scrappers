@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <div className={styles.page}>
       <article id="0.1.0">
-        <h2>0.1.0 9/17/2025</h2>
+        <h2>0.1.0 - 9/17/2025</h2>
         <ul>
           <li>
             <b>Improved search</b> Ability to search substrings with fuzzy
