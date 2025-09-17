@@ -44,16 +44,18 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      "cammnet",
       "commbuys",
       "demandstar",
       "findrfp",
       "floridabids",
       "govdirections",
       "governmentbidders",
-      "highergov",
+      // "highergov", // trial
       "instantmarkets",
       "merx",
       // "mygovwatch", // trial
+      "omniapartners",
       "publicpurchase",
       "rfpmart",
       // "techbids", // trial

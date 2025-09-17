@@ -19,6 +19,7 @@ import { run as floridabids } from "../playwright/rfpSearch/floridabids/sols";
 import { run as vendorlink } from "../playwright/rfpSearch/vendorlink/sols";
 import { run as rfpmart } from "../playwright/rfpSearch/rfpmart/sols";
 import { run as cammnet } from "../playwright/rfpSearch/cammnet/sols";
+import { run as omniapartners } from "../playwright/rfpSearch/omniapartners/sols";
 import { logger } from "firebase-functions";
 import { scriptLog as logModel } from "../models";
 import { secToTimeStr } from "../lib/utils";
@@ -39,6 +40,7 @@ const vendors = {
   instantmarkets,
   merx,
   mygovwatch,
+  omniapartners,
   publicpurchase,
   rfpmart,
   techbids,
@@ -58,6 +60,8 @@ type Results = {
   [key: string]: any;
 };
 
+const LOCAL = false;
+
 export async function runVendor(
   vendor: keyof typeof vendors,
   env: Record<string, any>
@@ -66,37 +70,37 @@ export async function runVendor(
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
   const BROWSERBASE_KEY = env.DEV_BROWSERBASE_KEY!;
 
-  let page;
+  let page, browser, context;
   let status = 200;
   let results: Results = {};
   let counts = { success: 0, dup: 0, junk: 0, fail: 0 };
 
   performance.mark("start");
 
-  const bb = new Browserbase({
-    apiKey: BROWSERBASE_KEY,
-  });
+  if (LOCAL) {
+    browser = await chromium.launch({
+      headless: false,
+      // slowMo: 50, // Slow down for debugging
+    });
+    context = await browser.newContext();
+    page = await context.newPage();
+  } else {
+    const bb = new Browserbase({
+      apiKey: BROWSERBASE_KEY,
+    });
 
-  const session = await bb.sessions.create({
-    projectId: "859b2230-84b0-449b-a2db-f9352988518c",
-    proxies: true,
-    userMetadata: {
-      vendor,
-    },
-  });
+    const session = await bb.sessions.create({
+      projectId: "859b2230-84b0-449b-a2db-f9352988518c",
+      proxies: true,
+      userMetadata: {
+        vendor,
+      },
+    });
 
-  const browser = await chromium.connectOverCDP(session.connectUrl);
-  const context = browser.contexts()[0];
-  page = context.pages()[0];
-
-  /*
-  const browser: Browser = await chromium.launch({
-    headless: false,
-    // slowMo: 50, // Slow down for debugging
-  });
-  const context = await browser.newContext();
-  page = await context.newPage();
-  */
+    browser = await chromium.connectOverCDP(session.connectUrl);
+    context = browser.contexts()[0];
+    page = context.pages()[0];
+  }
 
   try {
     if (!vendors[vendor]) {
@@ -238,15 +242,24 @@ export const playwright = onRequest(
       const selectedVendors = [
         "biddirect",
         "bidsync",
+        "cammnet",
+        "commbuys",
         "demandstar",
         "findrfp",
+        "floridabids",
+        "govdirections",
         "governmentbidders",
-        "highergov", // trial
+        // "highergov", // trial
         "instantmarkets",
+        "merx",
         // "mygovwatch", // trial
+        "omniapartners",
         "publicpurchase",
+        "rfpmart",
         // "techbids", // trial
+        "txsmartbuy",
         "vendorline",
+        "vendorlink",
         "vendorregistry",
       ];
       const limit = Math.max(
