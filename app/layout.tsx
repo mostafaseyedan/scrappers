@@ -129,13 +129,6 @@ export default function RootLayout({
                     </Link>
                     <Link
                       className="hidden"
-                      href="/stats"
-                      data-state={isActive("/stats") ? "active" : undefined}
-                    >
-                      Stats
-                    </Link>
-                    <Link
-                      className="hidden"
                       href="/settings"
                       data-state={isActive("/settings") ? "active" : undefined}
                     >
@@ -146,6 +139,12 @@ export default function RootLayout({
                       data-state={isActive("/sources") ? "active" : undefined}
                     >
                       Sources
+                    </Link>
+                    <Link
+                      href="/changelog"
+                      data-state={isActive("/changelog") ? "active" : undefined}
+                    >
+                      Changelog
                     </Link>
                   </nav>
                 </div>
