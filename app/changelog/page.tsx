@@ -13,7 +13,8 @@ export default function Page() {
           </li>
           <li>
             <b>Scraper</b> <i>omniapartners</i> added. Added a flag to switch
-            between local and remote.
+            between local and remote. Better scraper counter stats update
+            script.
           </li>
         </ul>
       </article>
