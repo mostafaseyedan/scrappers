@@ -1,8 +1,8 @@
-This project uses Hyperbrowser to scrape data into Firestore + Elastic Search. Go to http://localhost:3000 for the front end.
+This project uses Browserbase to scrape data into Firestore + Elastic Search. Go to http://localhost:5002 for the front end.
 
 ## Getting Started
 
 ```bash
 pnpm i
-pnpm dev
+pnpm run serve
 ```
