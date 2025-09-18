@@ -25,6 +25,7 @@ const elasticClient = new Client({
       description: { type: "text" },
       description_semantic: { type: "semantic_text" },
       url: { type: "text" },
+      authorId: { type: "text" },
       created: { type: "date" },
       updated: { type: "date" },
     },
