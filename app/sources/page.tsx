@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateSourceDialog } from "./createSourceDialog";
 import { EditSourceDialog } from "./editSourceDialog";
-import { List as CnList, type ListHandle } from "@/components/cendien/list";
+import { List as CnList, type ListHandle } from "@/components/cendien/List";
 import { SourceActions } from "./sourceActions";
 import { ArrowUp, ArrowDown, Filter } from "lucide-react";
 import {

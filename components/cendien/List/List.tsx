@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
 
-import styles from "./index.module.scss";
+import styles from "./List.module.scss";
 
 type ListParams = {
   className?: string;
