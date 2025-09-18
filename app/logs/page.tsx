@@ -1,6 +1,6 @@
 "use client";
 
-import { List as CnList } from "@/components/cendien/list";
+import { List as CnList } from "@/components/cendien/List";
 import { ScraperChart } from "./scraperChart";
 import { PursuingChart } from "./pursuingChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

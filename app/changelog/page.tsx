@@ -5,6 +5,19 @@ import styles from "./page.module.scss";
 export default function Page() {
   return (
     <div className={styles.page}>
+      <article id="0.2.0">
+        <h2>0.2.0 - TBA</h2>
+        <ul>
+          <li>
+            <b>AI</b> AI genkit installed.
+          </li>
+          <li>
+            <b>Scraper</b> <i>omniapartners</i> added. Added a flag to switch
+            between local and remote. Better scraper counter stats update
+            script.
+          </li>
+        </ul>
+      </article>
       <article id="0.1.0">
         <h2>0.1.0 - 9/17/2025</h2>
         <ul>

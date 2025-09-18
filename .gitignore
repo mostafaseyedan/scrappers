@@ -23,6 +23,7 @@
 /build
 
 # misc
+.genkit/*
 .DS_Store
 *.pem
 

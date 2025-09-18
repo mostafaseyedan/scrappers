@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
 
-import styles from "./index.module.scss";
+import styles from "./List.module.scss";
 
 type ListParams = {
   className?: string;
@@ -94,7 +94,7 @@ function List({
     const data = await resp.json();
     const total = data.hits?.total?.value || 0;
     const hits = data.hits?.hits.length ? data.hits.hits : [];
-    const dbSols = hits.length
+    let dbSols = hits.length
       ? hits.map((hit: Record<string, any>) => ({
           ...hit._source,
           id: hit._id,
@@ -102,6 +102,7 @@ function List({
         }))
       : [];
 
+    if (onPreResults) dbSols = await onPreResults(dbSols);
     setItems(dbSols);
     setTotalItems(total);
   }
