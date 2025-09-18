@@ -28,6 +28,7 @@
   padding: 10px 20px 10px 0;
   border-bottom: 1px solid #eee;
   display: flex;
+  gap: 10px;
 
   &_created {
     color: #c7c7c7;
@@ -37,6 +38,7 @@
 
   &_main {
     flex: 1 1 auto;
+    overflow: hidden;
   }
 
   &_name {
