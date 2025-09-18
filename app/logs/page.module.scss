@@ -11,6 +11,7 @@
     }
     &_main {
       flex: 1;
+      overflow: hidden;
     }
     &_scriptName {
       color: #c7c7c7;
@@ -69,6 +70,7 @@
     }
     &_main {
       flex: 1;
+      overflow: hidden;
     }
   }
 }
