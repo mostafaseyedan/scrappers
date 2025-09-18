@@ -66,6 +66,9 @@ const EditSolDialog = ({
           categories: sol.categories?.length ? sol.categories.join(", ") : "",
           keywords: sol.keywords?.length ? sol.keywords.join(", ") : "",
           cnNotes: sol.cnNotes ?? "",
+          site: sol.site ?? "",
+          siteId: sol.siteId ?? "",
+          externalLinks: sol.externalLinks ?? [],
         });
       }
     })();
@@ -96,6 +99,9 @@ const EditSolDialog = ({
 
     formValues.categories = sanitizeUniqueCommaValues(formValues.categories);
     formValues.keywords = sanitizeUniqueCommaValues(formValues.keywords);
+    formValues.externalLinks = sanitizeUniqueCommaValues(
+      formValues.externalLinks
+    );
 
     let resp;
     try {
@@ -199,34 +205,36 @@ const EditSolDialog = ({
                 }}
               />
             </div>
-            <FormField
-              name="mondayUrl"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Monday URL</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-            <FormField
-              name="sharepointUrl"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Sharepoint URL</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                name="site"
+                render={({ field }) => {
+                  return (
+                    <FormItem>
+                      <FormLabel>Site</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                name="siteId"
+                render={({ field }) => {
+                  return (
+                    <FormItem>
+                      <FormLabel>Site ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            </div>
             <FormField
               name="contactNote"
               render={({ field }) => {
@@ -252,6 +260,34 @@ const EditSolDialog = ({
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              name="mondayUrl"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Monday URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              name="sharepointUrl"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Sharepoint URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,6 +332,23 @@ const EditSolDialog = ({
                       <Textarea
                         {...field}
                         placeholder="keyword 1, keyword 2, keyword 3"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              name="externalLinks"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>External Links</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="https://link1.com, https://link2.com"
                       />
                     </FormControl>
                     <FormMessage />
