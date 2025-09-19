@@ -1,23 +1,6 @@
-@use "variables";
-
 .cendienLogo {
   margin-right: 5px;
   width: 30px;
-}
-
-body {
-  a[href] {
-    color: variables.$blue;
-  }
-
-  button {
-    cursor: pointer;
-  }
-
-  label {
-    margin-top: 5px;
-    font-size: 12px;
-  }
 }
 
 .layout {

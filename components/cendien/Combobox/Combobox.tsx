@@ -98,6 +98,18 @@ export function Combobox({
     setSuggestions(records);
   }
 
+  async function getById(id: string) {
+    const resp: Record<string, any> = await fetch(`${api}/${id}`);
+    const data = await resp.json();
+
+    if (data.error) {
+      console.error("Combobox failed to get value by id", id, data.error);
+      return false;
+    }
+
+    return data;
+  }
+
   async function getByKey(key: string) {
     const queryObject = {
       "filters.key": key,
@@ -117,7 +129,7 @@ export function Combobox({
       return false;
     }
 
-    return { value: record.key, label: record.name };
+    return record;
   }
 
   // Fetch the record for an incoming (or changed) external value if we don't have it yet
@@ -132,12 +144,14 @@ export function Combobox({
       // If we already have a suggestion for it, skip fetch
       if (suggestions.some((s) => s.value === incoming)) return;
 
-      const record = await getByKey(incoming);
+      const record =
+        getBy === "key" ? await getByKey(incoming) : await getById(incoming);
       if (record) {
+        const suggestion = { value: record.value, label: record.label };
         setSuggestions((prev) => {
           // Avoid duplicates if a race condition occurs
-          if (prev.some((s) => s.value === record.value)) return prev;
-          return [...prev, record];
+          if (prev.some((s) => s.value === suggestion.value)) return prev;
+          return [...prev, suggestion];
         });
       } else {
         setValue("");

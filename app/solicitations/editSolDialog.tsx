@@ -77,8 +77,6 @@ const EditSolDialog = ({
   }, [solId]);
 
   async function onSubmit(formValues: Record<string, any>) {
-    console.log({ formValues });
-
     try {
       if (formValues.closingDate)
         formValues.closingDate = sanitizeDateString(formValues.closingDate);
