@@ -5,11 +5,7 @@
   width: 30px;
 }
 
-.layout {
-  font-size: 15px;
-  padding: 0;
-  padding-bottom: 0;
-
+body {
   a[href] {
     color: variables.$blue;
   }
@@ -22,6 +18,12 @@
     margin-top: 5px;
     font-size: 12px;
   }
+}
+
+.layout {
+  font-size: 15px;
+  padding: 0;
+  padding-bottom: 0;
 
   &_header {
     :global(h1) {

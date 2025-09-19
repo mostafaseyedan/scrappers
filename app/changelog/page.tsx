@@ -13,8 +13,12 @@ export default function Page() {
           </li>
           <li>
             <b>Scraper</b> <i>omniapartners</i> added. Added a flag to switch
-            between local and remote. Better scraper counter stats update
-            script.
+            between local and remote. Better scraper counter stats update script
+            to more accurately count solicitation created.
+          </li>
+          <li>
+            <b>UI</b> New <i>Combobox</i> component helps with autocomplete
+            lookups.
           </li>
         </ul>
       </article>

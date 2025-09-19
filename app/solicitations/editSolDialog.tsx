@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { format as $d } from "date-fns";
 import { sanitizeDateString, sanitizeUniqueCommaValues } from "@/lib/utils";
+import { Combobox } from "@/components/cendien/Combobox";
 
 import styles from "./createSolDialog.module.scss";
 
@@ -68,6 +69,7 @@ const EditSolDialog = ({
           cnNotes: sol.cnNotes ?? "",
           site: sol.site ?? "",
           siteId: sol.siteId ?? "",
+          sourceKey: sol.sourceKey ?? "",
           externalLinks: sol.externalLinks ?? [],
         });
       }
@@ -75,6 +77,8 @@ const EditSolDialog = ({
   }, [solId]);
 
   async function onSubmit(formValues: Record<string, any>) {
+    console.log({ formValues });
+
     try {
       if (formValues.closingDate)
         formValues.closingDate = sanitizeDateString(formValues.closingDate);
@@ -147,13 +151,23 @@ const EditSolDialog = ({
             />
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                name="issuer"
+                name="sourceKey"
                 render={({ field }) => {
                   return (
                     <FormItem>
                       <FormLabel>Issuer</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Combobox
+                          {...field}
+                          api="/api/sources"
+                          onBeforeCreate={(value) => ({
+                            name: value,
+                            key: value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9-]/g, "-")
+                              .replace(/-+/g, "-"),
+                          })}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -361,12 +375,14 @@ const EditSolDialog = ({
             </Button>
           </form>
         </Form>
-        <DialogFooter>
+        <DialogFooter className={styles.footer}>
           {formError && <div className={styles.formError}>{formError}</div>}
-          <Button onClick={() => saveButtonRef.current?.click()}>Save</Button>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+          <div className={styles.buttons}>
+            <Button onClick={() => saveButtonRef.current?.click()}>Save</Button>
+            <Button variant="secondary" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
