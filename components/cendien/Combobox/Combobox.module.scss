@@ -1,0 +1,20 @@
+.Combobox {
+  padding: 0;
+  _checkIcon {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.triggerButton {
+  font-weight: normal;
+  justify-content: space-between;
+  _updownIcon {
+    margin-left: 10px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+}

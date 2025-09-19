@@ -125,3 +125,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+body {
+  a[href] {
+    color: #0664c9;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  label {
+    margin-top: 5px;
+    font-size: 12px;
+  }
+}

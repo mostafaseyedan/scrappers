@@ -1,3 +1,11 @@
+.buttons {
+  margin-left: auto;
+}
+
+.footer {
+  justify-content: space-between;
+}
+
 .form {
   max-height: 70vh;
   padding: 10px;
@@ -21,4 +29,5 @@
   color: red;
   font-size: 12px;
   flex: 1;
+  width: 300px;
 }

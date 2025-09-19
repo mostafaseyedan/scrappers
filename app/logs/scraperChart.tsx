@@ -82,14 +82,17 @@ function generateChartData(
   }
 
   for (const [dateStr, vendorData] of Object.entries(dailyStats)) {
+    const dateParts = dateStr.split("-");
+    const shortDateStr = parseInt(dateParts[1]) + "/" + parseInt(dateParts[2]);
     data.push({
-      date: $d(dateStr, "M/dd"),
+      longDate: dateStr,
+      date: shortDateStr,
       ...vendorData,
       total: Object.values(vendorData).reduce((a, b) => a + b, 0),
     });
   }
 
-  data.sort((a, b) => (a.date > b.date ? 1 : -1));
+  data.sort((a, b) => (a.longDate > b.longDate ? 1 : -1));
 
   return {
     data,
@@ -124,7 +127,6 @@ const ScraperChart = () => {
         endDate,
         days
       );
-      console.log({ data, vendors });
       setChartData(data);
       setVendors(vendors);
     }

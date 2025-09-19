@@ -8,6 +8,7 @@ import {
 } from "@/lib/elastic";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation_log as solLogModel } from "@/app/models";
+import { source as sourceModel } from "@/app/models";
 
 const COLLECTION = "solicitations";
 
@@ -76,6 +77,21 @@ export async function PATCH(
   try {
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
+
+    // Update issuer based on sourceKey
+    if (updateData.sourceKey) {
+      const sourceDoc = await sourceModel
+        .getByKey({
+          baseUrl: process.env.BASE_URL,
+          token: process.env.SERVICE_KEY,
+          key: updateData.sourceKey,
+        })
+        .catch((err: any) => console.error(err));
+      if (sourceDoc?.name) {
+        updateData.issuer = sourceDoc.name;
+      }
+    }
+
     const updatedDoc = await patch(COLLECTION, id, updateData);
     const elasticDoc = fireToJs(updatedDoc);
     if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;

@@ -193,9 +193,17 @@ const defaultCalls = {
       throw new Error(
         `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`
       );
+      return null;
     }
 
-    return json;
+    if (!json.results || !json.results.length) {
+      throw new Error(
+        `Failed to fetch data by key: ${key}. Record not found. (defaultCalls.getByKey/${collection})`
+      );
+      return null;
+    }
+
+    return json.results[0];
   },
   post: async ({ collection, data, schema, token, baseUrl }: PostParams) => {
     if (schema?.parse) {
@@ -311,13 +319,14 @@ const defaultCalls = {
     token,
     baseUrl,
   }: UpsertByKeyParams) => {
-    const respCheck = await defaultCalls.getByKey({
-      collection,
-      key,
-      token,
-      baseUrl,
-    });
-    const existingRecord = respCheck?.results[0];
+    const existingRecord = await defaultCalls
+      .getByKey({
+        collection,
+        key,
+        token,
+        baseUrl,
+      })
+      .catch((err: any) => console.error(err?.message));
 
     data.key = key; // Ensure the key is set in the data
 
@@ -395,6 +404,7 @@ const solicitation: any = {
       siteData: z.any().default({}),
       siteId: z.string(),
       siteUrl: z.string().url(),
+      sourceKey: z.string(),
       title: z.string(),
       updated: z.string().datetime(), // system
       url: z.string().url(),
@@ -431,6 +441,7 @@ const solicitation: any = {
       siteData: z.any().default({}),
       siteId: z.string().optional(),
       siteUrl: z.string().default(""),
+      sourceKey: z.string().default(""),
       title: z.string().min(1, "Title is required"),
       updated: z.string().datetime(),
       url: z.string().default(""),
@@ -611,6 +622,8 @@ const source: any = {
     await defaultCalls.get({ collection, ...options }),
   getById: async ({ id, ...options }: GetByIdParams) =>
     await defaultCalls.getById({ ...options, collection: "sources", id }),
+  getByKey: async ({ key, ...options }: GetByKeyParams) =>
+    await defaultCalls.getByKey({ ...options, collection: "sources", key }),
   patch: async ({ id, data, ...options }: PatchParams) =>
     await defaultCalls.patch({
       ...options,

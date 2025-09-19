@@ -38,6 +38,7 @@ const elasticClient = new Client({
       site: { type: "text" },
       siteId: { type: "text" },
       siteUrl: { type: "text" },
+      sourceKey: { type: "keyword" },
       keywords: { type: "keyword" },
       rfpType: { type: "text" },
       cnStatus: { type: "text" },

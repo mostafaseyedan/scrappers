@@ -94,7 +94,7 @@ function List({
     const data = await resp.json();
     const total = data.hits?.total?.value || 0;
     const hits = data.hits?.hits.length ? data.hits.hits : [];
-    let dbSols = hits.length
+    let records = hits.length
       ? hits.map((hit: Record<string, any>) => ({
           ...hit._source,
           id: hit._id,
@@ -102,8 +102,8 @@ function List({
         }))
       : [];
 
-    if (onPreResults) dbSols = await onPreResults(dbSols);
-    setItems(dbSols);
+    if (onPreResults) records = await onPreResults(records);
+    setItems(records);
     setTotalItems(total);
   }
 
