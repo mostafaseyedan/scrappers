@@ -12,6 +12,9 @@ export default function Page() {
             <b>AI</b> AI genkit installed.
           </li>
           <li>
+            <b>Elastic Search</b> migrated to Cendien.
+          </li>
+          <li>
             <b>Scraper</b> <i>omniapartners</i> added. Added a flag to switch
             between local and remote. Better scraper counter stats update script
             to more accurately count solicitation created.

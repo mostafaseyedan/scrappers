@@ -17,8 +17,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.instantmarkets.com/signin", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill("input[placeholder=\"Enter your email address\"]", user);
-  await page.fill("input[placeholder=\"Enter your password\"]", pass);
+  await page.fill('input[placeholder="Enter your email address"]', user);
+  await page.fill('input[placeholder="Enter your password"]', pass);
   await page.click("button:has-text('Login')");
 }
 
@@ -39,7 +39,7 @@ async function processRow(
     .locator("span:has-text('Agency: ') + span + span")
     .first()
     .innerText();
-  location = location.trim();
+  location = location.replace(",", ", ").trim();
   const issuer = await row
     .locator("span:has-text('Agency: ') + span")
     .first()
@@ -132,14 +132,14 @@ async function scrapeAllSols(
     }
 
     const popupDismiss = await page.locator(
-      "button:has-text(\"Don't Ask Again\")"
+      'button:has-text("Don\'t Ask Again")'
     );
     const popupDismissCount = await popupDismiss.count();
     if (popupDismissCount > 0) await popupDismiss.click();
 
     await page.waitForTimeout(1000);
 
-    const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
+    const nextPage = page.locator('pagination-async button:has-text("Next ")');
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {

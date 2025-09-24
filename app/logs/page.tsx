@@ -18,12 +18,12 @@ export default function Page() {
 
   return (
     <div className={styles.page}>
-      <Tabs defaultValue="scripts">
+      <Tabs defaultValue="scraping">
         <TabsList>
-          <TabsTrigger value="scripts">Script</TabsTrigger>
+          <TabsTrigger value="scraping">Scraping</TabsTrigger>
           <TabsTrigger value="solicitations">Solicitation</TabsTrigger>
         </TabsList>
-        <TabsContent value="scripts">
+        <TabsContent value="scraping">
           <ScraperChart />
           <CnList
             className={styles.logsList}
