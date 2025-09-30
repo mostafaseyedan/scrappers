@@ -214,7 +214,7 @@ export async function get(dbPath: string, options: GetOptions = {}) {
   if (isNaN(limit)) limit = 20;
 
   const page = parseInt(options?.page as string) || 1;
-  const sort = options?.sort ?? "created desc";
+  const sort = options?.sort;
   const filters = options?.filters || {};
   const collectionRef = client.collection(dbPath);
   let queryChain: FirebaseFirestore.Query = collectionRef;
@@ -270,11 +270,7 @@ export async function get(dbPath: string, options: GetOptions = {}) {
     );
   }
 
-  // Sorting is not allowed with other filters not matching the sort field
-  const notSortFilters = rawFilterItems.filter(
-    (filter) => filter[0] !== sort.split(" ")[0]
-  );
-  if (sort && notSortFilters.length === 0) {
+  if (sort) {
     const [field, direction] = sort.split(" ");
     queryChain = queryChain.orderBy(
       field,

@@ -21,6 +21,7 @@ import { CreateSolDialog } from "./createSolDialog";
 import { TopBar } from "./topBar";
 import { UserContext } from "../userContext";
 import { uidsToNames } from "@/lib/utils";
+import { solicitation as solModel } from "@/app/models";
 
 import styles from "./page.module.scss";
 
@@ -41,7 +42,8 @@ export default function Page() {
   }>({ cnStatus: "new" });
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("closingDate desc");
+  const [listError, setListError] = useState("");
+  const [sort, setSort] = useState("updated desc");
   const [totalFiltered, setTotalFiltered] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -61,6 +63,24 @@ export default function Page() {
   );
 
   const topBarRef = useRef<{ refresh?: () => void }>(null);
+
+  async function processIncomingSols(sols: Record<string, any>[]) {
+    const userIds: string[] = [];
+    sols.forEach((sol: Record<string, any>) => {
+      userIds.push(...(sol.viewedBy || []));
+    });
+    const userNames = getUser ? await uidsToNames(userIds, getUser) : [];
+    const userMap = new Map(userIds.map((id, idx) => [id, userNames[idx]]));
+
+    sols.map((sol: Record<string, any>) => {
+      sol.viewedByNames = (sol.viewedBy || []).map((uid: string) => {
+        return userMap.get(uid) || uid;
+      });
+      return sol;
+    });
+
+    return sols;
+  }
 
   async function searchSols(
     params: Partial<SearchSolsParams> = { filter: {} }
@@ -100,7 +120,7 @@ export default function Page() {
     const data = await resp.json();
     const total = data.hits?.total?.value || 0;
     const hits = data.hits?.hits.length ? data.hits.hits : [];
-    const dbSols = hits.length
+    let dbSols = hits.length
       ? hits.map((hit: Record<string, any>) => ({
           ...hit._source,
           id: hit._id,
@@ -109,19 +129,7 @@ export default function Page() {
       : [];
 
     if (dbSols.length > 0) {
-      const userIds: string[] = [];
-      dbSols.forEach((sol: Record<string, any>) => {
-        userIds.push(...(sol.viewedBy || []));
-      });
-      const userNames = getUser ? await uidsToNames(userIds, getUser) : [];
-      const userMap = new Map(userIds.map((id, idx) => [id, userNames[idx]]));
-
-      dbSols.map((sol: Record<string, any>) => {
-        sol.viewedByNames = (sol.viewedBy || []).map((uid: string) => {
-          return userMap.get(uid) || uid;
-        });
-        return sol;
-      });
+      dbSols = await processIncomingSols(dbSols);
     }
 
     setSols(dbSols);
@@ -136,19 +144,59 @@ export default function Page() {
     setTotalPages(Math.ceil(total / finalLimit));
   }
 
+  async function getSols() {
+    let sols = await solModel
+      .get({ limit, page, sort, filters: filter })
+      .catch((err: unknown) => {
+        console.error(err);
+        return { error: err instanceof Error ? err.message : String(err) };
+      });
+    const total = sols.total || 0;
+
+    if (sols.error || !sols.results) {
+      setListError(sols.error || "An unknown server error occurred");
+      return;
+    }
+
+    if (sols.results.length === 0) {
+      setSols([]);
+      setTotalRecords(0);
+      setListError("");
+      return;
+    }
+
+    if (sols.results?.length) {
+      sols = await processIncomingSols(sols.results);
+      setListError("");
+      setSols(sols);
+    }
+
+    if (Object.keys(filter).length > 0) {
+      setTotalFiltered(total);
+    } else {
+      setTotalFiltered(0);
+      setTotalRecords(total);
+    }
+
+    setTotalPages(Math.ceil(total / limit));
+  }
+
   const refreshSols: (options?: {
     list?: boolean;
     topBar?: boolean;
   }) => Promise<void> = async (options = {}) => {
     const { list = true, topBar = true } = options || {};
-    if (list) await debouncedSearchSols({ filter, limit, page, q, sort });
+    if (list) {
+      if (q) await debouncedSearchSols({ filter, limit, page, q, sort });
+      else await getSols();
+    }
     if (topBar) await topBarRef.current?.refresh?.();
   };
 
   useEffect(() => {
     (async () => {
       document.title = `Solicitations | Cendien Recon`;
-      await debouncedSearchSols({ filter, limit, page, q, sort });
+      await refreshSols();
     })();
 
     // window.addEventListener("focus", () => refreshSols());
@@ -156,7 +204,7 @@ export default function Page() {
     return () => {
       // window.removeEventListener("focus", () => refreshSols());
     };
-  }, [debouncedSearchSols, filter, q]);
+  }, [filter, q]);
 
   useEffect(() => {
     refreshSols({ list: true, topBar: false });
@@ -181,7 +229,9 @@ export default function Page() {
               ref={topBarRef}
             />
             <div className={styles.pageMain_solsSection_list}>
-              {sols?.length ? (
+              {listError ? (
+                <p className="p-4 error">{listError}</p>
+              ) : sols?.length ? (
                 sols.map((sol) => (
                   <Solicitation
                     key={`sol-${sol.id}`}
