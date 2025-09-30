@@ -187,7 +187,8 @@ export default function Page() {
   }) => Promise<void> = async (options = {}) => {
     const { list = true, topBar = true } = options || {};
     if (list) {
-      if (q) await debouncedSearchSols({ filter, limit, page, q, sort });
+      if (q || filter.cnLiked || filter.site)
+        await debouncedSearchSols({ filter, limit, page, q, sort });
       else await getSols();
     }
     if (topBar) await topBarRef.current?.refresh?.();

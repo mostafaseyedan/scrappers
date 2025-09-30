@@ -12,7 +12,8 @@ export default function Page() {
             <b>AI</b> AI genkit installed.
           </li>
           <li>
-            <b>Elastic Search</b> migrated to Cendien.
+            <b>Elastic Search</b> has been phased out. We use Firestore as the
+            driver and Algolia for search.
           </li>
           <li>
             <b>Scraper</b> <i>omniapartners</i> added. Added a flag to switch
