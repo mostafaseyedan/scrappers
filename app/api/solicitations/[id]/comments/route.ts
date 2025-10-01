@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { get, getById, patch, post } from "@/lib/firebaseAdmin";
-import { patch as elasticPatch } from "@/lib/elastic";
+import { patch as algoliaPatch } from "@/lib/algolia";
 import { checkSession } from "@/lib/serverUtils";
 
 export async function GET(
@@ -48,7 +48,7 @@ export async function POST(
 
     const countData = { commentsCount: (sol.commentsCount || 0) + 1 };
     await patch("solicitations", id, { ...countData });
-    await elasticPatch("solicitations", id, { ...countData });
+    await algoliaPatch("solicitations", id, { ...countData });
 
     results =
       (await post(`solicitations/${id}/comments`, updateData, user)) || {};
