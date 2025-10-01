@@ -118,19 +118,15 @@ export default function Page() {
 
     const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
     const data = await resp.json();
-    const total = data.hits?.total?.value || 0;
-    const hits = data.hits?.hits.length ? data.hits.hits : [];
-    let dbSols = hits.length
-      ? hits.map((hit: Record<string, any>) => ({
-          ...hit._source,
-          id: hit._id,
-          viewedBy: hit._source.viewedBy || [],
-        }))
-      : [];
+    const result = data.results?.[0];
+    const total = result.nbHits || 0;
+    let dbSols = result.hits.length ? result.hits : [];
 
     if (dbSols.length > 0) {
       dbSols = await processIncomingSols(dbSols);
     }
+
+    console.log({ result, total });
 
     setSols(dbSols);
 
