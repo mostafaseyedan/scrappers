@@ -21,10 +21,17 @@ runConfig:
 # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
 # - variable: MY_SECRET
 #   secret: mySecretRef
+# firebase apphosting:secrets:grantaccess DEV_ALGOLIA_ID,DEV_ALGOLIA_SEARCH_KEY,DEV_ALGOLIA_WRITE_KEY --backend recon
 
 env:
   - variable: BASE_URL
     value: https://reconrfp.cendien.com
+  - variable: ALGOLIA_ID
+    secret: DEV_ALGOLIA_ID
+  - variable: ALGOLIA_SEARCH_KEY
+    secret: DEV_ALGOLIA_SEARCH_KEY
+  - variable: ALGOLIA_WRITE_KEY
+    secret: DEV_ALGOLIA_WRITE_KEY
   - variable: BIDDIRECT_USER
     secret: DEV_BIDDIRECT_USER
   - variable: BIDDIRECT_PASS
