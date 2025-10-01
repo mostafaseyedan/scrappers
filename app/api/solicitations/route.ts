@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation as solModel } from "@/app/models";
 import {
+  count,
   get as fireGet,
   post as firePost,
   parseQueryString,
 } from "@/lib/firebaseAdmin";
-import { post as elasticPost } from "@/lib/elastic";
 import { fireToJs } from "@/lib/dataUtils";
+import { post as algoliaPost } from "@/lib/algolia";
 
 const COLLECTION = "solicitations";
 
@@ -21,7 +22,11 @@ export async function GET(req: NextRequest) {
     if (!user) throw new Error("Unauthenticated");
 
     const records = await fireGet(COLLECTION, queryOptions);
+    const total = await count(COLLECTION, {
+      filters: { ...queryOptions.filters },
+    });
     results = {
+      total,
       count: records.length,
       results: records,
     };
@@ -51,13 +56,7 @@ export async function POST(req: NextRequest) {
 
     const parsedData = solModel.schema.postApi.parse(bodyJson);
     const fireDoc = await firePost(COLLECTION, parsedData, user);
-    const elasticDoc = fireToJs(fireDoc);
-
-    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
-    if (elasticDoc.description)
-      elasticDoc.description_semantic = elasticDoc.description;
-
-    await elasticPost(COLLECTION, fireDoc.id, elasticDoc);
+    await algoliaPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
 
     results = fireDoc;
   } catch (error) {

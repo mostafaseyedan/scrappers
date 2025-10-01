@@ -92,15 +92,10 @@ function List({
     const urlQueryString = queryString.stringify(queryObject);
     const resp = await fetch(`${url}/search?${urlQueryString}`);
     const data = await resp.json();
-    const total = data.hits?.total?.value || 0;
-    const hits = data.hits?.hits.length ? data.hits.hits : [];
-    let records = hits.length
-      ? hits.map((hit: Record<string, any>) => ({
-          ...hit._source,
-          id: hit._id,
-          viewedBy: hit._source.viewedBy || [],
-        }))
-      : [];
+    const total = data.total || 0;
+    let records = data.results || [];
+
+    console.log({ data });
 
     if (onPreResults) records = await onPreResults(records);
     setItems(records);

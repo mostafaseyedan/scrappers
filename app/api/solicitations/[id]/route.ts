@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { fireToJs } from "@/lib/dataUtils";
 import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
 import {
-  remove as elasticRemove,
-  patch as elasticPatch,
-  post as elasticPost,
-} from "@/lib/elastic";
+  remove as algoliaRemove,
+  patch as algoliaPatch,
+  post as algoliaPost,
+} from "@/lib/algolia";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation_log as solLogModel } from "@/app/models";
 import { source as sourceModel } from "@/app/models";
@@ -24,7 +24,7 @@ export async function DELETE(
   try {
     if (!user) throw new Error("Unauthenticated");
     await fireRemove(COLLECTION, id);
-    await elasticRemove(COLLECTION, id);
+    await algoliaRemove(COLLECTION, id);
     results = { success: id };
   } catch (error) {
     console.error(`Failed to delete from ${COLLECTION} ${id}`, error);
@@ -93,21 +93,18 @@ export async function PATCH(
     }
 
     const updatedDoc = await patch(COLLECTION, id, updateData);
-    const elasticDoc = fireToJs(updatedDoc);
-    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
-    if (elasticDoc.description)
-      elasticDoc.description_semantic = elasticDoc.description;
+    const algoliaDoc = fireToJs(updatedDoc);
 
-    if (elasticDoc.publishDate === "") elasticDoc.publishDate = null;
-    if (elasticDoc.closingDate === "") elasticDoc.closingDate = null;
+    if (algoliaDoc.publishDate === "") algoliaDoc.publishDate = null;
+    if (algoliaDoc.closingDate === "") algoliaDoc.closingDate = null;
 
-    // If the elastic document is missing, create it
-    await elasticPatch(COLLECTION, id, elasticDoc).catch(async (error) => {
-      console.error(`Failed to update elastic for ${COLLECTION} ${id}`, error);
+    // If the algolia document is missing, create it
+    await algoliaPatch(COLLECTION, id, algoliaDoc).catch(async (error) => {
+      console.error(`Failed to update algolia for ${COLLECTION} ${id}`, error);
 
       if (error.message.includes("document_missing_exception")) {
-        await elasticPost(COLLECTION, id, elasticDoc);
-        console.log(`Elastic document created for ${COLLECTION} ${id}`);
+        await algoliaPost(COLLECTION, id, algoliaDoc);
+        console.log(`Algolia document created for ${COLLECTION} ${id}`);
       }
     });
 
@@ -151,11 +148,7 @@ export async function PUT(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
     const updatedDoc = await put(COLLECTION, id, updateData);
-    const elasticDoc = fireToJs(updatedDoc);
-    if (elasticDoc.title) elasticDoc.title_semantic = elasticDoc.title;
-    if (elasticDoc.description)
-      elasticDoc.description_semantic = elasticDoc.description;
-    await elasticPatch(COLLECTION, id, elasticDoc);
+    await algoliaPatch(COLLECTION, id, fireToJs(updatedDoc));
 
     await solLogModel.post({
       solId: id,

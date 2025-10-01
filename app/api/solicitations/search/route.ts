@@ -1,145 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Client } from "@elastic/elasticsearch";
 import { checkSession } from "@/lib/serverUtils";
+import { algoliasearch } from "algoliasearch";
 
-const elasticApiKey = process.env.ELASTIC_API_KEY;
-if (!elasticApiKey) {
-  throw new Error("ELASTIC_API_KEY environment variable is not defined");
-}
-
-const elasticClient = new Client({
-  node: process.env.ELASTIC_NODE,
-  auth: { apiKey: elasticApiKey },
-  serverMode: "serverless",
-});
+const algoliaClient = algoliasearch(
+  process.env.ALGOLIA_ID!,
+  process.env.ALGOLIA_SEARCH_KEY!
+);
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const user = await checkSession(req);
   const q = searchParams.get("q") || "";
-  const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const limit = parseInt(searchParams.get("limit") || "20", 10) || 20;
   const page = parseInt(searchParams.get("page") || "1", 10);
-  const sort = searchParams.get("sort") || "publishDate desc";
-  const contains = searchParams.get("contains") === "true" ? true : false;
 
-  const must: any[] = [];
-  const filterArr: any[] = [];
-  let queryObj = {};
+  // There is no sorting. You have to create a replicated index in Algolia
+  // const sort = searchParams.get("sort") || "publishDate desc";
 
   if (!user) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 500 });
   }
 
-  for (const [key, value] of searchParams.entries()) {
-    if (key.startsWith("filter.")) {
-      const field = key.substring(7);
-      filterArr.push({
-        match: {
-          [field]: value,
-        },
-      });
-    }
-  }
-
-  if (q) {
-    if (contains) {
-      // "contains" search: approximate infix match using wildcard per term across fields.
-      // Note: This is slower on large datasets and matches within single tokens.
-      // For scalable infix search, add an n-gram subfield and use match on that field.
-      const fields = [
-        "title",
-        "description",
-        "keywords",
-        "categories",
-        "cnNotes",
-        "location",
-        "issuer",
-        "id",
-        "site",
-        "siteId",
-      ];
-      const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-      for (const term of terms) {
-        must.push({
-          bool: {
-            should: fields.map((f) => ({
-              wildcard: {
-                [f]: {
-                  value: `*${term}*`,
-                  case_insensitive: true,
-                },
-              },
-            })),
-            minimum_should_match: 1,
-          },
-        });
-      }
-
-      queryObj = {
-        query: {
-          bool: {
-            must,
-            filter: filterArr,
-          },
-        },
-      };
-    } else {
-      must.push({
-        multi_match: {
-          query: q,
-          fields: [
-            "title",
-            "description",
-            "keywords",
-            "categories",
-            "cnNotes",
-            "location",
-            "issuer",
-            "id",
-            "site",
-            "siteId",
-          ],
-          fuzziness: "AUTO",
-        },
-      });
-      queryObj = {
-        query: {
-          bool: {
-            must,
-            filter: filterArr,
-          },
-        },
-      };
-    }
-  } else if (filterArr.length > 0) {
-    queryObj = {
-      query: {
-        bool: {
-          filter: filterArr,
-        },
+  const resp = await algoliaClient.search({
+    requests: [
+      {
+        indexName: "solicitations",
+        query: q,
+        page: Math.max(0, page - 1), // Algolia pages are 0-based
+        hitsPerPage: limit,
       },
-    };
-  } else {
-    queryObj = {
-      query: {
-        match_all: {},
-      },
-    };
-  }
-
-  const [sortField, sortOrder] = sort.split(" ");
-  const sortObj = {
-    [sortField]: sortOrder || "desc",
-  };
-
-  const result = await elasticClient.search({
-    index: "solicitations",
-    from: (page - 1) * limit,
-    ...(limit > 0 ? { size: limit } : {}),
-    sort: sortObj,
-    ...queryObj,
+    ],
   });
+  const result = resp.results?.[0] as Record<string, any>;
+  const records = result?.hits || [];
+  const total = result?.nbHits || 0;
 
-  return NextResponse.json(result);
+  return NextResponse.json({ results: records, total });
 }

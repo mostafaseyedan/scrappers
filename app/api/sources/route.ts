@@ -7,7 +7,7 @@ import {
   post as firePost,
 } from "@/lib/firebaseAdmin";
 import { source as sourceModel } from "@/app/models";
-import { post as elasticPost } from "@/lib/elastic";
+import { post as algoliaPost } from "@/lib/algolia";
 import { fireToJs } from "@/lib/dataUtils";
 
 const COLLECTION = "sources";
@@ -56,12 +56,7 @@ export async function POST(req: NextRequest) {
 
     const parsedData = sourceModel.schema.db.parse(bodyJson);
     const fireDoc = await firePost(COLLECTION, parsedData, user);
-
-    const elasticDoc = fireToJs(fireDoc);
-    if (elasticDoc.name) elasticDoc.name_semantic = elasticDoc.name;
-    if (elasticDoc.description)
-      elasticDoc.description_semantic = elasticDoc.description;
-    await elasticPost(COLLECTION, fireDoc.id, elasticDoc);
+    await algoliaPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
 
     results = fireDoc;
   } catch (error) {

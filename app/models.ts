@@ -463,8 +463,8 @@ const solicitation: any = {
   },
   count: async ({ ...options }: Partial<GetParams> = {}) =>
     await defaultCalls.count({
-      collection: "solicitations",
       ...options,
+      collection: "solicitations",
     }),
   get: async ({ ...options }: Partial<GetParams> = {}) =>
     await defaultCalls.get({ collection: "solicitations", ...options }),
@@ -618,8 +618,13 @@ const source: any = {
       url: z.string().url().or(z.literal("")).default(""),
     }),
   },
-  get: async ({ collection = "sources", ...options }: GetParams) =>
-    await defaultCalls.get({ collection, ...options }),
+  count: async ({ ...options }: Partial<GetParams> = {}) =>
+    await defaultCalls.count({
+      ...options,
+      collection: "sources",
+    }),
+  get: async (options: GetParams) =>
+    await defaultCalls.get({ ...options, collection: "sources" }),
   getById: async ({ id, ...options }: GetByIdParams) =>
     await defaultCalls.getById({ ...options, collection: "sources", id }),
   getByKey: async ({ key, ...options }: GetByKeyParams) =>
@@ -631,11 +636,11 @@ const source: any = {
       id,
       data,
     }),
-  post: async ({ collection = "sources", data, ...options }: PostParams) =>
+  post: async ({ data, ...options }: PostParams) =>
     await defaultCalls.post({
-      collection,
-      data,
       ...options,
+      collection: "sources",
+      data,
     }),
   remove: async ({ id, ...options }: RemoveParams) =>
     await defaultCalls.remove({ ...options, collection: "sources", id }),

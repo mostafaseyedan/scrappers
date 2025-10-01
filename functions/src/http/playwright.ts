@@ -60,7 +60,7 @@ type Results = {
   [key: string]: any;
 };
 
-const LOCAL = false;
+const LOCAL = true;
 
 export async function runVendor(
   vendor: keyof typeof vendors,
