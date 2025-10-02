@@ -79,14 +79,7 @@ export function Combobox({
     const urlQueryString = queryString.stringify(queryObject);
     const resp = await fetch(`${api}/search?${urlQueryString}`);
     const data = await resp.json();
-    const hits = data.hits?.hits.length ? data.hits.hits : [];
-    let records = hits.length
-      ? hits.map((hit: Record<string, any>) => ({
-          ...hit._source,
-          id: hit._id,
-          viewedBy: hit._source.viewedBy || [],
-        }))
-      : [];
+    let records = data.results || [];
 
     records = records
       .map((record: Record<string, any>) => ({
@@ -147,7 +140,7 @@ export function Combobox({
       const record =
         getBy === "key" ? await getByKey(incoming) : await getById(incoming);
       if (record) {
-        const suggestion = { value: record.value, label: record.label };
+        const suggestion = { value: record.key, label: record.name };
         setSuggestions((prev) => {
           // Avoid duplicates if a race condition occurs
           if (prev.some((s) => s.value === suggestion.value)) return prev;

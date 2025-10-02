@@ -90,6 +90,8 @@ export async function PATCH(
       if (sourceDoc?.name) {
         updateData.issuer = sourceDoc.name;
       }
+    } else {
+      updateData.issuer = "";
     }
 
     const updatedDoc = await patch(COLLECTION, id, updateData);

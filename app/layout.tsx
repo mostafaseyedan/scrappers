@@ -30,6 +30,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const navLinks = [
+  { href: "/solicitations", label: "Solicitations" },
+  { href: "/datasheet", label: "Datasheets" },
+  { href: "/logs", label: "Logs" },
+  { href: "/sources", label: "Sources" },
+  { href: "/changelog", label: "Changelog" },
+];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -107,46 +115,15 @@ export default function RootLayout({
                   <h1>Recon</h1>
 
                   <nav className={styles.layout_nav}>
-                    <Link
-                      href="/solicitations"
-                      data-state={
-                        isActive("/solicitations") ? "active" : undefined
-                      }
-                    >
-                      Solicitations
-                    </Link>
-                    <Link
-                      className="hidden"
-                      href="/contacts"
-                      data-state={isActive("/contacts") ? "active" : undefined}
-                    >
-                      Contacts
-                    </Link>
-                    <Link
-                      href="/logs"
-                      data-state={isActive("/logs") ? "active" : undefined}
-                    >
-                      Logs
-                    </Link>
-                    <Link
-                      className="hidden"
-                      href="/settings"
-                      data-state={isActive("/settings") ? "active" : undefined}
-                    >
-                      Settings
-                    </Link>
-                    <Link
-                      href="/sources"
-                      data-state={isActive("/sources") ? "active" : undefined}
-                    >
-                      Sources
-                    </Link>
-                    <Link
-                      href="/changelog"
-                      data-state={isActive("/changelog") ? "active" : undefined}
-                    >
-                      Changelog
-                    </Link>
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        data-state={isActive(link.href) ? "active" : undefined}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
                   </nav>
                 </div>
               </header>

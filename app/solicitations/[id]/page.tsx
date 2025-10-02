@@ -160,9 +160,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <div className={styles.sol_contentCol}>
               <span className={styles.sol_title}>{sol.title}</span>
               <div className={styles.sol_issuerRow}>
-                <span>{sol.location}</span>
-                <span>/</span>
                 <span>{sol.issuer}</span>
+                <span>/</span>
+                <span>{sol.location}</span>
               </div>
               <div className={styles.sol_sourceRow}>
                 <span>{sol.id}</span>
