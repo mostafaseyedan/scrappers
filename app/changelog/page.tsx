@@ -5,8 +5,11 @@ import styles from "./page.module.scss";
 export default function Page() {
   return (
     <div className={styles.page}>
+      <article id="0.3.0">
+        <h2>0.3.0 - TBA</h2>
+      </article>
       <article id="0.2.0">
-        <h2>0.2.0 - TBA</h2>
+        <h2>0.2.0 - 10/2/2025</h2>
         <ul>
           <li>
             <b>AI</b> AI genkit installed.

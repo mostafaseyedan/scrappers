@@ -51,7 +51,7 @@ export default function RootLayout({
   }, []);
 
   async function getUser(uid: string) {
-    if (usersCache.current[uid]) {
+    if (usersCache.current[uid] !== undefined) {
       return usersCache.current[uid];
     }
 
@@ -59,6 +59,7 @@ export default function RootLayout({
     const json = await response.json();
 
     if (json.error) {
+      usersCache.current[uid] = null;
       console.error("Failed to get user", json.error);
       return;
     }
