@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
+import { getById, patch, put, remove as fireRemove } from "au/server/firebase";
 import {
   remove as algoliaRemove,
   patch as algoliaPatch,

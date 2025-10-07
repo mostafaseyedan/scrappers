@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { app } from "@/lib/firebaseClient";
+import { auth } from "au/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "./layout.module.scss";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -32,7 +32,7 @@ const geistMono = Geist_Mono({
 
 const navLinks = [
   { href: "/solicitations", label: "Solicitations" },
-  { href: "/datasheet", label: "Datasheets" },
+  { href: "/datasheets", label: "Datasheets" },
   { href: "/logs", label: "Logs" },
   { href: "/sources", label: "Sources" },
   { href: "/changelog", label: "Changelog" },
@@ -45,7 +45,6 @@ export default function RootLayout({
 }>) {
   const router = useRouter();
   const pathname = usePathname();
-  const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
   const [, setAuthChecked] = useState(false);
   const usersCache = useRef<Record<string, any>>({});
@@ -77,7 +76,7 @@ export default function RootLayout({
   }
 
   async function logout() {
-    await signOut(getAuth(app));
+    await signOut(auth);
     await fetch("/api/logout");
     router.push("/login");
   }
@@ -105,11 +104,12 @@ export default function RootLayout({
                     height={30}
                   />
                   <a href="https://sales.cendien.com/">Analyze</a>
-                  <a href="https://rag.cendien.com/">RAG Chatbot</a>
-                  <a href="https://reconrfp.cendien.com/">Recon</a>
                   <a href="https://cendien.monday.com/boards/4374039553">
                     Monday
                   </a>
+                  <a href="https://rag.cendien.com/">RAG Chatbot</a>
+                  <a href="https://reconrfp.cendien.com/">Recon</a>
+                  <a href="https://resume.cendien.com/">Resume</a>
                 </div>
                 <div className={styles.layout_header_2ndRow}>
                   <h1>Recon</h1>
@@ -117,6 +117,9 @@ export default function RootLayout({
                   <nav className={styles.layout_nav}>
                     {navLinks.map((link) => (
                       <Link
+                        className={
+                          link.href.startsWith("/datasheets") ? "hidden" : ""
+                        }
                         key={link.href}
                         href={link.href}
                         data-state={isActive(link.href) ? "active" : undefined}

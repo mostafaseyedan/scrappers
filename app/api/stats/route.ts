@@ -5,7 +5,7 @@ import {
   get as fireGet,
   parseQueryString,
   post as firePost,
-} from "@/lib/firebaseAdmin";
+} from "au/server/firebase";
 import { stat as statModel } from "@/app/models";
 
 const COLLECTION = "stats";
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     bodyJson.authorId = user.uid;
 
     const parsedData = statModel.schema.db.parse(bodyJson);
-    const fireDoc = await firePost(COLLECTION, parsedData, user);
+    const fireDoc = await firePost(COLLECTION, parsedData);
 
     results = fireDoc;
   } catch (error) {

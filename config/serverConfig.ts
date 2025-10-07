@@ -1,4 +1,3 @@
-import { Tokens } from "next-firebase-auth-edge/auth";
 import { clientConfig } from "./clientConfig";
 
 export const serverConfig = {
@@ -35,7 +34,12 @@ export const authConfig = {
   experimental_enableTokenRefreshOnExpiredKidHeader: true,
   debug: false, // Enable debug mode to help troubleshoot authentication issues
   // tenantId: clientConfig.tenantId,
-  getMetadata: async (tokens: Tokens) => {
-    return { uid: tokens.decodedToken.uid, timestamp: new Date().getTime() };
+  getMetadata: async (tokens: any) => {
+    const uid =
+      tokens?.decodedToken?.uid ??
+      tokens?.token?.uid ??
+      tokens?.user?.uid ??
+      "";
+    return { uid, timestamp: new Date().getTime() };
   },
 };

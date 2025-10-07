@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { count, get, parseQueryString, post } from "@/lib/server/firebase";
+import { count, get, parseQueryString, post } from "au/server/firebase";
 import { getAuth } from "@/lib/server/auth";
 import { handleApiError } from "@/lib/server/api";
 

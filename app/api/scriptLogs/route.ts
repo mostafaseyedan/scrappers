@@ -5,7 +5,7 @@ import {
   get as fireGet,
   parseQueryString,
   post as firePost,
-} from "@/lib/firebaseAdmin";
+} from "au/server/firebase";
 
 const COLLECTION = "scriptLogs";
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;
 
-    const fireDoc = await firePost(COLLECTION, bodyJson, user);
+    const fireDoc = await firePost(COLLECTION, bodyJson);
 
     results = fireDoc;
   } catch (error) {

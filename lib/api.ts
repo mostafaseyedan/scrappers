@@ -99,7 +99,7 @@ const defaultCalls = {
     if (respData.error) throw new Error(respData.error);
     return true;
   },
-  swr: (url: string, queryOptions: QueryOptions) => {
+  useSWRQuery: (url: string, queryOptions: QueryOptions) => {
     const qs = queryOptions
       ? `?${queryString.stringify(queryOptions, { arrayFormat: "bracket" })}`
       : "";
@@ -205,6 +205,6 @@ export class ApiModel {
   }
 
   swr(queryOptions: QueryOptions) {
-    return defaultCalls.swr(this.getApiUrl(), queryOptions);
+    return defaultCalls.useSWRQuery(this.getApiUrl(), queryOptions);
   }
 }
