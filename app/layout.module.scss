@@ -1,3 +1,8 @@
+.aiChat {
+  height: 100vh;
+  display: none;
+}
+
 .cendienLogo {
   margin-right: 5px;
   width: 30px;
@@ -7,6 +12,7 @@
   font-size: 15px;
   padding: 0;
   padding-bottom: 0;
+  width: 100vw;
 
   &_header {
     :global(h1) {
@@ -47,13 +53,32 @@
   }
 
   &_userBox {
+    display: flex;
+    align-items: top;
     position: absolute;
     top: 10px;
     right: 20px;
+    gap: 10px;
 
     &_avatar {
       width: 50px;
       height: 50px;
     }
+  }
+}
+
+.layoutWrapper {
+  display: flex;
+}
+
+.showRightPanel {
+  .aiChat {
+    border-left: 1px solid #eee;
+    display: block;
+    flex: 0 0 350px;
+  }
+
+  .layout_userBox {
+    right: 370px;
   }
 }

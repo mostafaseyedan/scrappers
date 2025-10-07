@@ -16,7 +16,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
+import { AiChat } from "au/components/AiChat";
+import { BotMessageSquare } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 import "./globals.css";
 
@@ -47,6 +50,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [, setAuthChecked] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(true);
   const usersCache = useRef<Record<string, any>>({});
 
   useEffect(() => {
@@ -90,74 +94,93 @@ export default function RootLayout({
       <html lang="en">
         <title>Cendien Recon</title>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased ${
+            showRightPanel ? styles.showRightPanel : ""
+          }`}
         >
-          <div className={styles.layout}>
-            {user?.uid && !pathname.startsWith("/login") && (
-              <header className={styles.layout_header}>
-                <div className={styles.layout_header_1stRow}>
-                  <Image
-                    src="/cendien_corp_logo.jpg"
-                    alt="logo"
-                    className={styles.cendienLogo}
-                    width={30}
-                    height={30}
-                  />
-                  <a href="https://sales.cendien.com/">Analyze</a>
-                  <a href="https://cendien.monday.com/boards/4374039553">
-                    Monday
-                  </a>
-                  <a href="https://rag.cendien.com/">RAG Chatbot</a>
-                  <a href="https://reconrfp.cendien.com/">Recon</a>
-                  <a href="https://resume.cendien.com/">Resume</a>
-                </div>
-                <div className={styles.layout_header_2ndRow}>
-                  <h1>Recon</h1>
+          <div className={styles.layoutWrapper}>
+            <div className={styles.layout}>
+              {user?.uid && !pathname.startsWith("/login") && (
+                <header className={styles.layout_header}>
+                  <div className={styles.layout_header_1stRow}>
+                    <Image
+                      src="/cendien_corp_logo.jpg"
+                      alt="logo"
+                      className={styles.cendienLogo}
+                      width={30}
+                      height={30}
+                    />
+                    <a href="https://sales.cendien.com/">Analyze</a>
+                    <a href="https://cendien.monday.com/boards/4374039553">
+                      Monday
+                    </a>
+                    <a href="https://rag.cendien.com/">RAG Chatbot</a>
+                    <a href="https://reconrfp.cendien.com/">Recon</a>
+                    <a href="https://resume.cendien.com/">Resume</a>
+                  </div>
+                  <div className={styles.layout_header_2ndRow}>
+                    <h1>Recon</h1>
 
-                  <nav className={styles.layout_nav}>
-                    {navLinks.map((link) => (
-                      <Link
-                        className={
-                          link.href.startsWith("/datasheets") ? "hidden" : ""
-                        }
-                        key={link.href}
-                        href={link.href}
-                        data-state={isActive(link.href) ? "active" : undefined}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
-              </header>
-            )}
-            <main>{children}</main>
-            <footer className={styles.layout_footer}>Cendien Recon</footer>
-            {user?.uid && (
-              <div className={styles.layout_userBox}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
-                    <Avatar className={styles.layout_userBox_avatar}>
-                      <AvatarImage />
-                      <AvatarFallback></AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className={styles.layout_userBoxContent}
-                    align="end"
+                    <nav className={styles.layout_nav}>
+                      {navLinks.map((link) => (
+                        <Link
+                          className={
+                            link.href.startsWith("/datasheets") ? "hidden" : ""
+                          }
+                          key={link.href}
+                          href={link.href}
+                          data-state={
+                            isActive(link.href) ? "active" : undefined
+                          }
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+                </header>
+              )}
+              <main className={styles.layout_main}>{children}</main>
+              <footer className={styles.layout_footer}>Cendien Recon</footer>
+              {user?.uid && (
+                <div className={styles.layout_userBox}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setShowRightPanel(!showRightPanel)}
                   >
-                    <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={logout}>
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-            <Toaster />
+                    <BotMessageSquare />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className={styles.layout_userBoxTrigger}
+                    >
+                      <Avatar className={styles.layout_userBox_avatar}>
+                        <AvatarImage />
+                        <AvatarFallback></AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className={styles.layout_userBoxContent}
+                      align="end"
+                    >
+                      <DropdownMenuItem
+                        onSelect={() => router.push("/settings")}
+                      >
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={logout}>
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </div>
+            <AiChat className={styles.aiChat} />
           </div>
+
+          <Toaster />
         </body>
       </html>
     </UserContext.Provider>
