@@ -12,6 +12,7 @@
   font-size: 15px;
   padding: 0;
   padding-bottom: 0;
+  flex: 1;
   width: 100vw;
 
   &_header {
@@ -76,9 +77,14 @@
     border-left: 1px solid #eee;
     display: block;
     flex: 0 0 350px;
+    width: 350px;
   }
 
-  .layout_userBox {
-    right: 370px;
+  .layout {
+    width: calc(100vw - 350px);
+
+    &_userBox {
+      right: 370px;
+    }
   }
 }
