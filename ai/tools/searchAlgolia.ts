@@ -8,11 +8,8 @@ const handler = (ai: any) =>
       description:
         "Searches an Algolia index and returns top matching records for grounding factual answers.",
       inputSchema: z.object({
-        index: z
-          .string()
-          .default("solicitations")
-          .describe("Algolia index name"),
-        query: z.string().describe("User query to search"),
+        index: z.string().describe("Algolia index name"),
+        query: z.string().describe("User query to search").optional(),
         filters: z.string().optional().describe("Algolia filters expression"),
       }),
       outputSchema: z.object({

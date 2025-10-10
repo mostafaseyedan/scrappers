@@ -13,7 +13,7 @@ const handler = (ai) => {
       description: "Search for solicitations",
       params: { sort: { type: "string" } },
       system:
-        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to find relevant solicitations based on user queries with index=solicitations.",
+        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to get a list of solicitations (query is optional) with index=solicitations. List solicitations with fields: titles, issuer, location, closingDate, publishDate and id. Format the results as a nice list.",
       tools: [searchAlgoliaTool],
     },
     search_or_list_sources: {
@@ -22,7 +22,7 @@ const handler = (ai) => {
       description: "Search for sources",
       params: { sort: { type: "string" } },
       system:
-        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to find relevant sources based on user queries with index=sources.",
+        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to get a list of sources (query is optional) with index=sources. List sources with fields: names, type and id. Format the results as a nice list.",
       tools: [searchAlgoliaTool],
     },
     other: {
