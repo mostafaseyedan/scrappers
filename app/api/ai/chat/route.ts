@@ -1,25 +1,28 @@
 import { genkit } from "genkit/beta";
 import { googleAI } from "@genkit-ai/google-genai";
 import { NextRequest, NextResponse } from "next/server";
+import determineIntent from "@/ai/flows/determineIntent";
+
+const model = googleAI.model("gemini-2.0-flash");
 
 const ai = genkit({
   plugins: [googleAI({ apiKey: process.env.GEMINI_KEY })],
-  model: googleAI.model("gemini-2.5-pro"),
+  model,
 });
+
+const determineIntentFlow = determineIntent(ai);
 
 export const POST = async (request: NextRequest) => {
   const { message } = await request.json();
-  const chat = ai.chat({
-    system: "You are a helpful assistant.",
-  });
+
+  const intent = await determineIntentFlow({ inputMessage: message });
+  const chat = ai.chat({ system: intent.system, tools: intent.tools });
   const response = await chat.send(message);
-  let responseMessage;
+  const responseMessage =
+    response.message?.content?.[0]?.text ||
+    "I'm sorry, I didn't understand that.";
 
-  if (!response.message?.content?.[0]?.text) {
-    responseMessage = "I'm sorry, I didn't understand that.";
-  } else {
-    responseMessage = response.message.content[0].text;
-  }
+  console.log({ intent });
 
-  return NextResponse.json({ response: responseMessage });
+  return NextResponse.json({ response: responseMessage, intent });
 };

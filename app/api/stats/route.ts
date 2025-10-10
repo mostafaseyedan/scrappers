@@ -46,6 +46,11 @@ export async function POST(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
+    if (typeof bodyJson?.startDate == "string")
+      bodyJson.startDate = new Date(bodyJson.startDate);
+    if (typeof bodyJson?.endDate == "string")
+      bodyJson.endDate = new Date(bodyJson.endDate);
+
     bodyJson.created = new Date().toISOString();
     bodyJson.updated = new Date().toISOString();
     bodyJson.authorId = user.uid;

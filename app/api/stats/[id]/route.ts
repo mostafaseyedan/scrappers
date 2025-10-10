@@ -60,6 +60,11 @@ export async function PATCH(
   let results;
   let status = 200;
 
+  if (typeof updateData?.startDate == "string")
+    updateData.startDate = new Date(updateData.startDate);
+  if (typeof updateData?.endDate == "string")
+    updateData.endDate = new Date(updateData.endDate);
+
   try {
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);

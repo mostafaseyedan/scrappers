@@ -20,6 +20,12 @@ import { AiChat } from "au/components/AiChat";
 import { BotMessageSquare } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { chat as chatModel } from "@/app/models2";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 import "./globals.css";
 
@@ -98,8 +104,11 @@ export default function RootLayout({
             showRightPanel ? styles.showRightPanel : ""
           }`}
         >
-          <div className={styles.layoutWrapper}>
-            <div className={styles.layout}>
+          <ResizablePanelGroup
+            className={styles.layoutWrapper}
+            direction="horizontal"
+          >
+            <ResizablePanel className={styles.layout}>
               {user?.uid && !pathname.startsWith("/login") && (
                 <header className={styles.layout_header}>
                   <div className={styles.layout_header_1stRow}>
@@ -176,10 +185,12 @@ export default function RootLayout({
                   </DropdownMenu>
                 </div>
               )}
-            </div>
-            <AiChat className={styles.aiChat} />
-          </div>
-
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel className={styles.aiChat}>
+              <AiChat chatKey="aiChat" model={chatModel} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
           <Toaster />
         </body>
       </html>

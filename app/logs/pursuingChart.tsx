@@ -55,8 +55,6 @@ function generateChartData(
     dailyStats[dayStr] += dailyStats[dayStr];
   }
 
-  console.log({ dailyStats });
-
   for (const [dateStr, count] of Object.entries(dailyStats)) {
     data.push({
       date: $d(dateStr, "M/dd"),
@@ -91,7 +89,6 @@ const PursuingChart = () => {
 
     if (statData.results?.length) {
       const { data } = generateChartData(statData.results, endDate, days);
-      console.log({ data });
       setChartData(data);
     }
   }

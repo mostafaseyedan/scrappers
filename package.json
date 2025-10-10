@@ -63,6 +63,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.60.0",
     "react-loading-hook": "^1.1.2",
+    "react-resizable-panels": "^3.0.6",
     "recharts": "2.15.4",
     "require-in-the-middle": "^7.5.2",
     "sass": "^1.89.2",
@@ -72,7 +73,7 @@
     "tsx": "^4.20.3",
     "url-join": "^5.0.0",
     "use-debounce": "^10.0.5",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

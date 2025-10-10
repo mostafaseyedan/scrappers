@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { count, get, parseQueryString, post } from "au/server/firebase";
-import { getAuth } from "@/lib/server/auth";
+import {
+  count,
+  get,
+  getById,
+  parseQueryString,
+  post,
+} from "au/server/firebase";
+import { getAuth } from "au/server/auth";
 import { handleApiError } from "@/lib/server/api";
 
 type Params = {
@@ -15,7 +21,7 @@ export async function GET(
 ) {
   const _params = await params;
   const { model, id, submodel } = _params;
-  const dbPath = `${model}/${id}/${submodel}`;
+  let dbPath = `${model}/${id}/${submodel}`;
   const queryOptions = parseQueryString(req.url);
   let results: Record<string, any> = { params: _params };
   let status = 200;
@@ -23,6 +29,12 @@ export async function GET(
   try {
     const tokens = await getAuth(req);
     if (!tokens) throw new Error("Not authenticated");
+
+    if (id.startsWith("k_")) {
+      const parentDoc = await getById(model, id);
+      dbPath = `${model}/${parentDoc.id}/${submodel}`;
+    }
+
     results.records = await get(dbPath, queryOptions);
     results.totalRecords = await count(dbPath, queryOptions);
   } catch (error: any) {
@@ -38,7 +50,7 @@ export async function POST(
 ) {
   const _params = await params;
   const { model, id, submodel } = _params;
-  const dbPath = `${model}/${id}/${submodel}`;
+  let dbPath = `${model}/${id}/${submodel}`;
   const { body } = req;
   const doc = await new NextResponse(body).json();
   let results;
@@ -47,6 +59,11 @@ export async function POST(
   try {
     const tokens = await getAuth(req);
     if (!tokens) throw new Error("Not authenticated");
+
+    if (id.startsWith("k_")) {
+      const parentDoc = await getById(model, id);
+      dbPath = `${model}/${parentDoc.id}/${submodel}`;
+    }
 
     doc.authorId = tokens.decodedToken.uid;
 
