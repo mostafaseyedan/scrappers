@@ -12,8 +12,21 @@ const handler = (ai) => {
       name: "search or list solicitations",
       description: "Search for solicitations",
       params: { sort: { type: "string" } },
-      system:
-        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to get a list of solicitations (query is optional) with index=solicitations. List solicitations with fields: titles, issuer, location, closingDate, publishDate and id. Format the results as a nice list.",
+      system: `
+        You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to get a list of solicitations (query is optional) with index=solicitations. 
+        
+        List solicitations with fields: 
+          - title (make this a clickable link to /solicitations/{id})
+          - issuer (possible this is empty) 
+          - location (possible this is empty)
+          - id
+          - site (make this a clickable link to siteUrl)
+          - closingDate (possible this is empty)
+          - publishDate (possible this is empty)
+          - created 
+        
+        Format the results as a nice list.
+        `,
       tools: [searchAlgoliaTool],
     },
     search_or_list_sources: {
@@ -21,8 +34,16 @@ const handler = (ai) => {
       name: "search or list sources",
       description: "Search for sources",
       params: { sort: { type: "string" } },
-      system:
-        "You are a helpful assistant for searching solicitations. Use the searchAlgolia tool to get a list of sources (query is optional) with index=sources. List sources with fields: names, type and id. Format the results as a nice list.",
+      system: `
+        You are a helpful assistant for searching sources. Use the searchAlgolia tool to get a list of sources (query is optional) with index=sources. 
+        
+        List sources with fields: 
+          - names
+          - type
+          - id
+        
+        Format the results as a nice list.
+        `,
       tools: [searchAlgoliaTool],
     },
     other: {

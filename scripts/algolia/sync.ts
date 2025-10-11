@@ -1,4 +1,7 @@
+// pnpm tsx scripts/algolia/sync.ts --index=sources
+
 import "dotenv/config";
+import { sanitize } from "@/lib/algolia";
 import { algoliasearch } from "algoliasearch";
 import { solicitation as solModel, source as sourceModel } from "@/app/models";
 
@@ -40,7 +43,8 @@ async function upsertSource(rec: any) {
     return { status: "skipped" as const };
   }
 
-  const payload = { ...rec, objectID };
+  const payload = sanitize({ ...rec, objectID });
+  // console.log({ payload });
 
   try {
     // Check if object exists
@@ -89,9 +93,7 @@ async function run() {
     if ((sources as any).results) {
       const records: any[] = (sources as any).results;
 
-      const results = await Promise.allSettled(
-        records.map((r) => upsertSource(r))
-      );
+      await Promise.allSettled(records.map((r) => upsertSource(r)));
 
       page++;
       currentIndex += records.length;

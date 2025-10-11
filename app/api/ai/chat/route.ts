@@ -17,9 +17,12 @@ export const POST = async (request: NextRequest) => {
 
   const intent = await determineIntentFlow({ inputMessage: message });
   const chat = ai.chat({ system: intent.system, tools: intent.tools });
-  const response = await chat.send(message);
+  const response = await chat.send(message).catch((err) => {
+    console.error("AI chat error:", err);
+  });
+
   const responseMessage =
-    response.message?.content?.[0]?.text ||
+    response?.message?.content?.[0]?.text ||
     "I'm sorry, I didn't understand that.";
 
   console.log({ intent });
