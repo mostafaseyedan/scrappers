@@ -25,7 +25,5 @@ export const POST = async (request: NextRequest) => {
     response?.message?.content?.[0]?.text ||
     "I'm sorry, I didn't understand that.";
 
-  console.log({ intent });
-
   return NextResponse.json({ response: responseMessage, intent });
 };

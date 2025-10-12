@@ -16,11 +16,7 @@ const handler = (ai: any) =>
           .optional()
           .default("")
           .describe("User query to search"),
-        filters: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Algolia filters expression"),
+        filters: z.string().nullable().describe("Algolia filters").optional(),
       }),
       outputSchema: z.object({
         hits: z.array(z.record(z.any())),
@@ -28,19 +24,19 @@ const handler = (ai: any) =>
       }),
     },
     async (input: any) => {
+      console.log("searchAlgolia input:", input);
+
       const client = algoliasearch(
         process.env.ALGOLIA_ID!,
         process.env.ALGOLIA_SEARCH_KEY!
       );
-      const query = typeof input.query === "string" ? input.query : "";
-      const filters =
-        typeof input.filters === "string" ? input.filters : undefined;
       const resp = await client.search({
         requests: [
           {
             indexName: input.index,
-            query,
-            ...(filters ? { params: { filters } } : {}),
+            query: input.query || "",
+            filters: input.filters || "",
+            hitsPerPage: 10,
           },
         ],
       });
