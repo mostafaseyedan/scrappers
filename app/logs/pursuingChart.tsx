@@ -70,7 +70,7 @@ function generateChartData(
 
 const PursuingChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState<number>(60);
 
   async function refresh() {
     const startDate = subDays(new Date(), days);

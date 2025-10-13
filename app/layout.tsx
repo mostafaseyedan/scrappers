@@ -49,6 +49,26 @@ const navLinks = [
 
 const publicPaths = ["/login", "/register", "/reset-password"];
 
+function getLocal(key: string, defaultValue?: any) {
+  if (typeof window !== "undefined") {
+    const value = localStorage.getItem(key);
+    if (value) {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        console.error("Failed to parse localStorage item", key, e);
+      }
+    }
+  }
+  return defaultValue;
+}
+
+function setLocal(key: string, value: any) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -59,18 +79,53 @@ export default function RootLayout({
   const [user, setUser] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const usersCache = useRef<Record<string, any>>({});
-  const [showRightPanel, setShowRightPanel] = useState(false);
   const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
+  const [showChatPanel, setShowChatPanel] = useState(false);
+  const loadedRef = useRef(false);
+  const [panelSizes, setPanelSizes] = useState([100, 100]);
 
-  // Update right panel visibility when route changes between public/protected
+  const handleLayout = (sizes: number[]) => {
+    if (showChatPanel && sizes.length === 2) {
+      setPanelSizes(sizes);
+    }
+  };
+
+  // Update local storage when saved state changes
   useEffect(() => {
-    setShowRightPanel(!isPublic);
-  }, [isPublic]);
+    if (loadedRef.current) {
+      setLocal("layout.showChatPanel", showChatPanel);
+    }
+  }, [showChatPanel]);
+
+  // Save panel sizes
+  useEffect(() => {
+    if (
+      !isPublic &&
+      loadedRef.current &&
+      showChatPanel &&
+      panelSizes.length === 2
+    ) {
+      setLocal("layout.panelSizes", panelSizes);
+    }
+  }, [panelSizes, showChatPanel]);
 
   // Subscribe to Firebase auth once on mount
   useEffect(() => {
+    const localShowChatPanel = getLocal("layout.showChatPanel");
+    if (localShowChatPanel !== undefined) setShowChatPanel(localShowChatPanel);
+
+    const localPanelSizes = getLocal("layout.panelSizes");
+    if (
+      localPanelSizes &&
+      Array.isArray(localPanelSizes) &&
+      localPanelSizes.length === 2
+    ) {
+      setPanelSizes(localPanelSizes);
+    }
+
+    loadedRef.current = true;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("Auth state changed:", user);
       setUser(user);
       setAuthChecked(true);
     });
@@ -115,14 +170,18 @@ export default function RootLayout({
         <title>Cendien Recon</title>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased ${
-            showRightPanel ? styles.showRightPanel : ""
+            showChatPanel ? styles.showChatPanel : ""
           }`}
         >
           <ResizablePanelGroup
             className={styles.layoutWrapper}
             direction="horizontal"
+            onLayout={handleLayout}
           >
-            <ResizablePanel className={styles.layout} defaultSize={100}>
+            <ResizablePanel
+              className={styles.layout}
+              defaultSize={panelSizes[0]}
+            >
               {!isPublic && (
                 <header className={styles.layout_header}>
                   <div className={styles.layout_header_1stRow}>
@@ -171,13 +230,13 @@ export default function RootLayout({
               {user?.uid && (
                 <div className={styles.layout_userBox}>
                   <Button
-                    className={showRightPanel ? styles.closeChat_active : ""}
+                    className={showChatPanel ? styles.closeChat_active : ""}
                     size="sm"
                     variant="ghost"
-                    onClick={() => setShowRightPanel(!showRightPanel)}
+                    onClick={() => setShowChatPanel(!showChatPanel)}
                   >
                     <BotMessageSquare />
-                    {showRightPanel ? <X /> : ""}
+                    {showChatPanel ? <X /> : ""}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -205,10 +264,13 @@ export default function RootLayout({
                 </div>
               )}
             </ResizablePanel>
-            {showRightPanel && (
+            {!isPublic && showChatPanel && (
               <>
                 <ResizableHandle />
-                <ResizablePanel className={styles.aiChat} defaultSize={100}>
+                <ResizablePanel
+                  className={styles.aiChat}
+                  defaultSize={panelSizes[1]}
+                >
                   <AiChat chatKey="aiChat" model={chatModel} />
                 </ResizablePanel>
               </>
