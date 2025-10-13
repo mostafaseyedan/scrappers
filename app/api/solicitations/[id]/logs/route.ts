@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { get, getById, post } from "@/lib/firebaseAdmin";
+import { get, getById, post } from "au/server/firebase";
 import { checkSession } from "@/lib/serverUtils";
 
 const COLLECTION = "solicitations";
@@ -48,13 +48,14 @@ export async function POST(
     const sol = await getById(COLLECTION, id);
     if (!sol) throw new Error(`Parent record from ${COLLECTION} not found`);
 
+    sol.authorId = user.uid;
+
     //const countData = { commentsCount: (sol.commentsCount || 0) + 1 };
     //await patch(COLLECTION, id, { ...countData });
     //await elasticPatch(COLLECTION, id, { ...countData });
 
     results =
-      (await post(`${COLLECTION}/${id}/${SUBCOLLECTION}`, updateData, user)) ||
-      {};
+      (await post(`${COLLECTION}/${id}/${SUBCOLLECTION}`, updateData)) || {};
   } catch (error) {
     console.error(`Error creating in ${SUBCOLLECTION}`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);

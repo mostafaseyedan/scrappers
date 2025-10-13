@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { initAuth } from "@/lib/firebaseAdmin";
+import { auth } from "au/server/firebase";
 import { z } from "zod";
 
-const auth = initAuth();
 const COLLECTION = "users";
 
 const patchSchema = z.object({

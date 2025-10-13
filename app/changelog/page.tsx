@@ -7,6 +7,20 @@ export default function Page() {
     <div className={styles.page}>
       <article id="0.3.0">
         <h2>0.3.0 - TBA</h2>
+        <ul>
+          <li>
+            <b>AI</b> AiChat installed. Available commands are to get
+            solicitations, sources, and other.
+          </li>
+          <li>
+            <b>Core</b> Libraries have been synced. Auth and database mostly
+            share a singular library.
+          </li>
+          <li>
+            <b>Algolia</b> Default sort is created desc. Filtering is enabled
+            now for certian facet fields.
+          </li>
+        </ul>
       </article>
       <article id="0.2.0">
         <h2>0.2.0 - 10/2/2025</h2>

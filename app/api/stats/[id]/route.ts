@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getById, patch, put, remove as fireRemove } from "@/lib/firebaseAdmin";
+import { getById, patch, put, remove as fireRemove } from "au/server/firebase";
 import { checkSession } from "@/lib/serverUtils";
 
 const COLLECTION = "stats";
@@ -59,6 +59,11 @@ export async function PATCH(
   const user = await checkSession(req);
   let results;
   let status = 200;
+
+  if (typeof updateData?.startDate == "string")
+    updateData.startDate = new Date(updateData.startDate);
+  if (typeof updateData?.endDate == "string")
+    updateData.endDate = new Date(updateData.endDate);
 
   try {
     if (!user) throw new Error("Unauthenticated");

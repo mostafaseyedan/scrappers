@@ -17,7 +17,7 @@ import { PasswordForm } from "@/components/uiAuth/PasswordForm";
 import { PasswordFormValue } from "@/components/uiAuth/PasswordForm/PasswordForm";
 import { Switch } from "@/components/uiAuth/Switch/Switch";
 import { LoadingIcon } from "@/components/uiAuth/icons";
-import { getFirebaseAuth } from "../auth/firebase";
+import { auth } from "au/firebase";
 import { appendRedirectParam } from "../shared/redirect";
 import { useRedirectAfterLogin } from "../shared/useRedirectAfterLogin";
 import { useRedirectParam } from "../shared/useRedirectParam";
@@ -29,8 +29,6 @@ import {
 } from "./firebase";
 import Image from "next/image";
 import styles from "./login.module.css";
-
-const auth = getFirebaseAuth();
 
 export function LoginPage({
   loginAction,
@@ -53,8 +51,6 @@ export function LoginPage({
     useLoadingCallback(async ({ email, password }: PasswordFormValue) => {
       setHasLogged(false);
 
-      const auth = getFirebaseAuth();
-
       if (shouldLoginWithAction) {
         startTransition(() => loginAction(email, password));
       } else {
@@ -69,10 +65,7 @@ export function LoginPage({
   const [handleLoginWithGoogle, , googleError] = useLoadingCallback(
     async () => {
       setHasLogged(false);
-
-      const auth = getFirebaseAuth();
       await handleLogin(await loginWithProvider(auth, getGoogleProvider(auth)));
-
       setHasLogged(true);
     }
   );
@@ -80,22 +73,16 @@ export function LoginPage({
   const [handleLoginWithGoogleUsingRedirect, , googleUsingRedirectError] =
     useLoadingCallback(async () => {
       setHasLogged(false);
-
-      const auth = getFirebaseAuth();
       await loginWithProviderUsingRedirect(auth, getGoogleProvider(auth));
-
       setHasLogged(true);
     });
 
   const [handleLoginWithMicrosoft, , microsoftError] = useLoadingCallback(
     async () => {
       setHasLogged(false);
-
-      const auth = getFirebaseAuth();
       await handleLogin(
         await loginWithProvider(auth, getMicrosoftProvider(auth))
       );
-
       setHasLogged(true);
     }
   );
@@ -103,10 +90,7 @@ export function LoginPage({
   const [handleLoginWithMicrosoftUsingRedirect, , microsoftUsingRedirectError] =
     useLoadingCallback(async () => {
       setHasLogged(false);
-
-      const auth = getFirebaseAuth();
       await loginWithProviderUsingRedirect(auth, getMicrosoftProvider(auth));
-
       setHasLogged(true);
     });
 
@@ -115,7 +99,6 @@ export function LoginPage({
 
     if (credential?.user) {
       await handleLogin(credential);
-
       setHasLogged(true);
     }
   }
@@ -126,7 +109,6 @@ export function LoginPage({
 
   const [handleLoginWithEmailLink, , emailLinkError] = useLoadingCallback(
     async () => {
-      const auth = getFirebaseAuth();
       const email = window.prompt("Please provide your email");
 
       if (!email) {
@@ -143,7 +125,6 @@ export function LoginPage({
   );
 
   async function handleLoginWithEmailLinkCallback() {
-    const auth = getFirebaseAuth();
     if (!isSignInWithEmailLink(auth, window.location.href)) {
       return;
     }

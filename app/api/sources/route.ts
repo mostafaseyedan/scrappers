@@ -5,7 +5,7 @@ import {
   get as fireGet,
   parseQueryString,
   post as firePost,
-} from "@/lib/firebaseAdmin";
+} from "au/server/firebase";
 import { source as sourceModel } from "@/app/models";
 import { post as algoliaPost } from "@/lib/algolia";
 import { fireToJs } from "@/lib/dataUtils";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     bodyJson.authorId = user.uid;
 
     const parsedData = sourceModel.schema.db.parse(bodyJson);
-    const fireDoc = await firePost(COLLECTION, parsedData, user);
+    const fireDoc = await firePost(COLLECTION, parsedData);
     await algoliaPost(COLLECTION, fireDoc.id, fireToJs(fireDoc));
 
     results = fireDoc;

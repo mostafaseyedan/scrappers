@@ -29,7 +29,7 @@ async function main() {
     baseUrl: BASE_URL,
     limit: 1000,
     // filter: { cnStatus: "new" },
-    token: process.env.DEV_API_TOKEN,
+    token: process.env.DEV_TOKEN,
   });
 
   if (sols.error) console.error(sols.error);

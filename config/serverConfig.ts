@@ -1,4 +1,3 @@
-import { Tokens } from "next-firebase-auth-edge/auth";
 import { clientConfig } from "./clientConfig";
 
 export const serverConfig = {
@@ -32,10 +31,15 @@ export const authConfig = {
   enableMultipleCookies: true,
   // Set to false if you're not planning to use `signInWithCustomToken` Firebase Client SDK method
   enableCustomToken: false,
-  experimental_enableTokenRefreshOnExpiredKidHeader: true,
+  enableTokenRefreshOnExpiredKidHeader: true,
   debug: false, // Enable debug mode to help troubleshoot authentication issues
   // tenantId: clientConfig.tenantId,
-  getMetadata: async (tokens: Tokens) => {
-    return { uid: tokens.decodedToken.uid, timestamp: new Date().getTime() };
+  getMetadata: async (tokens: any) => {
+    const uid =
+      tokens?.decodedToken?.uid ??
+      tokens?.token?.uid ??
+      tokens?.user?.uid ??
+      "";
+    return { uid, timestamp: new Date().getTime() };
   },
 };

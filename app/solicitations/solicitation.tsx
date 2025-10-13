@@ -121,9 +121,9 @@ const Solicitation = ({
           {sol.title}
         </Link>
         <div className={styles.sol_issuerRow}>
-          <span>{sol.location}</span>
-          <span>/</span>
           <span>{sol.issuer}</span>
+          <span>/</span>
+          <span>{sol.location}</span>
           <a href={sol.siteUrl} target="_blank">
             {sol.site}
           </a>

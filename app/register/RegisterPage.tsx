@@ -7,7 +7,6 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import Link from "next/link";
-import { getFirebaseAuth } from "../auth/firebase";
 import { Button } from "@/components/uiAuth/Button";
 import { MainTitle } from "@/components/uiAuth/MainTitle";
 import { PasswordForm } from "@/components/uiAuth/PasswordForm";
@@ -18,6 +17,7 @@ import { useRedirectParam } from "@/app/shared/useRedirectParam";
 import styles from "./register.module.css";
 import { useRedirectAfterLogin } from "@/app/shared/useRedirectAfterLogin";
 import { loginWithCredential } from "@/app/api";
+import { auth } from "au/firebase";
 
 export function RegisterPage() {
   const [hasLogged, setHasLogged] = React.useState(false);
@@ -27,7 +27,6 @@ export function RegisterPage() {
   const [registerWithEmailAndPassword, isRegisterLoading, error] =
     useLoadingCallback(async ({ email, password }: PasswordFormValue) => {
       setHasLogged(false);
-      const auth = getFirebaseAuth();
       const credential = await createUserWithEmailAndPassword(
         auth,
         email,

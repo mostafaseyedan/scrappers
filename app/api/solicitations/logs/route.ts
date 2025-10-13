@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import {
   countColGroup,
-  initDb,
+  db,
   normalizeDoc,
   parseQueryString,
-} from "@/lib/firebaseAdmin";
+} from "au/server/firebase";
 
 const COLLECTION = "solicitations";
-const db = initDb();
 
 export async function GET(req: NextRequest) {
   const user = await checkSession(req);

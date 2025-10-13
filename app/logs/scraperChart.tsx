@@ -103,7 +103,7 @@ function generateChartData(
 const ScraperChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
   const [vendors, setVendors] = useState<string[]>([]);
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState<number>(60);
 
   async function refresh() {
     const startDate = subDays(new Date(), days);

@@ -22,6 +22,8 @@
 
 .page {
   padding: 0 20px;
+  height: calc(100vh - 95px);
+  overflow-y: auto;
 }
 
 .sourceItem {

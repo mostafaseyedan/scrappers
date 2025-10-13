@@ -1,6 +1,6 @@
-import {createContext, useContext} from 'react';
-import {UserInfo} from 'firebase/auth';
-import {Claims} from 'next-firebase-auth-edge/lib/auth/claims';
+import { createContext, useContext } from "react";
+import { UserInfo } from "firebase/auth";
+import { Claims } from "next-firebase-auth-edge/lib/auth/claims";
 
 export interface Metadata {
   uid: string;
@@ -20,7 +20,7 @@ export interface AuthContextValue {
 }
 
 export const AuthContext = createContext<AuthContextValue>({
-  user: null
+  user: null,
 });
 
 export const useAuth = () => useContext(AuthContext);

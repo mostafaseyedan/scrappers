@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { app } from "@/lib/firebaseClient";
+import { auth } from "au/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "./layout.module.scss";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -16,7 +16,16 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
+import { AiChat } from "au/components/AiChat";
+import { BotMessageSquare, X } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { chat as chatModel } from "@/app/models2";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 import "./globals.css";
 
@@ -30,6 +39,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const navLinks = [
+  { href: "/solicitations", label: "Solicitations" },
+  { href: "/datasheets", label: "Datasheets" },
+  { href: "/logs", label: "Logs" },
+  { href: "/sources", label: "Sources" },
+  { href: "/changelog", label: "Changelog" },
+];
+
+const publicPaths = ["/login", "/register", "/reset-password"];
+
+function getLocal(key: string, defaultValue?: any) {
+  if (typeof window !== "undefined") {
+    const value = localStorage.getItem(key);
+    if (value) {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        console.error("Failed to parse localStorage item", key, e);
+      }
+    }
+  }
+  return defaultValue;
+}
+
+function setLocal(key: string, value: any) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,16 +76,61 @@ export default function RootLayout({
 }>) {
   const router = useRouter();
   const pathname = usePathname();
-  const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
-  const [, setAuthChecked] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [showChatPanel, setShowChatPanel] = useState(false);
+  const [panelSizes, setPanelSizes] = useState([100, 100]);
+  const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
+  const loadedRef = useRef(false);
   const usersCache = useRef<Record<string, any>>({});
 
+  // Update local storage when saved state changes
   useEffect(() => {
+    if (loadedRef.current) {
+      setLocal("layout.showChatPanel", showChatPanel);
+    }
+  }, [showChatPanel]);
+
+  // Save panel sizes
+  useEffect(() => {
+    if (
+      !isPublic &&
+      loadedRef.current &&
+      showChatPanel &&
+      panelSizes.length === 2
+    ) {
+      setLocal("layout.panelSizes", panelSizes);
+    }
+  }, [panelSizes, showChatPanel]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (authChecked && !user && !isPublic) {
+      logout();
+    }
+  }, [authChecked, user, isPublic, router]);
+
+  // Subscribe to Firebase auth once on mount
+  useEffect(() => {
+    const localShowChatPanel = getLocal("layout.showChatPanel");
+    if (localShowChatPanel !== undefined) setShowChatPanel(localShowChatPanel);
+
+    const localPanelSizes = getLocal("layout.panelSizes");
+    if (
+      localPanelSizes &&
+      Array.isArray(localPanelSizes) &&
+      localPanelSizes.length === 2
+    ) {
+      setPanelSizes(localPanelSizes);
+    }
+
+    loadedRef.current = true;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setAuthChecked(true);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -68,10 +152,13 @@ export default function RootLayout({
     return json;
   }
 
-  async function logout() {
-    await signOut(getAuth(app));
-    await fetch("/api/logout");
-    router.push("/login");
+  function logout() {
+    setUser(null); // Optimistic update
+    router.push("/login"); // Immediate redirect
+
+    // Perform logout operations in the background
+    signOut(auth).catch(console.error);
+    fetch("/api/logout").catch(console.error);
   }
 
   function isActive(path: string) {
@@ -83,101 +170,118 @@ export default function RootLayout({
       <html lang="en">
         <title>Cendien Recon</title>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased ${
+            showChatPanel ? styles.showChatPanel : ""
+          }`}
         >
-          <div className={styles.layout}>
-            {user?.uid && !pathname.startsWith("/login") && (
-              <header className={styles.layout_header}>
-                <div className={styles.layout_header_1stRow}>
-                  <Image
-                    src="/cendien_corp_logo.jpg"
-                    alt="logo"
-                    className={styles.cendienLogo}
-                    width={30}
-                    height={30}
-                  />
-                  <a href="https://sales.cendien.com/">Analyze</a>
-                  <a href="https://rag.cendien.com/">RAG Chatbot</a>
-                  <a href="https://reconrfp.cendien.com/">Recon</a>
-                  <a href="https://cendien.monday.com/boards/4374039553">
-                    Monday
-                  </a>
-                </div>
-                <div className={styles.layout_header_2ndRow}>
-                  <h1>Recon</h1>
+          <ResizablePanelGroup
+            className={styles.layoutWrapper}
+            direction="horizontal"
+            onLayout={(sizes: number[]) => {
+              if (showChatPanel && sizes.length === 2) {
+                setPanelSizes(sizes);
+              }
+            }}
+          >
+            <ResizablePanel
+              className={styles.layout}
+              defaultSize={panelSizes[0]}
+            >
+              {!isPublic && (
+                <header className={styles.layout_header}>
+                  <div className={styles.layout_header_1stRow}>
+                    <Image
+                      src="/cendien_corp_logo.jpg"
+                      alt="logo"
+                      className={styles.cendienLogo}
+                      width={30}
+                      height={30}
+                    />
+                    <a href="https://sales.cendien.com/">Analyze</a>
+                    <a href="https://cendien.monday.com/boards/4374039553">
+                      Monday
+                    </a>
+                    <a href="https://rag.cendien.com/">RAG Chatbot</a>
+                    <a href="https://reconrfp.cendien.com/">Recon</a>
+                    <a href="https://resume.cendien.com/">Resume</a>
+                  </div>
+                  <div className={styles.layout_header_2ndRow}>
+                    <h1>Recon</h1>
 
-                  <nav className={styles.layout_nav}>
-                    <Link
-                      href="/solicitations"
-                      data-state={
-                        isActive("/solicitations") ? "active" : undefined
-                      }
-                    >
-                      Solicitations
-                    </Link>
-                    <Link
-                      className="hidden"
-                      href="/contacts"
-                      data-state={isActive("/contacts") ? "active" : undefined}
-                    >
-                      Contacts
-                    </Link>
-                    <Link
-                      href="/logs"
-                      data-state={isActive("/logs") ? "active" : undefined}
-                    >
-                      Logs
-                    </Link>
-                    <Link
-                      className="hidden"
-                      href="/settings"
-                      data-state={isActive("/settings") ? "active" : undefined}
-                    >
-                      Settings
-                    </Link>
-                    <Link
-                      href="/sources"
-                      data-state={isActive("/sources") ? "active" : undefined}
-                    >
-                      Sources
-                    </Link>
-                    <Link
-                      href="/changelog"
-                      data-state={isActive("/changelog") ? "active" : undefined}
-                    >
-                      Changelog
-                    </Link>
-                  </nav>
-                </div>
-              </header>
-            )}
-            <main>{children}</main>
-            <footer className={styles.layout_footer}>Cendien Recon</footer>
-            {user?.uid && (
-              <div className={styles.layout_userBox}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className={styles.layout_userBoxTrigger}>
-                    <Avatar className={styles.layout_userBox_avatar}>
-                      <AvatarImage />
-                      <AvatarFallback></AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className={styles.layout_userBoxContent}
-                    align="end"
+                    <nav className={styles.layout_nav}>
+                      {navLinks.map((link) => (
+                        <Link
+                          className={
+                            link.href.startsWith("/datasheets") ? "hidden" : ""
+                          }
+                          key={link.href}
+                          href={link.href}
+                          data-state={
+                            isActive(link.href) ? "active" : undefined
+                          }
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+                </header>
+              )}
+              <main className={styles.layout_main}>
+                {/* Render public pages immediately; gate protected pages until auth is checked */}
+                {isPublic || authChecked ? children : null}
+              </main>
+              <footer className={styles.layout_footer}>Cendien Recon</footer>
+              {user?.uid && (
+                <div className={styles.layout_userBox}>
+                  <Button
+                    className={showChatPanel ? styles.closeChat_active : ""}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowChatPanel(!showChatPanel)}
                   >
-                    <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={logout}>
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                    <BotMessageSquare />
+                    {showChatPanel ? <X /> : ""}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className={styles.layout_userBoxTrigger}
+                    >
+                      <Avatar className={styles.layout_userBox_avatar}>
+                        <AvatarImage />
+                        <AvatarFallback></AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className={styles.layout_userBoxContent}
+                      align="end"
+                    >
+                      <DropdownMenuItem
+                        onSelect={() => router.push("/settings")}
+                      >
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={logout}>
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </ResizablePanel>
+            {!isPublic && showChatPanel && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel
+                  className={styles.aiChat}
+                  defaultSize={panelSizes[1]}
+                >
+                  <AiChat chatKey="aiChat" model={chatModel} />
+                </ResizablePanel>
+              </>
             )}
-            <Toaster />
-          </div>
+          </ResizablePanelGroup>
+          <Toaster />
         </body>
       </html>
     </UserContext.Provider>

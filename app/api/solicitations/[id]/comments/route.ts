@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { get, getById, patch, post } from "@/lib/firebaseAdmin";
+import { get, getById, patch, post } from "au/server/firebase";
 import { patch as algoliaPatch } from "@/lib/algolia";
 import { checkSession } from "@/lib/serverUtils";
 
@@ -50,8 +50,7 @@ export async function POST(
     await patch("solicitations", id, { ...countData });
     await algoliaPatch("solicitations", id, { ...countData });
 
-    results =
-      (await post(`solicitations/${id}/comments`, updateData, user)) || {};
+    results = (await post(`solicitations/${id}/comments`, updateData)) || {};
   } catch (error) {
     console.error("Error creating new comment", error);
     const errorMessage = error instanceof Error ? error.message : String(error);

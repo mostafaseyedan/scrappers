@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { count as fireCount, parseQueryString } from "@/lib/firebaseAdmin";
+import { count as fireCount, parseQueryString } from "au/server/firebase";
 
 const COLLECTION = "solicitations";
 

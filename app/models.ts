@@ -207,7 +207,7 @@ const defaultCalls = {
   },
   post: async ({ collection, data, schema, token, baseUrl }: PostParams) => {
     if (schema?.parse) {
-      data = schema.parse(data);
+      data = schema.parse(data) as Record<string, any>;
     }
 
     const resp = await fetch(`${baseUrl || ""}/api/${collection}`, {

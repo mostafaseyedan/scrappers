@@ -55,23 +55,22 @@ function generateChartData(
     dailyStats[dayStr] += dailyStats[dayStr];
   }
 
-  console.log({ dailyStats });
-
   for (const [dateStr, count] of Object.entries(dailyStats)) {
     data.push({
+      longDate: dateStr,
       date: $d(dateStr, "M/dd"),
       total: count,
     });
   }
 
-  data.sort((a, b) => (a.date > b.date ? 1 : -1));
+  data.sort((a, b) => (a.longDate > b.longDate ? 1 : -1));
 
   return { data };
 }
 
 const PursuingChart = () => {
   const [chartData, setChartData] = useState<Record<string, any>[]>([]);
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState<number>(60);
 
   async function refresh() {
     const startDate = subDays(new Date(), days);
@@ -91,7 +90,6 @@ const PursuingChart = () => {
 
     if (statData.results?.length) {
       const { data } = generateChartData(statData.results, endDate, days);
-      console.log({ data });
       setChartData(data);
     }
   }
