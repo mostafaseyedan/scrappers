@@ -57,12 +57,13 @@ function generateChartData(
 
   for (const [dateStr, count] of Object.entries(dailyStats)) {
     data.push({
+      longDate: dateStr,
       date: $d(dateStr, "M/dd"),
       total: count,
     });
   }
 
-  data.sort((a, b) => (a.date > b.date ? 1 : -1));
+  data.sort((a, b) => (a.longDate > b.longDate ? 1 : -1));
 
   return { data };
 }

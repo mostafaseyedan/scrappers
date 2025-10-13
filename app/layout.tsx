@@ -60,12 +60,12 @@ export default function RootLayout({
   const [authChecked, setAuthChecked] = useState(false);
   const usersCache = useRef<Record<string, any>>({});
   const [showRightPanel, setShowRightPanel] = useState(false);
-  const shouldHide = publicPaths.some((p) => pathname?.startsWith(p));
+  const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
 
   // Update right panel visibility when route changes between public/protected
   useEffect(() => {
-    setShowRightPanel(!shouldHide);
-  }, [shouldHide]);
+    setShowRightPanel(!isPublic);
+  }, [isPublic]);
 
   // Subscribe to Firebase auth once on mount
   useEffect(() => {
@@ -96,10 +96,13 @@ export default function RootLayout({
     return json;
   }
 
-  async function logout() {
-    await signOut(auth);
-    await fetch("/api/logout");
-    router.push("/login");
+  function logout() {
+    setUser(null); // Optimistic update
+    router.push("/login"); // Immediate redirect
+
+    // Perform logout operations in the background
+    signOut(auth).catch(console.error);
+    fetch("/api/logout").catch(console.error);
   }
 
   function isActive(path: string) {
@@ -120,7 +123,7 @@ export default function RootLayout({
             direction="horizontal"
           >
             <ResizablePanel className={styles.layout} defaultSize={100}>
-              {!shouldHide && (
+              {!isPublic && (
                 <header className={styles.layout_header}>
                   <div className={styles.layout_header_1stRow}>
                     <Image
@@ -162,7 +165,7 @@ export default function RootLayout({
               )}
               <main className={styles.layout_main}>
                 {/* Render public pages immediately; gate protected pages until auth is checked */}
-                {shouldHide || authChecked ? children : null}
+                {isPublic || authChecked ? children : null}
               </main>
               <footer className={styles.layout_footer}>Cendien Recon</footer>
               {user?.uid && (
