@@ -7,8 +7,10 @@ import {
   post as algoliaPost,
 } from "@/lib/algolia";
 import { checkSession } from "@/lib/serverUtils";
-import { solicitation_log as solLogModel } from "@/app/models";
-import { source as sourceModel } from "@/app/models";
+import {
+  solicitation_log as solLogModel,
+  source as sourceModel,
+} from "@/app/models";
 
 const COLLECTION = "solicitations";
 

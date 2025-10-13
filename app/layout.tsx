@@ -78,17 +78,11 @@ export default function RootLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const usersCache = useRef<Record<string, any>>({});
-  const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
   const [showChatPanel, setShowChatPanel] = useState(false);
-  const loadedRef = useRef(false);
   const [panelSizes, setPanelSizes] = useState([100, 100]);
-
-  const handleLayout = (sizes: number[]) => {
-    if (showChatPanel && sizes.length === 2) {
-      setPanelSizes(sizes);
-    }
-  };
+  const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
+  const loadedRef = useRef(false);
+  const usersCache = useRef<Record<string, any>>({});
 
   // Update local storage when saved state changes
   useEffect(() => {
@@ -108,6 +102,13 @@ export default function RootLayout({
       setLocal("layout.panelSizes", panelSizes);
     }
   }, [panelSizes, showChatPanel]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (authChecked && !user && !isPublic) {
+      logout();
+    }
+  }, [authChecked, user, isPublic, router]);
 
   // Subscribe to Firebase auth once on mount
   useEffect(() => {
@@ -176,7 +177,11 @@ export default function RootLayout({
           <ResizablePanelGroup
             className={styles.layoutWrapper}
             direction="horizontal"
-            onLayout={handleLayout}
+            onLayout={(sizes: number[]) => {
+              if (showChatPanel && sizes.length === 2) {
+                setPanelSizes(sizes);
+              }
+            }}
           >
             <ResizablePanel
               className={styles.layout}

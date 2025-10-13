@@ -17,6 +17,7 @@ import { useRedirectParam } from "@/app/shared/useRedirectParam";
 import styles from "./register.module.css";
 import { useRedirectAfterLogin } from "@/app/shared/useRedirectAfterLogin";
 import { loginWithCredential } from "@/app/api";
+import { auth } from "au/firebase";
 
 export function RegisterPage() {
   const [hasLogged, setHasLogged] = React.useState(false);

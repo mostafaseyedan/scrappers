@@ -42,8 +42,6 @@ export async function POST(req: NextRequest) {
   let results;
   let status = 200;
 
-  console.log({ user });
-
   try {
     if (!user) throw new Error("Unauthenticated");
 

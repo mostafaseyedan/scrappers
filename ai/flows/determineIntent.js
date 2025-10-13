@@ -103,7 +103,6 @@ const handler = (ai) => {
         List sources with fields: 
           - names
           - type
-          - id
         
         Format the results as a nice list.
         `,

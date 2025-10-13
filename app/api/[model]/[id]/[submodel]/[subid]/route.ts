@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getById, patch, remove } from "au/server/firebase";
-import { getAuth } from "au/server/auth";
+import { checkSession as getAuth } from "@/lib/serverUtils";
 import { handleApiError } from "@/lib/server/api";
 
 type Params = {

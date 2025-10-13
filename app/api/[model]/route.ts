@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { count, get, parseQueryString, post } from "au/server/firebase";
-import { getAuth } from "au/server/auth";
+import { checkSession as getAuth } from "@/lib/serverUtils";
 import { handleApiError } from "@/lib/server/api";
 
 type Params = {
@@ -45,7 +45,7 @@ export async function POST(
     const tokens = await getAuth(req);
     if (!tokens) throw new Error("Not authenticated");
 
-    doc.authorId = tokens.decodedToken.uid;
+    doc.authorId = tokens.uid;
 
     results = await post(dbPath, doc);
   } catch (error: any) {

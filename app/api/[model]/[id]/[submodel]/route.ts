@@ -6,7 +6,7 @@ import {
   parseQueryString,
   post,
 } from "au/server/firebase";
-import { getAuth } from "au/server/auth";
+import { checkSession as getAuth } from "@/lib/serverUtils";
 import { handleApiError } from "@/lib/server/api";
 
 type Params = {
@@ -28,6 +28,7 @@ export async function GET(
 
   try {
     const tokens = await getAuth(req);
+
     if (!tokens) throw new Error("Not authenticated");
 
     if (id.startsWith("k_")) {
@@ -65,7 +66,7 @@ export async function POST(
       dbPath = `${model}/${parentDoc.id}/${submodel}`;
     }
 
-    doc.authorId = tokens.decodedToken.uid;
+    doc.authorId = tokens.uid;
 
     results = await post(dbPath, doc);
   } catch (error: any) {
