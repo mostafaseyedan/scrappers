@@ -18,6 +18,7 @@ import { PasswordFormValue } from "@/components/uiAuth/PasswordForm/PasswordForm
 import { Switch } from "@/components/uiAuth/Switch/Switch";
 import { LoadingIcon } from "@/components/uiAuth/icons";
 import { auth } from "au/firebase";
+import { getFirebaseAuth } from "../auth/firebase";
 import { appendRedirectParam } from "../shared/redirect";
 import { useRedirectAfterLogin } from "../shared/useRedirectAfterLogin";
 import { useRedirectParam } from "../shared/useRedirectParam";
@@ -90,7 +91,12 @@ export function LoginPage({
   const [handleLoginWithMicrosoftUsingRedirect, , microsoftUsingRedirectError] =
     useLoadingCallback(async () => {
       setHasLogged(false);
-      await loginWithProviderUsingRedirect(auth, getMicrosoftProvider(auth));
+
+      const oldauth = getFirebaseAuth();
+      await loginWithProviderUsingRedirect(
+        oldauth,
+        getMicrosoftProvider(oldauth)
+      );
       setHasLogged(true);
     });
 

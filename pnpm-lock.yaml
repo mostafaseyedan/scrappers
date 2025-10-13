@@ -3072,7 +3072,7 @@ packages:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
   au@file:vendor/au.tgz:
-    resolution: {integrity: sha512-F+G0ZUEehGQ+26YGa8RFE9MwDQqCCKu7g+kRA9csMA2R2gwxgfJf859kXRrSc0/yy3nQLRsOq0uX40tUakMqFQ==, tarball: file:vendor/au.tgz}
+    resolution: {integrity: sha512-6GYEBenwJNVira5Oy9NeTutNgg6TEE+c257CSd4TVM+RHoAok9UJV2pHZbpP3d19r2DPJ5pbBi7ziaWKBLj95g==, tarball: file:vendor/au.tgz}
     version: 0.1.0
 
   available-typed-arrays@1.0.7:
