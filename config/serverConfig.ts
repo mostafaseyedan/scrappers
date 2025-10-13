@@ -33,7 +33,7 @@ export const authConfig = {
   enableCustomToken: false,
   enableTokenRefreshOnExpiredKidHeader: true,
   debug: false, // Enable debug mode to help troubleshoot authentication issues
-  // tenantId: clientConfig.tenantId,
+  tenantId: clientConfig.tenantId,
   getMetadata: async (tokens: any) => {
     const uid =
       tokens?.decodedToken?.uid ??
