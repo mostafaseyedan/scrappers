@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "postbuild": "[ -d .next/standalone/recon/.next ] && cp -r .next/standalone/recon/.next .next/standalone/ || true",
     "build:functions": "cd functions && pnpm run build",
     "deploy": "firebase deploy",
     "deploy:functions": "cd functions && pnpm run deploy",

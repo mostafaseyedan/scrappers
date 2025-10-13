@@ -7,6 +7,10 @@ runConfig:
   cpu: 1
   memoryMiB: 512
 
+# Build configuration
+buildConfig:
+  runtime: nodejs22
+  
 # Environment variables and secrets.
 # env:
 # Configure environment variables.
