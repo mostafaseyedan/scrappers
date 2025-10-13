@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "mkdir -p node_modules/au && tar -xzf vendor/au.tgz -C node_modules/au --strip-components=1",
     "build": "next build",
-    "postbuild": "[ -d .next/standalone/recon/.next ] && cp -r .next/standalone/recon/.next .next/standalone/ || true",
+    "postbuild": "rm -rf node_modules/au",
     "build:functions": "cd functions && pnpm run build",
     "deploy": "firebase deploy",
     "deploy:functions": "cd functions && pnpm run deploy",
