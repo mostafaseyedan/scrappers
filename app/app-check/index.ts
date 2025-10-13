@@ -3,7 +3,7 @@ import {
   initializeAppCheck,
   ReCaptchaEnterpriseProvider,
 } from "@firebase/app-check";
-import { getFirebaseApp } from "@/app/auth/firebase";
+import { client } from "au/firebase";
 import { FirebaseApp } from "@firebase/app";
 
 let appCheck: AppCheck | null = null;
@@ -30,7 +30,5 @@ export function getOrInitializeAppCheck(app: FirebaseApp): AppCheck {
 }
 
 export function getAppCheck() {
-  const app = getFirebaseApp();
-
-  return getOrInitializeAppCheck(app);
+  return getOrInitializeAppCheck(client);
 }

@@ -4,12 +4,12 @@ import * as React from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import Link from "next/link";
 import { useLoadingCallback } from "react-loading-hook";
-import { getFirebaseAuth } from "@/app/auth/firebase";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/uiAuth/FormError";
 import { Input } from "@/components/ui/input";
 import { appendRedirectParam } from "@/app/shared/redirect";
 import { useRedirectParam } from "@/app/shared/useRedirectParam";
+import { auth } from "au/firebase";
 import styles from "./ResetPasswordPage.module.css";
 
 export function ResetPasswordPage() {
@@ -21,7 +21,6 @@ export function ResetPasswordPage() {
       event.preventDefault();
       event.stopPropagation();
 
-      const auth = getFirebaseAuth();
       setIsSent(false);
       await sendPasswordResetEmail(auth, email);
       setEmail("");

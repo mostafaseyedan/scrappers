@@ -7,7 +7,6 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import Link from "next/link";
-import { getFirebaseAuth } from "../auth/firebase";
 import { Button } from "@/components/uiAuth/Button";
 import { MainTitle } from "@/components/uiAuth/MainTitle";
 import { PasswordForm } from "@/components/uiAuth/PasswordForm";
@@ -27,7 +26,6 @@ export function RegisterPage() {
   const [registerWithEmailAndPassword, isRegisterLoading, error] =
     useLoadingCallback(async ({ email, password }: PasswordFormValue) => {
       setHasLogged(false);
-      const auth = getFirebaseAuth();
       const credential = await createUserWithEmailAndPassword(
         auth,
         email,

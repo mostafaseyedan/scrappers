@@ -47,6 +47,8 @@ const navLinks = [
   { href: "/changelog", label: "Changelog" },
 ];
 
+const publicPaths = ["/login", "/register", "/reset-password"];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,15 +57,24 @@ export default function RootLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
-  const [, setAuthChecked] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const usersCache = useRef<Record<string, any>>({});
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const shouldHide = publicPaths.some((p) => pathname?.startsWith(p));
 
+  // Update right panel visibility when route changes between public/protected
+  useEffect(() => {
+    setShowRightPanel(!shouldHide);
+  }, [shouldHide]);
+
+  // Subscribe to Firebase auth once on mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed:", user);
       setUser(user);
       setAuthChecked(true);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -108,8 +119,8 @@ export default function RootLayout({
             className={styles.layoutWrapper}
             direction="horizontal"
           >
-            <ResizablePanel className={styles.layout}>
-              {user?.uid && !pathname.startsWith("/login") && (
+            <ResizablePanel className={styles.layout} defaultSize={100}>
+              {!shouldHide && (
                 <header className={styles.layout_header}>
                   <div className={styles.layout_header_1stRow}>
                     <Image
@@ -149,7 +160,10 @@ export default function RootLayout({
                   </div>
                 </header>
               )}
-              <main className={styles.layout_main}>{children}</main>
+              <main className={styles.layout_main}>
+                {/* Render public pages immediately; gate protected pages until auth is checked */}
+                {shouldHide || authChecked ? children : null}
+              </main>
               <footer className={styles.layout_footer}>Cendien Recon</footer>
               {user?.uid && (
                 <div className={styles.layout_userBox}>
@@ -186,10 +200,14 @@ export default function RootLayout({
                 </div>
               )}
             </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel className={styles.aiChat}>
-              <AiChat chatKey="aiChat" model={chatModel} />
-            </ResizablePanel>
+            {showRightPanel && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel className={styles.aiChat} defaultSize={100}>
+                  <AiChat chatKey="aiChat" model={chatModel} />
+                </ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
           <Toaster />
         </body>
