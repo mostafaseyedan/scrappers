@@ -1,11 +1,22 @@
+@use "./variables";
+@use "sass:color";
+
 .aiChat {
   height: 100vh;
   min-width: 350px;
+
+  [class*="__messages"] {
+    padding-top: 100px;
+  }
 }
 
 .cendienLogo {
   margin-right: 5px;
   width: 30px;
+}
+
+.closeChat_active {
+  box-shadow: 0 0 0 3px color.adjust(variables.$blue, $lightness: 40%);
 }
 
 .layout {

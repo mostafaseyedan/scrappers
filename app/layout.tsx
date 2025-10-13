@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 import { AiChat } from "au/components/AiChat";
-import { BotMessageSquare } from "lucide-react";
+import { BotMessageSquare, X } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { chat as chatModel } from "@/app/models2";
@@ -168,11 +168,13 @@ export default function RootLayout({
               {user?.uid && (
                 <div className={styles.layout_userBox}>
                   <Button
-                    size="icon"
+                    className={showRightPanel ? styles.closeChat_active : ""}
+                    size="sm"
                     variant="ghost"
                     onClick={() => setShowRightPanel(!showRightPanel)}
                   >
                     <BotMessageSquare />
+                    {showRightPanel ? <X /> : ""}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger
