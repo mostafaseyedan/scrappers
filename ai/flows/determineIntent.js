@@ -61,22 +61,45 @@ const handler = (ai) => {
 
         Filters (STRICT whitelist):
         - Allowed filter fields ONLY: cnStatus (alias status), cnType (alias type), created, publishDate, closingDate
-        - Everything else (e.g., location, issuer, title, site) MUST go in query, NOT filters
         - Allowed values:
           - cnStatus: new, researching, pursuing, preApproval, submitted, negotitation, awarded, monitor, foia, notWon, notPursuing
           - cnType: erp, staffing, itSupport, cloud, other, facilitiesTelecomHardware, nonRelevant
+        - Everything else that is not a filter allowed value (e.g., location, issuer, title, site) MUST go in query
         - Date fields created/publishDate/closingDate are Unix ms (UTC)
         - Allowed operators: =, >, >=, <, <=; combine with AND/OR
-        - Examples (structure only):
-          - cnStatus:new OR cnType:erp
-          - publishDate>=<startMs> AND publishDate<<endMs>
+
+        Default/override rules for cnStatus (MANDATORY):
+        - If the user does NOT specify a status, ADD cnStatus:new to filters.
+        - If the user specifies a single allowed status, use that instead of the default.
+        - If the user specifies multiple statuses, join them with OR, e.g., (cnStatus:new OR cnStatus:submitted).
+        - If the user explicitly requests no status constraint (e.g., "any status", "all statuses", "don't filter by status"), OMIT cnStatus entirely.
+        - Never duplicate recognized status terms in query.
+
+        Matching rules (IMPORTANT):
+        - Compare filter value mentions case-insensitively.
+        - When matching cnType values, ignore spaces and hyphens in the user's text (e.g., "it support", "IT-Support" => itSupport).
+        - Map common phrases to canonical values:
+          - "it support" or "it-support" => cnType:itSupport
+          - "erp" => cnType:erp
+          - "staffing" => cnType:staffing
+          - "cloud" => cnType:cloud
+          - "facilities telecom hardware" => cnType:facilitiesTelecomHardware
+        - If a value matches an allowed filter after normalization, PUT IT IN filters and DO NOT include it in query.
+        
+        Examples (structure only):
+        - Default status only: cnStatus:new
+        - Specific status: cnStatus:submitted
+        - Multiple statuses: (cnStatus:new OR cnStatus:submitted)
+        - With month range: cnStatus:new AND publishDate>=<startMs> AND publishDate<<endMs>
         - INVALID examples (do NOT put in filters; put in query instead):
           - location:California, issuer:NASA, title:"RFP"
 
         What to do:
+        - Always apply the cnStatus default/override rules above
         - Decide if filters are needed; if yes, build a single filters string using ONLY whitelisted fields
         - For month-only requests, substitute <startMs>/<endMs> from the table above for the named month
         - Put any non-whitelisted constraints into the query parameter
+        - Do not duplicate recognized filter terms in the query; keep query for free-text terms only
 
         Output format (strict Markdown):
         - First line: "Found <nbHits> results." 

@@ -16,7 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 import { AiChat } from "au/components/AiChat";
-import { BotMessageSquare, X } from "lucide-react";
+import { X } from "lucide-react";
+import { RiGeminiLine } from "react-icons/ri";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { chat as chatModel } from "@/app/models2";
@@ -41,11 +42,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const navLinks = [
+const navLinks: Array<{ href: string; label: string; className?: string }> = [
   { href: "/solicitations", label: "Solicitations" },
-  { href: "/datasheets", label: "Datasheets" },
+  { href: "/contacts", label: "Contacts", className: "hidden" },
+  { href: "/knowledge", label: "Knowledge", className: "hidden" },
   { href: "/logs", label: "Logs" },
   { href: "/sources", label: "Sources" },
+  { href: "/datasheets", label: "Tables", className: "hidden" },
   { href: "/changelog", label: "Changelog" },
 ];
 
@@ -213,9 +216,7 @@ export default function RootLayout({
                     <nav className={styles.layout_nav}>
                       {navLinks.map((link) => (
                         <Link
-                          className={
-                            link.href.startsWith("/datasheets") ? "hidden" : ""
-                          }
+                          className={link.className || ""}
                           key={link.href}
                           href={link.href}
                           data-state={
@@ -242,7 +243,7 @@ export default function RootLayout({
                     variant="ghost"
                     onClick={() => setShowChatPanel(!showChatPanel)}
                   >
-                    <BotMessageSquare />
+                    <RiGeminiLine />
                     {showChatPanel ? <X /> : ""}
                   </Button>
                   <DropdownMenu>
