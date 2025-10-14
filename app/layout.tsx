@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { auth } from "au/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "./layout.module.scss";
@@ -26,8 +25,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { getFirebaseAuth } from "./auth/firebase";
 
 import "./globals.css";
+
+const auth = getFirebaseAuth();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

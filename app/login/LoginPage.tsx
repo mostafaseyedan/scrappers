@@ -17,7 +17,6 @@ import { PasswordForm } from "@/components/uiAuth/PasswordForm";
 import { PasswordFormValue } from "@/components/uiAuth/PasswordForm/PasswordForm";
 import { Switch } from "@/components/uiAuth/Switch/Switch";
 import { LoadingIcon } from "@/components/uiAuth/icons";
-import { auth } from "au/firebase";
 import { getFirebaseAuth } from "../auth/firebase";
 import { appendRedirectParam } from "../shared/redirect";
 import { useRedirectAfterLogin } from "../shared/useRedirectAfterLogin";
@@ -30,6 +29,9 @@ import {
 } from "./firebase";
 import Image from "next/image";
 import styles from "./login.module.css";
+
+// Initialize the correct Firebase Auth instance for this app
+const auth = getFirebaseAuth();
 
 export function LoginPage({
   loginAction,

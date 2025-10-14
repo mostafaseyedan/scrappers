@@ -9,8 +9,10 @@ import { FormError } from "@/components/uiAuth/FormError";
 import { Input } from "@/components/ui/input";
 import { appendRedirectParam } from "@/app/shared/redirect";
 import { useRedirectParam } from "@/app/shared/useRedirectParam";
-import { auth } from "au/firebase";
+import { getFirebaseAuth } from "../auth/firebase";
 import styles from "./ResetPasswordPage.module.css";
+
+const auth = getFirebaseAuth();
 
 export function ResetPasswordPage() {
   const [email, setEmail] = React.useState("");
