@@ -13,17 +13,17 @@ export function getOrInitializeAppCheck(app: FirebaseApp): AppCheck {
     return appCheck;
   }
 
+  const env = (globalThis as any)?.process?.env || {};
   // Firebase uses a global variable to check if app check is enabled in a dev environment
-  if (process.env.NODE_ENV !== "production") {
+  if (env.NODE_ENV !== "production") {
     Object.assign(window, {
-      FIREBASE_APPCHECK_DEBUG_TOKEN:
-        process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN,
+      FIREBASE_APPCHECK_DEBUG_TOKEN: env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN,
     });
   }
 
   return (appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider(
-      process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_KEY!
+      env.NEXT_PUBLIC_FIREBASE_APP_CHECK_KEY!
     ),
     isTokenAutoRefreshEnabled: true, // Set to true to allow auto-refresh.
   }));
