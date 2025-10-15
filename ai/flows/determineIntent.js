@@ -108,7 +108,9 @@ const handler = (ai) => {
           - [<title>](/solicitations/{id})  
             <issuer> / <location> [<site>](<siteUrl>)  
             *Published: <publishDate|YYYY-MM-DD> Closing: <closingDate|YYYY-MM-DD> Extracted: <created|YYYY-MM-DD>*
-        - Last line: "\nQuery: <query string you passed to the tool | none>. Filters: <filters string you passed to the tool | none>. Default sort: extracted date desc."
+        - After the final bullet item, output one blank line (i.e., an empty line).
+        - Then output exactly (no leading '-' or indentation): "Query: <query string you passed to the tool | none>. Filters: <filters string you passed to the tool | none>. Default sort: extracted date desc."
+        - This final line must not be part of the list.
         - If 'id' missing: title is plain text (no link)
         - If 'siteUrl' missing: omit the site link
         - Omit empty fields; dates in UTC YYYY-MM-DD
