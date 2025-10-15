@@ -28,7 +28,7 @@ async function main() {
   const sols = await solModel.search({
     baseUrl: BASE_URL,
     limit: 1000,
-    // filter: { cnStatus: "new" },
+    // filters: { cnStatus: "new" },
     token: process.env.DEV_TOKEN,
   });
 

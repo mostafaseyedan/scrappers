@@ -34,12 +34,12 @@ type TopBarProps = {
   q: string;
   queryParams: {
     q: string;
-    filter: Record<string, any>;
+    filters: Record<string, any>;
     limit: number;
     page: number;
     sort: string;
   };
-  setFilter: Dispatch<React.SetStateAction<Record<string, any>>>;
+  setFilters: Dispatch<React.SetStateAction<Record<string, any>>>;
   setQ: Dispatch<React.SetStateAction<string>>;
   setSort: Dispatch<React.SetStateAction<string>>;
   setPage: Dispatch<React.SetStateAction<number>>;
@@ -55,7 +55,7 @@ const TopBar = forwardRef(
       onClickCreateSol,
       q,
       queryParams,
-      setFilter,
+      setFilters,
       setQ,
       setSort,
       setPage,
@@ -89,17 +89,17 @@ const TopBar = forwardRef(
       <div className={cn(styles.topBar, className)}>
         <div
           className={styles.cnStatusDropdown}
-          data-status={queryParams.filter.cnStatus}
+          data-status={queryParams.filters.cnStatus}
         >
           <Select
             value={
-              queryParams.filter.cnStatus === undefined
+              queryParams.filters.cnStatus === undefined
                 ? "all"
-                : queryParams.filter.cnStatus || "new"
+                : queryParams.filters.cnStatus || "new"
             }
             onValueChange={async (value) => {
               setPage(1);
-              setFilter((prev) => {
+              setFilters((prev) => {
                 if (value === "all") {
                   const newValues = { ...prev };
                   delete newValues.cnStatus;
@@ -136,10 +136,10 @@ const TopBar = forwardRef(
         </div>
         <div className={styles.cnTypeDropdown}>
           <Select
-            value={queryParams.filter.cnType || "-"}
+            value={queryParams.filters.cnType || "-"}
             onValueChange={async (value) => {
               setPage(1);
-              setFilter((prev) => {
+              setFilters((prev) => {
                 if (value === "-") {
                   const newValues = { ...prev };
                   delete newValues.cnType;
@@ -190,7 +190,7 @@ const TopBar = forwardRef(
             </Tooltip>
             <PopoverContent className={styles.popover}>
               <FilterOptions
-                setFilter={setFilter}
+                setFilters={setFilters}
                 setQ={setQ}
                 setSort={setSort}
                 setPage={setPage}
@@ -220,7 +220,7 @@ const TopBar = forwardRef(
           value={q}
           onChange={(e) => {
             setPage(1);
-            setFilter((prev) => {
+            setFilters((prev) => {
               const newValues = { ...prev };
               delete newValues.cnStatus;
               return newValues;

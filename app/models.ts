@@ -77,7 +77,7 @@ type SolSearchParams = {
   limit?: number;
   page?: number;
   sort?: string;
-  filter?: Record<string, any>;
+  filters?: Record<string, any>;
   token?: string;
 };
 
@@ -496,11 +496,11 @@ const solicitation: any = {
     const baseUrl = params.baseUrl || "";
 
     const flattenedFilter: Record<string, any> = {};
-    for (const [key, value] of Object.entries(params.filter || {})) {
-      flattenedFilter[`filter.${key}`] = value;
+    for (const [key, value] of Object.entries(params.filters || {})) {
+      flattenedFilter[`filters.${key}`] = value;
     }
 
-    delete params.filter;
+    delete params.filters;
     const urlQueryString = queryString.stringify({
       ...params,
       ...flattenedFilter,

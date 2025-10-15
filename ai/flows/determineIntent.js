@@ -60,16 +60,14 @@ const handler = (ai) => {
         - Do not use a year earlier than ${currentYear} unless the user explicitly specifies it
 
         Filters (STRICT whitelist):
-        - Allowed filter fields ONLY: cnStatus (alias status), cnType (alias type), created, publishDate, closingDate
+        - Allowed filter fields ONLY: cnStatus (alias status), cnType (alias type), issuer, location, site, created, publishDate, closingDate
         - Allowed values:
           - cnStatus: new, researching, pursuing, preApproval, submitted, negotitation, awarded, monitor, foia, notWon, notPursuing
           - cnType: erp, staffing, itSupport, cloud, other, facilitiesTelecomHardware, nonRelevant
-        - Everything else that is not a filter allowed value (e.g., location, issuer, title, site) MUST go in query
         - Date fields created/publishDate/closingDate are Unix ms (UTC)
         - Allowed operators: =, >, >=, <, <=; combine with AND/OR
 
         Default/override rules for cnStatus (MANDATORY):
-        - If the user does NOT specify a status, ADD cnStatus:new to filters.
         - If the user specifies a single allowed status, use that instead of the default.
         - If the user specifies multiple statuses, join them with OR, e.g., (cnStatus:new OR cnStatus:submitted).
         - If the user explicitly requests no status constraint (e.g., "any status", "all statuses", "don't filter by status"), OMIT cnStatus entirely.
@@ -87,10 +85,9 @@ const handler = (ai) => {
         - If a value matches an allowed filter after normalization, PUT IT IN filters and DO NOT include it in query.
         
         Examples (structure only):
-        - Default status only: cnStatus:new
         - Specific status: cnStatus:submitted
         - Multiple statuses: (cnStatus:new OR cnStatus:submitted)
-        - With month range: cnStatus:new AND publishDate>=<startMs> AND publishDate<<endMs>
+        - With month range: publishDate>=<startMs> AND publishDate<<endMs>
         - INVALID examples (do NOT put in filters; put in query instead):
           - location:California, issuer:NASA, title:"RFP"
 

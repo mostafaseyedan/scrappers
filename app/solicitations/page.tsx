@@ -30,13 +30,13 @@ type SearchSolsParams = {
   limit?: number;
   page?: number;
   sort?: string;
-  filter?: Record<string, any>;
+  filters?: Record<string, any>;
 };
 
 export default function Page() {
   const [sols, setSols] = useState<any[]>([]);
   const [limit, setLimit] = useState(20);
-  const [filter, setFilter] = useState<{
+  const [filters, setFilters] = useState<{
     cnStatus?: string;
     [key: string]: any;
   }>({ cnStatus: "new" });
@@ -83,26 +83,26 @@ export default function Page() {
   }
 
   async function searchSols(
-    params: Partial<SearchSolsParams> = { filter: {} }
+    params: Partial<SearchSolsParams> = { filters: {} }
   ) {
     const {
       q: paramQ,
       limit: paramLimit,
       page: paramPage,
       sort: paramSort,
-      filter: paramFilter,
+      filters: paramFilters,
     } = params;
 
     // Use state if param is undefined
     const finalLimit = paramLimit ?? limit;
     const finalPage = paramPage ?? page;
     const finalSort = paramSort ?? sort;
-    const finalFilter = paramFilter ?? filter;
+    const finalFilters = paramFilters ?? filters;
     const finalQ = paramQ || q;
 
-    const flattenedFilter = {} as Record<string, any>;
-    for (const [key, value] of Object.entries(finalFilter)) {
-      flattenedFilter[`filter.${key}`] = value;
+    const flattenedFilters = {} as Record<string, any>;
+    for (const [key, value] of Object.entries(finalFilters)) {
+      flattenedFilters[`filters.${key}`] = value;
     }
 
     const queryObject = {
@@ -110,12 +110,10 @@ export default function Page() {
       limit: finalLimit,
       page: finalPage,
       sort: finalSort,
-      ...flattenedFilter,
+      ...flattenedFilters,
     } as Record<string, any>;
-    if (q) delete queryObject["filter.cnStatus"];
-    queryObject.contains = true;
+    if (q) delete queryObject["filters.cnStatus"];
     const urlQueryString = queryString.stringify(queryObject);
-
     const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
     const data = await resp.json();
     const total = data.total || 0;
@@ -127,7 +125,7 @@ export default function Page() {
 
     setSols(dbSols);
 
-    if (q || Object.keys(finalFilter).length > 0) {
+    if (q || Object.keys(finalFilters).length > 0) {
       setTotalFiltered(total);
     } else {
       setTotalFiltered(0);
@@ -139,7 +137,7 @@ export default function Page() {
 
   async function getSols() {
     let sols = await solModel
-      .get({ limit, page, sort, filters: filter })
+      .get({ limit, page, sort, filters })
       .catch((err: unknown) => {
         console.error(err);
         return { error: err instanceof Error ? err.message : String(err) };
@@ -164,7 +162,7 @@ export default function Page() {
       setSols(sols);
     }
 
-    if (Object.keys(filter).length > 0) {
+    if (Object.keys(filters).length > 0) {
       setTotalFiltered(total);
     } else {
       setTotalFiltered(0);
@@ -180,8 +178,12 @@ export default function Page() {
   }) => Promise<void> = async (options = {}) => {
     const { list = true, topBar = true } = options || {};
     if (list) {
-      if (q || filter.cnLiked || filter.site)
-        await debouncedSearchSols({ filter, limit, page, q, sort });
+      if (
+        q ||
+        Object.keys(filters).filter((k) => k !== "cnStatus" || k !== "cnStatus")
+          .length > 0
+      )
+        await debouncedSearchSols({ filters, limit, page, q, sort });
       else await getSols();
     }
     if (topBar) await topBarRef.current?.refresh?.();
@@ -198,7 +200,7 @@ export default function Page() {
     return () => {
       // window.removeEventListener("focus", () => refreshSols());
     };
-  }, [filter, q]);
+  }, [filters, q]);
 
   useEffect(() => {
     refreshSols({ list: true, topBar: false });
@@ -211,12 +213,12 @@ export default function Page() {
           <div className={styles.pageMain_solsSection}>
             <TopBar
               q={q}
-              setFilter={setFilter}
+              setFilters={setFilters}
               setQ={setQ}
               setSort={setSort}
               setPage={setPage}
               setTotalRecords={setTotalRecords}
-              queryParams={{ q, filter, limit, page, sort }}
+              queryParams={{ q, filters, limit, page, sort }}
               expandedSolIds={expandedSolIds}
               setExpandedSolIds={setExpandedSolIds}
               onClickCreateSol={() => setShowCreateSol(true)}
@@ -251,7 +253,7 @@ export default function Page() {
               )}
             </div>
             <div className={styles.pageMain_solsSection_pagination}>
-              {q || Object.keys(filter).length > 0 ? (
+              {q || Object.keys(filters).length > 0 ? (
                 <>
                   {totalFiltered} out {totalRecords} items.
                 </>

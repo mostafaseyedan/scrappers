@@ -27,14 +27,6 @@ const handler = (ai: any) =>
       const { index } = input;
       let filters = input.filters || "";
 
-      /*
-      if (index === "solicitations") {
-        if (!filters.includes("cnStatus")) {
-          filters =
-            filters === "" ? "cnStatus:new" : filters + " AND cnStatus:new";
-        }
-      } */
-
       const client = algoliasearch(
         process.env.ALGOLIA_ID!,
         process.env.ALGOLIA_SEARCH_KEY!

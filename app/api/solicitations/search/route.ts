@@ -13,6 +13,22 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q") || "";
   const limit = parseInt(searchParams.get("limit") || "20", 10) || 20;
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const filters: Record<string, any> = {};
+  let filterString = "";
+
+  // Quote and escape Algolia filter values so spaces and quotes are handled correctly
+  const quoteAlgoliaValue = (v: string) =>
+    `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
+  for (const [key, value] of searchParams.entries()) {
+    if (key.startsWith("filters.")) {
+      const filterKey = key.replace("filters.", "");
+      filters[filterKey] = value;
+      if (filterString) filterString += " AND ";
+      // Do NOT URL-encode filter values; Algolia expects quoted strings for values with spaces
+      filterString += `${filterKey}:${quoteAlgoliaValue(value)}`;
+    }
+  }
 
   // There is no sorting. You have to create a replicated index in Algolia
   // const sort = searchParams.get("sort") || "publishDate desc";
@@ -27,6 +43,7 @@ export async function GET(req: NextRequest) {
         indexName: "solicitations",
         query: q,
         page: Math.max(0, page - 1), // Algolia pages are 0-based
+        filters: filterString || undefined,
         hitsPerPage: limit,
       },
     ],
