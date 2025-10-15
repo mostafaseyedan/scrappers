@@ -24,21 +24,23 @@ const handler = (ai: any) =>
       }),
     },
     async (input: any) => {
-      console.log("searchAlgolia input:", input);
+      const { index } = input;
+      let filters = input.filters || "";
 
       const client = algoliasearch(
         process.env.ALGOLIA_ID!,
         process.env.ALGOLIA_SEARCH_KEY!
       );
+      const algoliaOptions = {
+        indexName: index,
+        query: input.query || "",
+        filters,
+        hitsPerPage: 10,
+      };
+      console.log({ algoliaOptions });
+
       const resp = await client.search({
-        requests: [
-          {
-            indexName: input.index,
-            query: input.query || "",
-            filters: input.filters || "",
-            hitsPerPage: 10,
-          },
-        ],
+        requests: [algoliaOptions],
       });
       const result = (resp.results?.[0] as any) || {};
       const rawHits = (result.hits || []) as any[];

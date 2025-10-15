@@ -1,28 +1,29 @@
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/cendien/Combobox";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 import styles from "./filterOptions.module.scss";
 
 type FilterOptionsProps = {
   queryParams: {
     q: string;
-    filter: Record<string, any>;
+    filters: Record<string, any>;
     limit: number;
     page: number;
     sort: string;
   };
-  setFilter: Dispatch<SetStateAction<Record<string, any>>>;
+  setFilters: Dispatch<SetStateAction<Record<string, any>>>;
   setQ: Dispatch<SetStateAction<string>>;
   setSort: (sort: string) => void;
   setPage: Dispatch<SetStateAction<number>>;
@@ -30,11 +31,25 @@ type FilterOptionsProps = {
 
 const FilterOptions = ({
   queryParams,
-  setFilter,
+  setFilters,
   setSort,
   setQ,
   setPage,
 }: FilterOptionsProps) => {
+  const [facets, setFacets] = useState<
+    Record<string, Array<{ value: string; count: number }>>
+  >({});
+
+  const getFacets = async () => {
+    const res = await fetch("/api/solicitations/search/options");
+    const json = await res.json();
+    setFacets(json.facets || {});
+  };
+
+  useEffect(() => {
+    getFacets();
+  }, []);
+
   return (
     <div className={styles.filterOptions}>
       <section>
@@ -48,61 +63,136 @@ const FilterOptions = ({
             <SelectValue placeholder="Select a sort" />
           </SelectTrigger>
           <SelectContent>
-            <SelectGroup>
-              <SelectItem value="closingDate asc">
-                Closing Date <ArrowUp />
-              </SelectItem>
-              <SelectItem value="closingDate desc">
-                Closing Date <ArrowDown />
-              </SelectItem>
-              <SelectItem value="created asc">
-                Extracted Date <ArrowUp />
-              </SelectItem>
-              <SelectItem value="created desc">
-                Extracted Date <ArrowDown />
-              </SelectItem>
-              <SelectItem value="publishDate asc">
-                Published Date <ArrowUp />
-              </SelectItem>
-              <SelectItem value="publishDate desc">
-                Published Date <ArrowDown />
-              </SelectItem>
-              <SelectItem value="updated asc">
-                Updated <ArrowUp />
-              </SelectItem>
-              <SelectItem value="updated desc">
-                Updated <ArrowDown />
-              </SelectItem>
-            </SelectGroup>
+            <SelectItem value="closingDate asc">
+              Closing Date <ArrowUp />
+            </SelectItem>
+            <SelectItem value="closingDate desc">
+              Closing Date <ArrowDown />
+            </SelectItem>
+            <SelectItem value="created asc">
+              Extracted Date <ArrowUp />
+            </SelectItem>
+            <SelectItem value="created desc">
+              Extracted Date <ArrowDown />
+            </SelectItem>
+            <SelectItem value="publishDate asc">
+              Published Date <ArrowUp />
+            </SelectItem>
+            <SelectItem value="publishDate desc">
+              Published Date <ArrowDown />
+            </SelectItem>
+            <SelectItem value="updated asc">
+              Updated <ArrowUp />
+            </SelectItem>
+            <SelectItem value="updated desc">
+              Updated <ArrowDown />
+            </SelectItem>
           </SelectContent>
         </Select>
       </section>
       <section>
-        <label>Source</label>
-        <Input
-          value={queryParams.filter.site || ""}
-          onChange={(e) => {
-            const value = e.target.value;
+        <label>Issuer</label>
+        <Combobox
+          initialSuggestions={facets.issuer?.map((issuer) => ({
+            value: issuer.value,
+            label: `${issuer.value} (${issuer.count})`,
+          }))}
+          onChange={(value) => {
             setPage(1);
-            setFilter((prev) => {
+            setSort("created desc");
+            setFilters((prev) => {
+              const next = { ...prev };
+              if (!value) {
+                delete next.issuer;
+                return next;
+              }
+              delete next.site;
+              delete next.location;
+              delete next.cnStatus;
+              return { ...next, issuer: value };
+            });
+          }}
+          value={queryParams.filters.issuer || ""}
+        />
+      </section>
+      <section>
+        <label>Location</label>
+        <Combobox
+          initialSuggestions={facets.location?.map((location) => ({
+            value: location.value,
+            label: `${location.value} (${location.count})`,
+          }))}
+          onChange={(value) => {
+            setPage(1);
+            setSort("created desc");
+            setFilters((prev) => {
+              const next = { ...prev };
+              if (!value) {
+                delete next.location;
+                return next;
+              }
+              delete next.cnStatus;
+              return { ...next, location: value };
+            });
+          }}
+          value={queryParams.filters.location || ""}
+        />
+      </section>
+      <section>
+        <label>Aggregator Site</label>
+        <Combobox
+          initialSuggestions={facets.site?.map((site) => ({
+            value: site.value,
+            label: `${site.value} (${site.count})`,
+          }))}
+          onChange={(value) => {
+            setPage(1);
+            setSort("created desc");
+            setFilters((prev) => {
               const next = { ...prev };
               if (!value) {
                 delete next.site;
                 return next;
               }
+              delete next.cnStatus;
               return { ...next, site: value };
             });
           }}
-          placeholder="i.e. bidnetdirect, rfpmart, highergov"
+          value={queryParams.filters.site || ""}
         />
       </section>
-      <section className={styles.filterOptions_other}>
+      <section className="hidden">
+        <label>Dates</label>
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a date field" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="closing">Closing</SelectItem>
+            <SelectItem value="extracted">Extracted</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="updated">Updated</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="week">This week</SelectItem>
+            <SelectItem value="month">This month</SelectItem>
+            <SelectItem value="3month">3 months ago</SelectItem>
+            <SelectItem value="custom">Custom range</SelectItem>
+          </SelectContent>
+        </Select>
+      </section>
+      <section className={cn(styles.filterOptions_other, "hidden")}>
         <label>Other</label>
         <Checkbox
-          checked={queryParams.filter.cnLiked || false}
+          checked={queryParams.filters.cnLiked || false}
           onCheckedChange={(checked) => {
             setPage(1);
-            setFilter((prev) => {
+            setFilters((prev) => {
               const newValues = { ...prev };
               if (checked === false) {
                 delete newValues.cnLiked;
@@ -120,7 +210,7 @@ const FilterOptions = ({
         variant="outline"
         size="sm"
         onClick={() => {
-          setFilter({});
+          setFilters({});
           setQ("");
           setPage(1);
         }}

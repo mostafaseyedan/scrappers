@@ -60,23 +60,43 @@ const handler = (ai) => {
         - Do not use a year earlier than ${currentYear} unless the user explicitly specifies it
 
         Filters (STRICT whitelist):
-        - Allowed filter fields ONLY: cnStatus (alias status), cnType (alias type), created, publishDate, closingDate
-        - Everything else (e.g., location, issuer, title, site) MUST go in query, NOT filters
+        - Allowed filter fields ONLY: cnStatus (alias status), cnType (alias type), issuer, location, site, created, publishDate, closingDate
         - Allowed values:
           - cnStatus: new, researching, pursuing, preApproval, submitted, negotitation, awarded, monitor, foia, notWon, notPursuing
           - cnType: erp, staffing, itSupport, cloud, other, facilitiesTelecomHardware, nonRelevant
         - Date fields created/publishDate/closingDate are Unix ms (UTC)
         - Allowed operators: =, >, >=, <, <=; combine with AND/OR
-        - Examples (structure only):
-          - cnStatus:new OR cnType:erp
-          - publishDate>=<startMs> AND publishDate<<endMs>
+
+        Default/override rules for cnStatus (MANDATORY):
+        - If the user specifies a single allowed status, use that instead of the default.
+        - If the user specifies multiple statuses, join them with OR, e.g., (cnStatus:new OR cnStatus:submitted).
+        - If the user explicitly requests no status constraint (e.g., "any status", "all statuses", "don't filter by status"), OMIT cnStatus entirely.
+        - Never duplicate recognized status terms in query.
+
+        Matching rules (IMPORTANT):
+        - Compare filter value mentions case-insensitively.
+        - When matching cnType values, ignore spaces and hyphens in the user's text (e.g., "it support", "IT-Support" => itSupport).
+        - Map common phrases to canonical values:
+          - "it support" or "it-support" => cnType:itSupport
+          - "erp" => cnType:erp
+          - "staffing" => cnType:staffing
+          - "cloud" => cnType:cloud
+          - "facilities telecom hardware" => cnType:facilitiesTelecomHardware
+        - If a value matches an allowed filter after normalization, PUT IT IN filters and DO NOT include it in query.
+        
+        Examples (structure only):
+        - Specific status: cnStatus:submitted
+        - Multiple statuses: (cnStatus:new OR cnStatus:submitted)
+        - With month range: publishDate>=<startMs> AND publishDate<<endMs>
         - INVALID examples (do NOT put in filters; put in query instead):
           - location:California, issuer:NASA, title:"RFP"
 
         What to do:
+        - Always apply the cnStatus default/override rules above
         - Decide if filters are needed; if yes, build a single filters string using ONLY whitelisted fields
         - For month-only requests, substitute <startMs>/<endMs> from the table above for the named month
         - Put any non-whitelisted constraints into the query parameter
+        - Do not duplicate recognized filter terms in the query; keep query for free-text terms only
 
         Output format (strict Markdown):
         - First line: "Found <nbHits> results." 
@@ -85,7 +105,9 @@ const handler = (ai) => {
           - [<title>](/solicitations/{id})  
             <issuer> / <location> [<site>](<siteUrl>)  
             *Published: <publishDate|YYYY-MM-DD> Closing: <closingDate|YYYY-MM-DD> Extracted: <created|YYYY-MM-DD>*
-        - Last line: "\nQuery: <query string you passed to the tool | none>. Filters: <filters string you passed to the tool | none>. Default sort: extracted date desc."
+        - After the final bullet item, output one blank line (i.e., an empty line).
+        - Then output exactly (no leading '-' or indentation): "Query: <query string you passed to the tool | none>. Filters: <filters string you passed to the tool | none>. Default sort: extracted date desc."
+        - This final line must not be part of the list.
         - If 'id' missing: title is plain text (no link)
         - If 'siteUrl' missing: omit the site link
         - Omit empty fields; dates in UTC YYYY-MM-DD

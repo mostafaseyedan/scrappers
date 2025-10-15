@@ -1,10 +1,13 @@
+"use client";
+
+import { Datatable } from "au/components/Datatable";
+import { contact as contactModel } from "@/app/models2";
 import styles from "./page.module.scss";
 
 export default function Page() {
   return (
     <div className={styles.page}>
-      <h2>Contacts</h2>
-      <p>Coming soon.</p>
+      <Datatable model={contactModel} />
     </div>
   );
 }
