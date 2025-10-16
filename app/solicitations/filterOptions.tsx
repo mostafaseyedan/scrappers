@@ -10,7 +10,6 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import styles from "./filterOptions.module.scss";
@@ -23,6 +22,7 @@ type FilterOptionsProps = {
     page: number;
     sort: string;
   };
+  filterFacets?: Record<string, Array<{ value: string; count: number }>>;
   setFilters: Dispatch<SetStateAction<Record<string, any>>>;
   setQ: Dispatch<SetStateAction<string>>;
   setSort: (sort: string) => void;
@@ -31,25 +31,12 @@ type FilterOptionsProps = {
 
 const FilterOptions = ({
   queryParams,
+  filterFacets,
   setFilters,
   setSort,
   setQ,
   setPage,
 }: FilterOptionsProps) => {
-  const [facets, setFacets] = useState<
-    Record<string, Array<{ value: string; count: number }>>
-  >({});
-
-  const getFacets = async () => {
-    const res = await fetch("/api/solicitations/search/options");
-    const json = await res.json();
-    setFacets(json.facets || {});
-  };
-
-  useEffect(() => {
-    getFacets();
-  }, []);
-
   return (
     <div className={styles.filterOptions}>
       <section>
@@ -93,7 +80,7 @@ const FilterOptions = ({
       <section>
         <label>Issuer</label>
         <Combobox
-          initialSuggestions={facets.issuer?.map((issuer) => ({
+          initialSuggestions={filterFacets?.issuer?.map((issuer) => ({
             value: issuer.value,
             label: `${issuer.value} (${issuer.count})`,
           }))}
@@ -118,7 +105,7 @@ const FilterOptions = ({
       <section>
         <label>Location</label>
         <Combobox
-          initialSuggestions={facets.location?.map((location) => ({
+          initialSuggestions={filterFacets?.location?.map((location) => ({
             value: location.value,
             label: `${location.value} (${location.count})`,
           }))}
@@ -141,7 +128,7 @@ const FilterOptions = ({
       <section>
         <label>Aggregator Site</label>
         <Combobox
-          initialSuggestions={facets.site?.map((site) => ({
+          initialSuggestions={filterFacets?.site?.map((site) => ({
             value: site.value,
             label: `${site.value} (${site.count})`,
           }))}

@@ -182,7 +182,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn(styles.triggerButton, "w-full")}
+          className={cn(styles.triggerButton, className)}
         >
           {value
             ? suggestions.find((item) => item.value === value)?.label

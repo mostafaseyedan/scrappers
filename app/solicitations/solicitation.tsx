@@ -1,4 +1,14 @@
-import { Eye, MessageCircle, StickyNote, Tag } from "lucide-react";
+import {
+  CalendarClock,
+  Clock,
+  Eye,
+  FileText,
+  Globe,
+  MapPin,
+  MessageCircle,
+  StickyNote,
+  Tag,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -36,6 +46,8 @@ function isWithinAWeek(date: Date): boolean {
   oneWeekFromNow.setDate(now.getDate() + 7);
   return date >= now && date <= oneWeekFromNow;
 }
+
+const dateFormat = "MMM d y";
 
 type SolicitationProps = {
   className?: string;
@@ -121,99 +133,60 @@ const Solicitation = ({
           {sol.title}
         </Link>
         <div className={styles.sol_issuerRow}>
-          <span>{sol.issuer}</span>
-          <span>/</span>
-          <span>{sol.location}</span>
+          {sol.issuer && <span>{sol.issuer}</span>}
+          {sol.location && (
+            <span>
+              <MapPin />
+              {sol.location}
+            </span>
+          )}
           <a href={sol.siteUrl} target="_blank">
+            <Globe />
             {sol.site}
           </a>
+          {Boolean(sol.keywords?.length) && (
+            <span>
+              <Tag /> {sol.keywords.join(", ")}
+            </span>
+          )}
         </div>
         <div className={styles.sol_datesCol}>
-          <div>
-            <label>Closing</label>
-            <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-              {sol.closingDate &&
-                fnFormat(new Date(sol.closingDate), "M/d/y haaa")}
-            </span>
-          </div>
-          <div>
-            <label>Published</label>
-            <span className={isWithinAWeek(sol.publishDate) ? "red" : ""}>
-              {sol.publishDate &&
-                fnFormat(new Date(sol.publishDate), "M/d/y haaa")}
-            </span>
-          </div>
-          <div>
-            <label>Extracted</label>
-            <span>
-              {sol.created && fnFormat(new Date(sol.created), "M/d/y h:mmaaa")}
-            </span>
-          </div>
-          <div className={styles.sol_iconCounts}>
-            {Boolean(sol.keywords?.length) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant={"ghost"} aria-label="Tags">
-                    {sol.keywords.length || 0} <Tag />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {sol.keywords.length || 0} Tags - {sol.keywords.join(", ")}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={"ghost"}
-                  aria-label="Comments"
-                  onClick={() => {
-                    if (onClickComment) {
-                      onClickComment(sol.id);
-                    }
-                  }}
-                >
-                  {sol.commentsCount} <MessageCircle />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Comments</TooltipContent>
-            </Tooltip>
-            {sol.cnNotes && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant={"ghost"} aria-label="Notes">
-                    <StickyNote />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Notes - {sol.cnNotes.substr(0, 250)}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={"ghost"} aria-label="Views">
-                  {sol.viewedBy?.length || 0} <Eye />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Viewed By
-                <br />
-                {viewedBy?.length > 0
-                  ? viewedBy.map((v: string) => (
-                      <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
-                    ))
-                  : "No one yet"}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          {sol.closingDate && (
+            <div>
+              <label>
+                <Clock />
+                Closing
+              </label>
+              <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
+                {fnFormat(new Date(sol.closingDate), dateFormat)}
+              </span>
+            </div>
+          )}
+          {sol.publishDate && (
+            <div>
+              <label>
+                <CalendarClock /> Published
+              </label>
+              <span className={isWithinAWeek(sol.publishDate) ? "red" : ""}>
+                {fnFormat(new Date(sol.publishDate), dateFormat)}
+              </span>
+            </div>
+          )}
+          {sol.created && (
+            <div>
+              <label>
+                <FileText />
+                Extracted
+              </label>
+              <span>{fnFormat(new Date(sol.created), dateFormat)}</span>
+            </div>
+          )}
         </div>
         <div
           className={styles.sol_descriptionBox}
           onClick={() => setExpanded((v) => !v)}
         >
           <span className={styles.sol_description}>{sol.description}</span>
-
           <div className={styles.sol_externalLinks}>
             <label>External Links</label>
             <div>
@@ -242,6 +215,52 @@ const Solicitation = ({
         </div>
       </div>
       <div className={styles.sol_statusCol}>
+        <div className={styles.sol_iconCounts}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={"ghost"}
+                aria-label="Comments"
+                onClick={() => {
+                  if (onClickComment) {
+                    onClickComment(sol.id);
+                  }
+                }}
+              >
+                {sol.commentsCount} <MessageCircle />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Comments</TooltipContent>
+          </Tooltip>
+          {sol.cnNotes && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={"ghost"} aria-label="Notes">
+                  <StickyNote />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Notes - {sol.cnNotes.substr(0, 250)}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant={"ghost"} aria-label="Views">
+                {sol.viewedBy?.length || 0} <Eye />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Viewed By
+              <br />
+              {viewedBy?.length > 0
+                ? viewedBy.map((v: string) => (
+                    <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
+                  ))
+                : "No one yet"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <div className={styles.sol_cnStatus} data-status={cnStatus}>
           <Select
             value={cnStatus}

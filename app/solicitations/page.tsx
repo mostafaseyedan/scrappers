@@ -36,6 +36,9 @@ type SearchSolsParams = {
 export default function Page() {
   const [sols, setSols] = useState<any[]>([]);
   const [limit, setLimit] = useState(20);
+  const [filterFacets, setFilterFacets] = useState<
+    Record<string, Array<{ value: string; count: number }>>
+  >({});
   const [filters, setFilters] = useState<{
     cnStatus?: string;
     [key: string]: any;
@@ -135,6 +138,12 @@ export default function Page() {
     setTotalPages(Math.ceil(total / finalLimit));
   }
 
+  const getFilterFacets = async () => {
+    const res = await fetch("/api/solicitations/search/options");
+    const json = await res.json();
+    setFilterFacets(json.facets || {});
+  };
+
   async function getSols() {
     let sols = await solModel
       .get({ limit, page, sort, filters })
@@ -190,6 +199,10 @@ export default function Page() {
   };
 
   useEffect(() => {
+    getFilterFacets();
+  }, []);
+
+  useEffect(() => {
     (async () => {
       document.title = `Solicitations | Cendien Recon`;
       await refreshSols();
@@ -213,6 +226,7 @@ export default function Page() {
           <div className={styles.pageMain_solsSection}>
             <TopBar
               q={q}
+              filterFacets={filterFacets}
               setFilters={setFilters}
               setQ={setQ}
               setSort={setSort}
