@@ -2,9 +2,15 @@
 @use "../variables";
 
 .sol {
-  border-bottom: 1px solid #eee;
+  border: 2px solid #eee;
+  border-radius: 15px;
   display: flex;
-  padding: 5px 10px 0 10px;
+  padding: 10px;
+  margin-bottom: 15px;
+
+  &:hover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
 
   &_cnStatus {
     margin-bottom: 5px;
@@ -61,6 +67,14 @@
     flex: 1 1 100%;
     overflow: hidden;
 
+    :global(svg.lucide) {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+
     label {
       margin-right: 5px;
     }
@@ -69,7 +83,9 @@
   &_datesCol {
     color: variables.$lightGray;
     display: flex;
+    font-size: 13px;
     gap: 20px;
+    white-space: nowrap;
   }
 
   &_description {
@@ -91,10 +107,11 @@
   }
 
   &_issuerRow {
+    display: flex;
+    font-size: 13px;
     white-space: nowrap;
-    > * {
-      margin-right: 5px;
-    }
+    margin-bottom: 3px;
+    gap: 10px;
   }
 
   &_category,
@@ -116,6 +133,7 @@
     color: #c7c7c7;
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 5px;
     button {
       padding: 0 10px;
       height: auto;
@@ -136,6 +154,7 @@
   &_title {
     font-weight: bold;
     display: block;
+    margin-bottom: 3px;
   }
 
   &__expanded {

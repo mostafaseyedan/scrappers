@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/cendien/Combobox";
 import { FilterOptions } from "./filterOptions";
 import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
@@ -30,6 +31,7 @@ import styles from "./topBar.module.scss";
 type TopBarProps = {
   className?: string;
   expandedSolIds: string[];
+  filterFacets?: Record<string, Array<{ value: string; count: number }>>;
   onClickCreateSol?: () => void;
   q: string;
   queryParams: {
@@ -52,6 +54,7 @@ const TopBar = forwardRef(
     {
       className,
       expandedSolIds,
+      filterFacets,
       onClickCreateSol,
       q,
       queryParams,
@@ -87,6 +90,22 @@ const TopBar = forwardRef(
 
     return (
       <div className={cn(styles.topBar, className)}>
+        <Button onClick={onClickCreateSol}>Create</Button>
+        <Input
+          className={styles.topBar_search}
+          type="text"
+          placeholder="Search"
+          value={q}
+          onChange={(e) => {
+            setPage(1);
+            setFilters((prev) => {
+              const newValues = { ...prev };
+              delete newValues.cnStatus;
+              return newValues;
+            });
+            setQ(e.target.value);
+          }}
+        />
         <div
           className={styles.cnStatusDropdown}
           data-status={queryParams.filters.cnStatus}
@@ -175,7 +194,28 @@ const TopBar = forwardRef(
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={onClickCreateSol}>Create</Button>
+        <Combobox
+          className="width-[200px]"
+          initialSuggestions={filterFacets?.site?.map((site) => ({
+            value: site.value,
+            label: `${site.value} (${site.count})`,
+          }))}
+          onChange={(value) => {
+            setPage(1);
+            setSort("created desc");
+            setFilters((prev) => {
+              const next = { ...prev };
+              if (!value) {
+                delete next.site;
+                return next;
+              }
+              delete next.cnStatus;
+              return { ...next, site: value };
+            });
+          }}
+          value={queryParams.filters.site || ""}
+        />
+
         <div className={styles.topBar_filter}>
           <Popover>
             <Tooltip>
@@ -190,6 +230,7 @@ const TopBar = forwardRef(
             </Tooltip>
             <PopoverContent className={styles.popover}>
               <FilterOptions
+                filterFacets={filterFacets}
                 setFilters={setFilters}
                 setQ={setQ}
                 setSort={setSort}
@@ -213,21 +254,6 @@ const TopBar = forwardRef(
             <TooltipContent>Collapse all</TooltipContent>
           </Tooltip>
         )}
-        <Input
-          className={styles.topBar_search}
-          type="text"
-          placeholder="Search"
-          value={q}
-          onChange={(e) => {
-            setPage(1);
-            setFilters((prev) => {
-              const newValues = { ...prev };
-              delete newValues.cnStatus;
-              return newValues;
-            });
-            setQ(e.target.value);
-          }}
-        />
       </div>
     );
   }

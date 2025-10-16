@@ -654,8 +654,8 @@ const stat: any = {
       value: z.number(),
       periodType: z.enum(["", "day", "week", "month", "year"]).default(""),
       description: z.string().default(""),
-      startDate: z.string(),
-      endDate: z.string(),
+      startDate: z.date(),
+      endDate: z.date(),
     }),
   },
   get: async ({ collection = "stats", ...options }: GetParams) =>
