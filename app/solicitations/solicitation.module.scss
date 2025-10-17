@@ -8,10 +8,6 @@
   padding: 10px;
   margin-bottom: 15px;
 
-  &:hover {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  }
-
   &_cnStatus {
     margin-bottom: 5px;
     > button {
@@ -68,8 +64,8 @@
     overflow: hidden;
 
     :global(svg.lucide) {
-      width: 20px;
-      height: 20px;
+      width: 14px;
+      height: 14px;
       display: inline-block;
       margin-right: 3px;
       vertical-align: middle;
@@ -86,6 +82,14 @@
     font-size: 13px;
     gap: 20px;
     white-space: nowrap;
+
+    :global(.red) {
+      color: red;
+    }
+
+    > div > * {
+      vertical-align: middle;
+    }
   }
 
   &_description {

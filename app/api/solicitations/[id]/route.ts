@@ -80,8 +80,6 @@ export async function PATCH(
     if (!user) throw new Error("Unauthenticated");
     await getById(COLLECTION, id);
 
-    console.log(updateData);
-
     // Update issuer based on sourceKey
     if (updateData.sourceKey) {
       const sourceDoc = await sourceModel
