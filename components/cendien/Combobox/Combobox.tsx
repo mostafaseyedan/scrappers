@@ -43,7 +43,7 @@ type Suggestion = {
 export function Combobox({
   className,
   api,
-  initialSuggestions = [],
+  initialSuggestions,
   getBy = "key",
   onBeforeCreate,
   ...field
@@ -51,8 +51,9 @@ export function Combobox({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [value, setValue] = useState<string>(field.value || "");
-  const [suggestions, setSuggestions] =
-    useState<Suggestion[]>(initialSuggestions);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(
+    initialSuggestions ?? []
+  );
 
   const searchDebounced = useDebouncedCallback(async (q: string) => {
     setSearchTerm(q);
@@ -70,7 +71,8 @@ export function Combobox({
     page?: number;
     sort?: string;
   }) {
-    if (!q || !api) return;
+    // Allow empty string to fetch initial suggestions; only guard against undefined/null
+    if (q === undefined || q === null || !api) return;
 
     const queryObject = {
       q,
@@ -129,7 +131,8 @@ export function Combobox({
   }
 
   useEffect(() => {
-    if (!initialSuggestions) return;
+    // Ignore absent or empty initialSuggestions so we don't wipe out fetched results
+    if (!initialSuggestions || initialSuggestions.length === 0) return;
     setSuggestions((prev) => {
       const a = prev;
       const b = initialSuggestions;
@@ -151,8 +154,13 @@ export function Combobox({
       // Always sync local value (including when cleared)
       if (incoming !== value) setValue(incoming);
 
-      // If cleared, no need to fetch a record
-      if (!incoming) return;
+      // If cleared, run an initial suggestions search (empty q) when api is available
+      if (!incoming) {
+        if (api) {
+          await search({ q: "" });
+        }
+        return;
+      }
 
       // If we already have a suggestion for it, skip fetch
       if (suggestions.some((s) => s.value === incoming)) return;
@@ -211,49 +219,60 @@ export function Combobox({
           <CommandList>
             <CommandEmpty>
               No item found.
-              {api && (
-                <>
-                  <br />
-                  <Button
-                    onClick={async () => {
-                      let postData = {};
-                      if (onBeforeCreate) postData = onBeforeCreate(searchTerm);
-                      const resp = await fetch(api, {
-                        method: "POST",
-                        body: JSON.stringify(postData),
-                      });
-                      const json = await resp.json();
-                      setSuggestions([
-                        { value: json.key, label: json.name },
-                        ...suggestions,
-                      ]);
-                      setValue(json.key);
-                      field.onChange?.(json.key);
-                      setOpen(false);
-                    }}
-                  >
-                    Create New
-                  </Button>
-                </>
-              )}
-            </CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                value="-"
-                onSelect={() => {
-                  setValue("");
-                  field.onChange?.("");
+              <br />
+              <Button
+                onClick={async () => {
+                  let postData = {},
+                    results;
+                  if (onBeforeCreate) postData = onBeforeCreate(searchTerm);
+
+                  if (api) {
+                    const resp = await fetch(api, {
+                      method: "POST",
+                      body: JSON.stringify(postData),
+                    });
+                    results = await resp.json();
+                  } else {
+                    const sanitizedTerm = searchTerm
+                      .trim()
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, "-")
+                      .replace(/[-]+/g, "-");
+                    results = { key: sanitizedTerm, name: searchTerm };
+                  }
+
+                  setSuggestions([
+                    { value: results.key, label: results.name },
+                    ...suggestions,
+                  ]);
+
+                  setValue(results.key);
+                  field.onChange?.(results.key);
                   setOpen(false);
                 }}
               >
-                <CheckIcon
-                  className={cn(
-                    styles._checkIcon,
-                    value === "" ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                -
-              </CommandItem>
+                Create New
+              </Button>
+            </CommandEmpty>
+            <CommandGroup>
+              {Boolean(suggestions.length) && (
+                <CommandItem
+                  value="-"
+                  onSelect={() => {
+                    setValue("");
+                    field.onChange?.("");
+                    setOpen(false);
+                  }}
+                >
+                  <CheckIcon
+                    className={cn(
+                      styles._checkIcon,
+                      value === "" ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  -
+                </CommandItem>
+              )}
               {suggestions.map((item) => {
                 return (
                   <CommandItem
