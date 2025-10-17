@@ -8,6 +8,14 @@
   padding: 10px;
   margin-bottom: 15px;
 
+  :global(svg.lucide) {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    margin-right: 3px;
+    vertical-align: middle;
+  }
+
   &_cnStatus {
     margin-bottom: 5px;
     > button {
@@ -62,14 +70,6 @@
   &_contentCol {
     flex: 1 1 100%;
     overflow: hidden;
-
-    :global(svg.lucide) {
-      width: 14px;
-      height: 14px;
-      display: inline-block;
-      margin-right: 3px;
-      vertical-align: middle;
-    }
 
     label {
       margin-right: 5px;
@@ -138,6 +138,7 @@
     display: flex;
     justify-content: flex-end;
     margin-bottom: 5px;
+
     button {
       padding: 0 10px;
       height: auto;
