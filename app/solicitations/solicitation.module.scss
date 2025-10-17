@@ -68,8 +68,8 @@
     overflow: hidden;
 
     :global(svg.lucide) {
-      width: 20px;
-      height: 20px;
+      width: 14px;
+      height: 14px;
       display: inline-block;
       margin-right: 3px;
       vertical-align: middle;
@@ -86,6 +86,14 @@
     font-size: 13px;
     gap: 20px;
     white-space: nowrap;
+
+    :global(.red) {
+      color: red;
+    }
+
+    > div > * {
+      vertical-align: middle;
+    }
   }
 
   &_description {

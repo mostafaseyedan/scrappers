@@ -40,11 +40,12 @@ import { UserContext } from "../userContext";
 
 import styles from "./solicitation.module.scss";
 
-function isWithinAWeek(date: Date): boolean {
+function isExpiring(date: Date): boolean {
   const now = new Date();
   const oneWeekFromNow = new Date(now);
-  oneWeekFromNow.setDate(now.getDate() + 7);
-  return date >= now && date <= oneWeekFromNow;
+  oneWeekFromNow.setDate(now.getDate() + 14);
+  date = new Date(date);
+  return oneWeekFromNow > date;
 }
 
 const dateFormat = "MMM d y";
@@ -152,14 +153,12 @@ const Solicitation = ({
         </div>
         <div className={styles.sol_datesCol}>
           {sol.closingDate && (
-            <div>
+            <div className={isExpiring(sol.closingDate) ? "red" : ""}>
               <label>
                 <Clock />
                 Closing
               </label>
-              <span className={isWithinAWeek(sol.closingDate) ? "red" : ""}>
-                {fnFormat(new Date(sol.closingDate), dateFormat)}
-              </span>
+              <span>{fnFormat(new Date(sol.closingDate), dateFormat)}</span>
             </div>
           )}
           {sol.publishDate && (
@@ -167,9 +166,7 @@ const Solicitation = ({
               <label>
                 <CalendarClock /> Published
               </label>
-              <span className={isWithinAWeek(sol.publishDate) ? "red" : ""}>
-                {fnFormat(new Date(sol.publishDate), dateFormat)}
-              </span>
+              <span>{fnFormat(new Date(sol.publishDate), dateFormat)}</span>
             </div>
           )}
           {sol.created && (
