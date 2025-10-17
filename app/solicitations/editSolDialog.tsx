@@ -158,6 +158,7 @@ const EditSolDialog = ({
                         <Combobox
                           {...field}
                           api="/api/sources"
+                          allowCreate={true}
                           onBeforeCreate={(value) => ({
                             name: value,
                             key: value

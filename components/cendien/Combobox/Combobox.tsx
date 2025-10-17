@@ -23,6 +23,7 @@ import styles from "./Combobox.module.scss";
 
 type ComboboxProps = {
   className?: string;
+  allowCreate?: boolean; // allow creating new items
   api?: string;
   value?: string; // initial value coming from react-hook-form
   name?: string; // react-hook-form field name
@@ -43,6 +44,7 @@ type Suggestion = {
 export function Combobox({
   className,
   api,
+  allowCreate = false,
   initialSuggestions,
   getBy = "key",
   onBeforeCreate,
@@ -219,40 +221,44 @@ export function Combobox({
           <CommandList>
             <CommandEmpty>
               No item found.
-              <br />
-              <Button
-                onClick={async () => {
-                  let postData = {},
-                    results;
-                  if (onBeforeCreate) postData = onBeforeCreate(searchTerm);
+              {allowCreate && (
+                <>
+                  <br />
+                  <Button
+                    onClick={async () => {
+                      let postData = {},
+                        results;
+                      if (onBeforeCreate) postData = onBeforeCreate(searchTerm);
 
-                  if (api) {
-                    const resp = await fetch(api, {
-                      method: "POST",
-                      body: JSON.stringify(postData),
-                    });
-                    results = await resp.json();
-                  } else {
-                    const sanitizedTerm = searchTerm
-                      .trim()
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]+/g, "-")
-                      .replace(/[-]+/g, "-");
-                    results = { key: sanitizedTerm, name: searchTerm };
-                  }
+                      if (api) {
+                        const resp = await fetch(api, {
+                          method: "POST",
+                          body: JSON.stringify(postData),
+                        });
+                        results = await resp.json();
+                      } else {
+                        const sanitizedTerm = searchTerm
+                          .trim()
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, "-")
+                          .replace(/[-]+/g, "-");
+                        results = { key: sanitizedTerm, name: searchTerm };
+                      }
 
-                  setSuggestions([
-                    { value: results.key, label: results.name },
-                    ...suggestions,
-                  ]);
+                      setSuggestions([
+                        { value: results.key, label: results.name },
+                        ...suggestions,
+                      ]);
 
-                  setValue(results.key);
-                  field.onChange?.(results.key);
-                  setOpen(false);
-                }}
-              >
-                Create New
-              </Button>
+                      setValue(results.key);
+                      field.onChange?.(results.key);
+                      setOpen(false);
+                    }}
+                  >
+                    Create New
+                  </Button>
+                </>
+              )}
             </CommandEmpty>
             <CommandGroup>
               {Boolean(suggestions.length) && (
