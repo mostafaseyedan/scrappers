@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { count, get, parseQueryString, post } from "au/server/firebase";
 import { checkSession as getAuth } from "@/lib/serverUtils";
 import { handleApiError } from "@/lib/server/api";
+import urlJoin from "url-join";
 
 type Params = {
   model: string;
@@ -12,11 +13,13 @@ export async function GET(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  const { model: dbPath } = _params;
-
+  let { model: dbPath } = _params;
   const queryOptions = parseQueryString(req.url);
+  const parentDbPath = queryOptions?.parentDbPath || "";
   let results: Record<string, any> = { params: _params };
   let status = 200;
+
+  dbPath = urlJoin(parentDbPath, dbPath);
 
   try {
     const tokens = await getAuth(req);
@@ -35,11 +38,21 @@ export async function POST(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  const { model: dbPath } = _params;
+  let { model: dbPath } = _params;
   const { body } = req;
-  const doc = await new NextResponse(body).json();
+  const json = await new NextResponse(body).json();
+  const parentDbPath = json.$parentDbPath || "";
   let results;
   let status = 200;
+  let doc: Record<string, any> = {};
+
+  dbPath = urlJoin(parentDbPath, dbPath);
+
+  for (const key of Object.keys(json)) {
+    if (!key.startsWith("$")) {
+      doc[key] = json[key];
+    }
+  }
 
   try {
     const tokens = await getAuth(req);

@@ -46,3 +46,138 @@ export const chat = new ApiModel({
     }),
   },
 });
+
+export const contact = new ApiModel({
+  key: "contacts",
+  path: "contacts",
+  schema: {
+    db: z.object({
+      firstName: z.string(),
+      lastName: z.string().optional(),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      company: z.string().optional(),
+      notes: z.string().optional(),
+    }),
+  },
+});
+
+export const issuer = new ApiModel({
+  key: "issuers",
+  path: "issuers",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      bidsUrl: z.string().optional(),
+      location: z.string().optional(),
+      locationKey: z.string().optional(),
+      isRegistered: z.boolean().default(false),
+      url: z.string().optional(),
+    }),
+  },
+});
+
+export const location = new ApiModel({
+  key: "locations",
+  path: "locations",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      state: z.string().optional(),
+      country: z.string().optional(),
+      description: z.string().optional(),
+    }),
+  },
+});
+
+export const knowledgeTopic_item = new ApiModel({
+  key: "knowledgeTopic_items",
+  path: "knowledgeTopics/{id}/items",
+  schema: {
+    db: z.object({
+      question: z.string(),
+      answer: z.string(),
+      source: z.string().optional(),
+    }),
+  },
+});
+
+export const knowledgeTopic = new ApiModel({
+  key: "knowledgeTopics",
+  path: "knowledgeTopics",
+  submodels: {
+    items: knowledgeTopic_item,
+  },
+  schema: {
+    db: z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      items: z
+        .array(knowledgeTopic_item.schema.db)
+        .default([])
+        .describe("[submodel]"),
+    }),
+  },
+});
+
+export const site_subsite = new ApiModel({
+  key: "site_subsites",
+  path: "sites/{id}/subsites",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  },
+});
+
+export const site = new ApiModel({
+  key: "sites",
+  path: "sites",
+  submodels: {
+    subsites: site_subsite,
+  },
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  },
+});
+
+export const table_row = new ApiModel({
+  key: "table_rows",
+  path: "tables/{id}/rows",
+  schema: {
+    db: z.object({
+      col1: z.string().optional(),
+      col2: z.string().optional(),
+      col3: z.string().optional(),
+      col4: z.string().optional(),
+      col5: z.string().optional(),
+    }),
+  },
+});
+
+export const table = new ApiModel({
+  key: "tables",
+  path: "tables",
+  submodels: {
+    rows: table_row,
+  },
+  schema: {
+    db: z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      columns: z.array(z.string()).default([]),
+      rows: z.array(table_row.schema.db).default([]).describe("[submodel]"),
+    }),
+  },
+});

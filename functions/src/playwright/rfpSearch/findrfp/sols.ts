@@ -32,7 +32,7 @@ async function login(page: Page, user: string, pass: string) {
   await page.waitForTimeout(5000);
 }
 
-async function processRow(
+async function processSol(
   row: Locator,
   env: Record<string, any>,
   context: BrowserContext
@@ -124,7 +124,7 @@ async function scrapeAllSols(
   context: BrowserContext
 ) {
   let allSols: Record<string, any>[] = [];
-  let lastPage = true;
+  let lastPage = false;
   let currPage = 1;
 
   await page.goto(
@@ -158,8 +158,8 @@ async function scrapeAllSols(
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const sol = await processRow(row, env, context).catch((err) =>
-        logger.error("processRow failed", err)
+      const sol = await processSol(row, env, context).catch((err) =>
+        logger.error("processSol failed", err)
       );
       if (sol) allSols.push(sol);
     }

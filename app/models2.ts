@@ -62,6 +62,38 @@ export const contact = new ApiModel({
   },
 });
 
+export const issuer = new ApiModel({
+  key: "issuers",
+  path: "issuers",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      bidUrl: z.string().optional(),
+      location: z.string().optional(),
+      locationKey: z.string().optional(),
+      isRegistered: z.boolean().default(false),
+      url: z.string().optional(),
+    }),
+  },
+});
+
+export const location = new ApiModel({
+  key: "locations",
+  path: "locations",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      state: z.string().optional(),
+      country: z.string().optional(),
+      type: z.enum(["city"]).optional(),
+      description: z.string().optional(),
+    }),
+  },
+});
+
 export const knowledgeTopic_item = new ApiModel({
   key: "knowledgeTopic_items",
   path: "knowledgeTopics/{id}/items",
@@ -86,6 +118,40 @@ export const knowledgeTopic = new ApiModel({
       description: z.string().optional(),
       items: z
         .array(knowledgeTopic_item.schema.db)
+        .default([])
+        .describe("[submodel]"),
+    }),
+  },
+});
+
+export const site_subsite = new ApiModel({
+  key: "site_subsites",
+  path: "sites/{id}/subsites",
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  },
+});
+
+export const site = new ApiModel({
+  key: "sites",
+  path: "sites",
+  submodels: {
+    subsites: site_subsite,
+  },
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string().describe("[unique]"),
+      description: z.string().optional(),
+      url: z.string().optional(),
+      cnNotes: z.string().optional(),
+      subsites: z
+        .array(site_subsite.schema.db)
         .default([])
         .describe("[submodel]"),
     }),

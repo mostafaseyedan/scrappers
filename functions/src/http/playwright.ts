@@ -3,6 +3,7 @@ import { run as publicpurchase } from "../playwright/rfpSearch/publicpurchase/so
 import { run as bidsync } from "../playwright/rfpSearch/bidsync/sols";
 import { run as vendorregistry } from "../playwright/rfpSearch/vendorregistry/sols";
 import { run as biddirect } from "../playwright/rfpSearch/biddirect/sols";
+import { run as bonfirehub } from "../playwright/rfpSearch/bonfirehub/agencies";
 import { run as vendorline } from "../playwright/rfpSearch/vendorline/sols";
 import { run as techbids } from "../playwright/rfpSearch/techbids/sols";
 import { run as instantmarkets } from "../playwright/rfpSearch/instantmarkets/sols";
@@ -29,6 +30,7 @@ import Browserbase from "@browserbasehq/sdk";
 const vendors = {
   biddirect,
   bidsync,
+  bonfirehub,
   cammnet,
   commbuys,
   demandstar,
@@ -149,6 +151,7 @@ export async function runVendor(
         data: {
           ...(results.sols ? { sols: results.sols } : {}),
           ...(results.error ? { error: results.error } : {}),
+          ...(results.data ? { data: results.data } : {}),
         },
       },
     });
@@ -201,6 +204,8 @@ export const playwright = onRequest(
       "DEV_BIDDIRECT_PASS",
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
+      "DEV_BONFIRE_USER",
+      "DEV_BONFIRE_PASS",
       "DEV_BROWSERBASE_KEY",
       "DEV_DEMANDSTAR_USER",
       "DEV_DEMANDSTAR_PASS",
