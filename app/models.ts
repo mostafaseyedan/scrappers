@@ -375,6 +375,8 @@ const solicitation: any = {
   schema: {
     old: z.object({
       aiExtracted: z.boolean().default(false),
+      aiPursueScore: z.number().nullable().default(null),
+      aiPursueScoreNote: z.string().default(""),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().datetime(),
       cnData: z.object({}).default({}),
@@ -415,6 +417,8 @@ const solicitation: any = {
     }),
     postApi: z.object({
       aiExtracted: z.boolean().default(false),
+      aiPursueScore: z.number().nullable().default(null),
+      aiPursueScoreNote: z.string().default(""),
       authorId: z.string(),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().nullable().default(null),

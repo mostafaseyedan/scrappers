@@ -16,20 +16,13 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
 }
 
 function parseSolIdFromArgs(argv: string[]): string | undefined {
-  const kv = argv.find((a) => ["--id="].some((p) => a.startsWith(p)));
+  // Preferred format: --solId=<ID>
+  const kv = argv.find((a) => a.startsWith("--solId="));
   if (kv) return kv.split("=", 2)[1];
 
-  // Support split args: --solId ID, --id ID, --sol-id ID
-  for (const key of ["--id"]) {
-    const i = argv.indexOf(key);
-    if (i >= 0 && i + 1 < argv.length && !argv[i + 1].startsWith("--")) {
-      return argv[i + 1];
-    }
-  }
-
-  // Support positional first arg: extractDetails.ts <ID>
-  const positionals = argv.filter((a) => !a.startsWith("--"));
-  if (positionals.length > 0) return positionals[0];
+  // Fallback to environment variable
+  if (process.env.SOL_ID && process.env.SOL_ID.trim())
+    return process.env.SOL_ID.trim();
 
   return undefined;
 }
@@ -49,16 +42,15 @@ function printUsage(): void {
   const script = "scripts/browserbasehq/extractDetails.ts";
   console.log(
     [
-      `Usage: pnpm exec tsx ${script} --solId <SOLICITATION_ID>`,
+      `Usage: pnpm exec tsx ${script} --solId=<SOLICITATION_ID>`,
       "",
       "Options:",
-      "  --id                       Specify the solicitation ID",
-      "  --url <URL>                Override the solicitation siteUrl to navigate",
+      "  --solId=<ID>               Specify the solicitation ID (required unless SOL_ID env is set)",
+      "  --url=<URL>                Override the solicitation siteUrl to navigate",
       "  -h, --help                 Show this help and exit",
       "",
-      "Also supported:",
-      `  pnpm exec tsx ${script} <SOLICITATION_ID>`,
-      "  Env var SOL_ID can be used when flags/positionals are not provided.",
+      "Environment:",
+      "  SOL_ID                     Optional fallback when --solId is not provided",
     ].join("\n")
   );
 }
@@ -496,7 +488,7 @@ async function main() {
   if (!SOL_ID) {
     printUsage();
     throw new Error(
-      "Missing SOL_ID. Provide via --solId, positional arg, or SOL_ID env var."
+      "Missing SOL_ID. Provide via --solId=<ID> or set SOL_ID in the environment."
     );
   }
 

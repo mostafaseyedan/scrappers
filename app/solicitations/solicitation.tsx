@@ -26,6 +26,8 @@ import {
   SetStateAction,
   useEffect,
 } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { solicitation as solModel } from "../models";
 import { SolActions } from "./solActions";
 import { cnStatuses, cnTypes } from "../config";
@@ -80,6 +82,9 @@ const Solicitation = ({
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
   const [viewedBy, setViewedBy] = useState<string[]>([]);
+  const aiScore = Number(sol.aiPursueScore);
+  const aiScoreClass =
+    aiScore >= 0.9 ? "green" : aiScore >= 0.7 ? "orange" : "red";
 
   useEffect(() => {
     let isMounted = true;
@@ -257,6 +262,22 @@ const Solicitation = ({
                 : "No one yet"}
             </TooltipContent>
           </Tooltip>
+          {Boolean(sol.aiPursueScore) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={"ghost"} aria-label="Score">
+                  <span className={cn(styles.sol_aiScore, aiScoreClass)}>
+                    {aiScore.toFixed(2)}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="w-100">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {sol.aiPursueScoreNote || ""}
+                </ReactMarkdown>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
         <div className={styles.sol_cnStatus} data-status={cnStatus}>
           <Select
