@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getById, patch, remove } from "au/server/firebase";
+import { getById, parseQueryString, patch, remove } from "au/server/firebase";
 import { checkSession as getAuth } from "@/lib/serverUtils";
 import { handleApiError } from "@/lib/server/api";
+import urlJoin from "url-join";
 
 type Params = {
   model: string;
@@ -13,9 +14,14 @@ export async function DELETE(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  const { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
+  const queryOptions = parseQueryString(req.url);
+  const parentDbPath = queryOptions?.parentDbPath || "";
   let results: Record<string, any> = {};
   let status = 200;
+
+  dbPath = urlJoin(parentDbPath, dbPath);
 
   try {
     const tokens = await getAuth(req);
@@ -35,9 +41,14 @@ export async function GET(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  const { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
+  const queryOptions = parseQueryString(req.url);
+  const parentDbPath = queryOptions?.parentDbPath || "";
   let results = {};
   let status = 200;
+
+  dbPath = urlJoin(parentDbPath, dbPath);
 
   try {
     const tokens = await getAuth(req);
@@ -56,11 +67,22 @@ export async function PATCH(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  const { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
   const { body } = req;
-  const updateData = await new NextResponse(body).json();
+  const json = await new NextResponse(body).json();
+  const parentDbPath = json.$parentDbPath || "";
+  const updateData: Record<string, any> = {};
   let results: Record<string, any> = {};
   let status = 200;
+
+  dbPath = urlJoin(parentDbPath, dbPath);
+
+  for (const key of Object.keys(json)) {
+    if (!key.startsWith("$")) {
+      updateData[key] = json[key];
+    }
+  }
 
   try {
     const tokens = await getAuth(req);

@@ -374,6 +374,7 @@ const scriptLog: any = {
 const solicitation: any = {
   schema: {
     old: z.object({
+      aiExtracted: z.boolean().default(false),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().datetime(),
       cnData: z.object({}).default({}),
@@ -394,23 +395,26 @@ const solicitation: any = {
       documents: z.array(z.string().url()).default([]), // WARNING: do not change this structure
       externalLinks: z.array(z.string().url()).default([]),
       issuer: z.string(),
+      issuerKey: z.string(),
       keywords: z.array(z.string()).default([]),
       location: z.string(),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
       publishDate: z.string().datetime(),
       questionsDueByDate: z.coerce.string(),
       rfpType: z.coerce.string(),
-      site: z.string(),
+      site: z.string(), // deprecated. will move to siteKey
       siteData: z.any().default({}),
       siteId: z.string(),
       siteUrl: z.string().url(),
-      sourceKey: z.string(),
+      sourceKey: z.string(), // deprecated
+      subsiteKey: z.string().default(""),
       title: z.string(),
       updated: z.string().datetime(), // system
       url: z.string().url(),
       viewedBy: z.array(z.string()).default([]),
     }),
     postApi: z.object({
+      aiExtracted: z.boolean().default(false),
       authorId: z.string(),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().nullable().default(null),
@@ -429,6 +433,7 @@ const solicitation: any = {
       documents: z.array(z.string().url()).default([]),
       externalLinks: z.array(z.string()).default([]),
       issuer: z.string().optional(),
+      issuerKey: z.string().optional(),
       keywords: z.array(z.string()).default([]),
       location: z.string().default(""),
       logs: z.array(z.any()).default([]).describe("[submodel]"),
@@ -437,11 +442,12 @@ const solicitation: any = {
       questionsDueByDate: z.string().nullable().default(null),
       rfpType: z.string().optional(),
       sharepointUrl: z.string().default(""),
-      site: z.string().default("unknown"),
+      site: z.string().default("unknown"), // deprecated. will move to siteKey
       siteData: z.any().default({}),
       siteId: z.string().optional(),
       siteUrl: z.string().default(""),
-      sourceKey: z.string().default(""),
+      subsiteKey: z.string().default(""),
+      sourceKey: z.string().default(""), // deprecated
       title: z.string().min(1, "Title is required"),
       updated: z.string().datetime(),
       url: z.string().default(""),
