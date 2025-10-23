@@ -374,6 +374,7 @@ const scriptLog: any = {
 const solicitation: any = {
   schema: {
     old: z.object({
+      aiExtracted: z.boolean().default(false),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().datetime(),
       cnData: z.object({}).default({}),
@@ -413,6 +414,7 @@ const solicitation: any = {
       viewedBy: z.array(z.string()).default([]),
     }),
     postApi: z.object({
+      aiExtracted: z.boolean().default(false),
       authorId: z.string(),
       categories: z.array(z.string()).default([]),
       closingDate: z.string().nullable().default(null),

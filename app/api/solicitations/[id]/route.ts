@@ -81,7 +81,9 @@ export async function PATCH(
     await getById(COLLECTION, id);
 
     // Update issuer based on sourceKey
-    if (updateData.sourceKey) {
+    if (updateData.issuer) {
+      // Do nothing, issuer is already set
+    } else if (updateData.sourceKey) {
       const sourceDoc = await sourceModel
         .getByKey({
           baseUrl: process.env.BASE_URL,
