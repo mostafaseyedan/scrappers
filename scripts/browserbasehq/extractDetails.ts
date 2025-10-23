@@ -535,7 +535,6 @@ async function main() {
     apiKey: process.env.BROWSERBASE_KEY!,
     projectId: process.env.BROWSERBASE_PROJECT_ID!,
     verbose: 1,
-    debugDir: path.resolve(process.cwd(), ".debug"),
   });
 
   await stagehand.init();
