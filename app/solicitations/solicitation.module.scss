@@ -2,11 +2,9 @@
 @use "../variables";
 
 .sol {
-  border: 2px solid #eee;
-  border-radius: 15px;
+  border-bottom: 1px solid #eee;
   display: flex;
   padding: 10px;
-  margin-bottom: 15px;
 
   :global(svg.lucide) {
     width: 14px;
@@ -17,7 +15,9 @@
   }
 
   &_cnStatus {
+    display: inline-block;
     margin-bottom: 5px;
+    margin-right: 10px;
     > button {
       margin-left: auto;
     }
@@ -61,6 +61,7 @@
   }
 
   &_cnType {
+    display: inline-block;
     margin-bottom: 5px;
     > button {
       margin-left: auto;
@@ -154,6 +155,7 @@
   &_statusCol {
     padding-left: 10px;
     text-align: right;
+    white-space: nowrap;
   }
 
   &_title {

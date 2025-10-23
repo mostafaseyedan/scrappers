@@ -4,6 +4,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import { z } from "zod/v3";
 import fs from "fs";
 import path from "path";
+import OpenAI from "openai";
 import { solicitation as solModel } from "@/app/models";
 import { scrapingSites } from "@/app/config";
 import type { Page, Frame } from "playwright";
@@ -514,7 +515,16 @@ async function main() {
   const overrideUrl = parseUrlFromArgs(process.argv.slice(2));
   const targetUrl = overrideUrl || sol.siteUrl;
 
-  const instruction = [
+  // Early skip for unsupported/paywalled sources we don't want to crawl
+  if ((sol.site || "").toLowerCase() === "govdirections") {
+    console.warn(
+      "[skip] 'govdirections' site detected; skipping extraction and returning empty JSON."
+    );
+    console.log({});
+    return;
+  }
+
+  let instruction = [
     "Extract this page into the specified RFP schema.",
     "Return ONLY the JSON that matches the schema—no additional keys like html, page_text, content, or raw text.",
     "If a field is not present on the page, return null for that field.",
@@ -530,15 +540,46 @@ async function main() {
       (overrideUrl ? " (overridden via --url)" : "")
   );
 
+  // Select provider/model via env; default to Gemini for now
+  const modelName = process.env.STAGEHAND_MODEL || "google/gemini-2.5-flash";
+  const useOpenAI = modelName.startsWith("openai/");
+  const useGoogle = modelName.startsWith("google/");
+
+  if (useOpenAI && !process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "Missing OPENAI_API_KEY in environment. Set it when using an openai/* model."
+    );
+  }
+  if (useGoogle && !process.env.GEMINI_KEY) {
+    throw new Error(
+      "Missing GEMINI_KEY in environment. Set it when using a google/* model."
+    );
+  }
+
   const stagehand = new Stagehand({
     env: "LOCAL",
     apiKey: process.env.BROWSERBASE_KEY!,
     projectId: process.env.BROWSERBASE_PROJECT_ID!,
-    verbose: 1,
+    modelName,
+    modelClientOptions: useOpenAI
+      ? { apiKey: process.env.OPENAI_API_KEY! }
+      : useGoogle
+      ? { apiKey: process.env.GEMINI_KEY! }
+      : undefined,
   });
 
   await stagehand.init();
   const page = stagehand.page;
+
+  // Adjust instruction per provider
+  if (useOpenAI) {
+    // Prefer omitting fields over nulls for OpenAI JSON schema
+    instruction = instruction.map((line) =>
+      line.includes("return null for that field")
+        ? "If a field is not present on the page, omit the field."
+        : line
+    );
+  }
 
   await page.goto(targetUrl, {
     waitUntil: "domcontentloaded",
@@ -574,8 +615,7 @@ async function main() {
   // Handle potential security verification interstitials
   // await maybeHandleSecurity(page as unknown as Page, 60000);
 
-  // Define schemas: loose (tolerates null title) for initial fetch to avoid server-side schema errors;
-  // strict (requires title) for final validation once past any security gate.
+  // Define schemas: default (tolerates null/union) and OpenAI-friendly (no null/union).
   const rfpLooseSchema = z.object({
     title: z.string().nullable().optional(),
     solicitationNumber: z.string().nullable().optional(),
@@ -593,27 +633,42 @@ async function main() {
     publishedDate: z.string().nullable().optional(), // ISO 8601 if parseable
     dueDate: z.string().nullable().optional(), // ISO 8601 if parseable
     description: z.string().nullable().optional(), // 1-3 sentence summary
+    // contact can be an object, a flat string, or an array of strings
     contact: z
-      .object({
-        name: z.string().nullable().optional(),
-        email: z.string().nullable().optional(),
-        phone: z.string().nullable().optional(),
-      })
-      .nullable()
+      .union([
+        z
+          .object({
+            name: z.string().nullable().optional(),
+            email: z.string().nullable().optional(),
+            phone: z.string().nullable().optional(),
+          })
+          .nullable(),
+        z.array(z.string()).nullable(),
+        z.string().nullable(),
+      ])
       .optional(),
+    // submission can be an object or a URL/string
     submission: z
-      .object({
-        url: z.string().nullable().optional(),
-        instructions: z.string().nullable().optional(),
-      })
-      .nullable()
+      .union([
+        z
+          .object({
+            url: z.string().nullable().optional(),
+            instructions: z.string().nullable().optional(),
+          })
+          .nullable(),
+        z.string().nullable(),
+      ])
       .optional(),
+    // attachments can be array of objects or array of strings (URLs, ids)
     attachments: z
       .array(
-        z.object({
-          name: z.string().nullable().optional(),
-          url: z.string(),
-        })
+        z.union([
+          z.object({
+            name: z.string().nullable().optional(),
+            url: z.string().nullable().optional(),
+          }),
+          z.string(),
+        ])
       )
       .nullable()
       .optional(),
@@ -625,13 +680,18 @@ async function main() {
       })
       .nullable()
       .optional(),
+    // preBidMeeting can be an object or a plain date string
     preBidMeeting: z
-      .object({
-        date: z.string().nullable().optional(), // ISO 8601 if parseable
-        location: z.string().nullable().optional(),
-        mandatory: z.boolean().nullable().optional(),
-      })
-      .nullable()
+      .union([
+        z
+          .object({
+            date: z.string().nullable().optional(), // ISO 8601 if parseable
+            location: z.string().nullable().optional(),
+            mandatory: z.boolean().nullable().optional(),
+          })
+          .nullable(),
+        z.string().nullable(),
+      ])
       .optional(),
     questionsDueDate: z.string().nullable().optional(), // ISO 8601 if parseable
     websiteUrl: z.string().nullable().optional(),
@@ -640,24 +700,107 @@ async function main() {
     title: z.string().min(1, "title required"),
   });
 
+  // OpenAI-friendly schemas (avoid nullable/complex unions to ensure clean JSON Schema)
+  const rfpOpenAILooseSchema = z.object({
+    title: z.string().optional(),
+    solicitationNumber: z.string().optional(),
+    agency: z.string().optional(),
+    buyer: z.string().optional(),
+    category: z.string().optional(),
+    location: z
+      .object({
+        city: z.string().optional(),
+        state: z.string().optional(),
+        country: z.string().optional(),
+      })
+      .optional(),
+    publishedDate: z.string().optional(),
+    dueDate: z.string().optional(),
+    description: z.string().optional(),
+    contact: z
+      .object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+      })
+      .optional(),
+    submission: z
+      .object({
+        url: z.string().optional(),
+        instructions: z.string().optional(),
+      })
+      .optional(),
+    attachments: z
+      .array(
+        z.object({
+          name: z.string().optional(),
+          url: z.string().optional(),
+        })
+      )
+      .optional(),
+    budget: z
+      .object({
+        min: z.number().optional(),
+        max: z.number().optional(),
+        currency: z.string().optional(),
+      })
+      .optional(),
+    preBidMeeting: z
+      .object({
+        date: z.string().optional(),
+        location: z.string().optional(),
+        mandatory: z.boolean().optional(),
+      })
+      .optional(),
+    questionsDueDate: z.string().optional(),
+    websiteUrl: z.string().optional(),
+  });
+  const rfpOpenAIStrictSchema = rfpOpenAILooseSchema.extend({
+    title: z.string().min(1, "title required"),
+  });
+
   type LooseRfp = z.infer<typeof rfpLooseSchema>;
   type StrictRfp = z.infer<typeof rfpStrictSchema>;
+  type LooseRfpOpenAI = z.infer<typeof rfpOpenAILooseSchema>;
+  type StrictRfpOpenAI = z.infer<typeof rfpOpenAIStrictSchema>;
+  // Catch-all record schema as a super-loose fallback when the model returns
+  // unexpected shapes. Values may be primitives, arrays, or nested objects.
+  // Use a ZodObject to satisfy Stagehand's schema requirement, but allow any keys/values
+  const catchAllSchema = z.object({}).catchall(z.any());
+  type CatchAll = z.infer<typeof catchAllSchema>;
   async function extractWithLoose(): Promise<
-    { ok: true; data: LooseRfp } | { ok: false; error: unknown }
+    | { ok: true; data: LooseRfp; shape: "rfp" }
+    | { ok: true; data: CatchAll; shape: "catchall" }
+    | { ok: false; error: unknown }
   > {
+    const activeLoose = useOpenAI ? rfpOpenAILooseSchema : rfpLooseSchema;
+    // First preference: try the structured (loose) RFP schema
     try {
       const result = (await page.extract({
         instruction: instruction.join(" "),
-        schema: rfpLooseSchema,
-      })) as unknown as LooseRfp;
-      return { ok: true, data: result };
-    } catch (err) {
-      return { ok: false, error: err };
+        schema: activeLoose as any,
+      })) as unknown as LooseRfp | LooseRfpOpenAI;
+      return { ok: true, data: result as any, shape: "rfp" };
+    } catch (errPrimary) {
+      if (useOpenAI) {
+        return { ok: false, error: errPrimary };
+      }
+      // Fallback: try a catch-all record so we don't lose the extraction entirely
+      try {
+        const generic = (await page.extract({
+          instruction: instruction.join(" "),
+          schema: catchAllSchema as any,
+        })) as unknown as CatchAll;
+        return { ok: true, data: generic, shape: "catchall" };
+      } catch (errFallback) {
+        return { ok: false, error: errFallback ?? errPrimary };
+      }
     }
   }
 
   // First attempt: if schema validation fails due to security gate, mitigate and retry once
   let attempt = await extractWithLoose();
+  let usedOpenAIFallback = false;
   if (!attempt.ok) {
     console.warn(
       "[extract] Initial extraction failed. Attempting to clear possible security gate and retry…"
@@ -669,26 +812,196 @@ async function main() {
       } catch {}
     }
     attempt = await extractWithLoose();
-    if (!attempt.ok) {
-      console.warn(
-        "[extract] Extraction failed after retry. Dumping debug artifacts."
-      );
-      await debugDump(page as unknown as Page, "extract_failed");
-      throw attempt.error;
+  }
+  // Ensure type-narrowing for subsequent logic
+  if (!attempt.ok) {
+    // As a final fallback, try direct OpenAI extraction if key is available
+    const priorError = attempt.error as unknown;
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        console.warn(
+          "[extract] Attempting OpenAI direct fallback (json_object mode)…"
+        );
+        const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const snapshot = await (async () => {
+          const url = page.url();
+          let title = "";
+          try {
+            title = await page.title();
+          } catch {}
+          // Prefer visible text; cap to avoid token blowups
+          let text = "";
+          try {
+            text = await page.evaluate(() => document.body?.innerText || "");
+          } catch {}
+          if (text.length > 18000) text = text.slice(0, 18000);
+          return { url, title, text };
+        })();
+
+        const model = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
+        const sys = [
+          "You extract procurement/RFP details into a JSON object.",
+          "Return ONLY a single JSON object. No explanations.",
+          "If a field is missing, omit it.",
+          "Use ISO 8601 dates (YYYY-MM-DD) where possible.",
+        ].join(" ");
+
+        const user = [
+          "Extract this page into the specified RFP schema with these fields:",
+          "title, solicitationNumber, agency, buyer, category,",
+          "location{city,state,country}, publishedDate, dueDate, description,",
+          "contact{name,email,phone}, submission{url,instructions},",
+          "attachments[{name,url}], budget{min,max,currency},",
+          "preBidMeeting{date,location,mandatory}, questionsDueDate, websiteUrl.",
+          "Return ONLY the JSON object.",
+          "\nCurrent URL: " + snapshot.url,
+          "\nTitle: " + snapshot.title,
+          "\nVisible text:\n" + snapshot.text,
+        ].join(" ");
+
+        const resp = await openaiClient.chat.completions.create({
+          model,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user },
+          ],
+          temperature: 0.2,
+        });
+        const content = resp.choices?.[0]?.message?.content || "{}";
+        let parsed: any;
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          const first = content.indexOf("{");
+          const last = content.lastIndexOf("}");
+          if (first >= 0 && last > first) {
+            parsed = JSON.parse(content.slice(first, last + 1));
+          } else {
+            parsed = {};
+          }
+        }
+        // Normalize common alternate field names/shapes to our schema
+        const normalize = (obj: any) => {
+          const out: any = { ...obj };
+          // issuingAgency -> agency
+          if (!out.agency && typeof out.issuingAgency === "string") {
+            out.agency = out.issuingAgency;
+          }
+          // buyer array -> string
+          if (Array.isArray(out.buyer)) {
+            const first = out.buyer.find(
+              (v: any) => typeof v === "string" && v.trim()
+            );
+            if (first) out.buyer = first;
+            else delete out.buyer;
+          }
+          // agencyContact -> contact
+          if (!out.contact && out.agencyContact) {
+            const ac = out.agencyContact;
+            const flat = Array.isArray(ac) ? ac.join(" \n ") : String(ac);
+            const emailMatch = flat.match(
+              /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
+            );
+            const phoneMatch = flat.match(/\+?\d[\d\s().-]{7,}/);
+            const nameCandidate = Array.isArray(ac)
+              ? ac[0]
+              : flat.split("\n")[0];
+            out.contact = {
+              name:
+                typeof nameCandidate === "string" ? nameCandidate : undefined,
+              email: emailMatch ? emailMatch[0] : undefined,
+              phone: phoneMatch ? phoneMatch[0] : undefined,
+            };
+          }
+          // contact as string/array -> contact object
+          if (
+            out.contact &&
+            (typeof out.contact === "string" || Array.isArray(out.contact))
+          ) {
+            const flat = Array.isArray(out.contact)
+              ? out.contact.join(" \n ")
+              : String(out.contact);
+            const emailMatch = flat.match(
+              /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
+            );
+            const phoneMatch = flat.match(/\+?\d[\d\s().-]{7,}/);
+            out.contact = {
+              name: flat.split("\n")[0],
+              email: emailMatch ? emailMatch[0] : undefined,
+              phone: phoneMatch ? phoneMatch[0] : undefined,
+            };
+          }
+          // documents -> attachments
+          const docs = out.documents || out.docs;
+          if (!out.attachments && Array.isArray(docs)) {
+            out.attachments = docs
+              .map((d: any) => {
+                if (typeof d === "string") {
+                  const isUrl = /^https?:\/\//i.test(d);
+                  return isUrl ? { url: d } : { name: d };
+                }
+                if (d && typeof d === "object") return d;
+                return undefined;
+              })
+              .filter(Boolean);
+          }
+          // submissionUrl -> submission.url
+          if (!out.submission && typeof out.submissionUrl === "string") {
+            out.submission = { url: out.submissionUrl };
+          }
+          // pre-proposal -> preBidMeeting
+          const preDate =
+            out.preProposalConferenceDate || out.preBidMeetingDate;
+          const preTime =
+            out.preProposalConferenceTime || out.preBidMeetingTime;
+          if (!out.preBidMeeting && (preDate || preTime)) {
+            out.preBidMeeting = {
+              date:
+                preDate && preTime
+                  ? `${preDate} ${preTime}`
+                  : preDate || preTime,
+              location:
+                out.preProposalConferenceInfo || out.preBidMeetingDetails,
+            };
+          }
+          return out;
+        };
+
+        const normalized = normalize(parsed);
+        // Validate with OpenAI-friendly loose schema
+        const check = rfpOpenAILooseSchema.safeParse(normalized);
+        if (!check.success) {
+          throw new Error(
+            "OpenAI direct fallback validation failed: " +
+              JSON.stringify(check.error.issues.slice(0, 5))
+          );
+        }
+        attempt = { ok: true, data: check.data as any, shape: "rfp" };
+        usedOpenAIFallback = true;
+      } catch (e) {
+        throw priorError ?? e;
+      }
+    } else {
+      throw priorError;
     }
   }
 
-  let rfpLoose = attempt.data;
+  // rfpLoose may be either structured RFP-ish object or a catch-all map
+  let rfpLoose = attempt.data as LooseRfp | CatchAll;
+  const isCatchAll =
+    !useOpenAI && attempt.ok && (attempt as any).shape === "catchall";
 
   // If the returned content still looks like a security page, try once more
   const looksBlocked =
-    !rfpLoose.title &&
-    ((rfpLoose.description || "")
+    !isCatchAll &&
+    !(rfpLoose as any).title &&
+    ((((rfpLoose as any).description || "") as string)
       .toLowerCase()
       .includes("security verification") ||
       (await looksLikeSecurityGate(page as unknown as Page)));
 
-  if (looksBlocked) {
+  if (!usedOpenAIFallback && looksBlocked) {
     console.warn(
       "[security] Content still appears gated. Retrying after another mitigation…"
     );
@@ -700,8 +1013,8 @@ async function main() {
       // Re-extract with strict schema now that we (hopefully) passed the gate
       const strict = (await page.extract({
         instruction: instruction.join(" "),
-        schema: rfpStrictSchema,
-      })) as unknown as StrictRfp;
+        schema: (useOpenAI ? rfpOpenAIStrictSchema : rfpStrictSchema) as any,
+      })) as unknown as StrictRfp | StrictRfpOpenAI;
       rfpLoose = strict;
     } else {
       console.warn(
@@ -712,17 +1025,17 @@ async function main() {
   }
 
   // If we are not gated anymore but title is still missing, attempt a strict extract once
-  if (!rfpLoose.title) {
+  if (!usedOpenAIFallback && !isCatchAll && !(rfpLoose as any).title) {
     try {
       const strict = (await page.extract({
         instruction: instruction.join(" "),
-        schema: rfpStrictSchema,
-      })) as unknown as StrictRfp;
+        schema: (useOpenAI ? rfpOpenAIStrictSchema : rfpStrictSchema) as any,
+      })) as unknown as StrictRfp | StrictRfpOpenAI;
       rfpLoose = strict;
     } catch {}
   }
 
-  let rfp = rfpLoose as StrictRfp | LooseRfp;
+  let rfp = rfpLoose as StrictRfp | LooseRfp | CatchAll;
 
   // If extracted data appears to be a login page (e.g., strings contain "login"),
   // return an empty JSON and skip DB updates to avoid storing gated content.
@@ -737,8 +1050,9 @@ async function main() {
 
   // Ensure websiteUrl is the actual current URL if extractor returned a bare domain
   const currentUrl = page.url();
-  if (!rfp.websiteUrl || !/^https?:\/\//i.test(rfp.websiteUrl)) {
-    rfp.websiteUrl = currentUrl;
+  const hasUrl = typeof (rfp as any)?.websiteUrl === "string";
+  if (!hasUrl || !/^https?:\/\//i.test((rfp as any).websiteUrl)) {
+    (rfp as any).websiteUrl = currentUrl;
   }
 
   const updateData: Record<string, any> = {

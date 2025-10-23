@@ -4,6 +4,8 @@
 
 .pageMain_solsSection {
   &_list {
+    border: 2px solid #eee;
+    border-radius: 15px;
     height: calc(100vh - 195px);
     margin: 10px 0;
     overflow-y: auto;

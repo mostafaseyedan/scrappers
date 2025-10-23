@@ -14,7 +14,8 @@ export async function DELETE(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  let { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
   const queryOptions = parseQueryString(req.url);
   const parentDbPath = queryOptions?.parentDbPath || "";
   let results: Record<string, any> = {};
@@ -40,7 +41,8 @@ export async function GET(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  let { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
   const queryOptions = parseQueryString(req.url);
   const parentDbPath = queryOptions?.parentDbPath || "";
   let results = {};
@@ -65,7 +67,8 @@ export async function PATCH(
   { params }: { params: Promise<Params> }
 ) {
   const _params = await params;
-  let { model: dbPath, id } = _params;
+  const { id } = _params;
+  let dbPath = _params.model;
   const { body } = req;
   const json = await new NextResponse(body).json();
   const parentDbPath = json.$parentDbPath || "";

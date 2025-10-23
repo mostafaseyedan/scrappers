@@ -44,7 +44,7 @@ export async function POST(
   const parentDbPath = json.$parentDbPath || "";
   let results;
   let status = 200;
-  let doc: Record<string, any> = {};
+  const doc: Record<string, any> = {};
 
   dbPath = urlJoin(parentDbPath, dbPath);
 
