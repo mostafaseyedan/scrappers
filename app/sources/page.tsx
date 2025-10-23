@@ -20,13 +20,13 @@ export default function Page() {
           <TabsTrigger value="sites">Sites</TabsTrigger>
         </TabsList>
         <TabsContent value="issuers">
-          <Datatable model={issuerModel} />
+          <Datatable model={issuerModel} defaultLimit={10} />
         </TabsContent>
         <TabsContent value="locations">
-          <Datatable model={locationModel} />
+          <Datatable model={locationModel} defaultLimit={10} />
         </TabsContent>
         <TabsContent value="sites">
-          <Datatable model={siteModel} />
+          <Datatable model={siteModel} defaultLimit={10} />
         </TabsContent>
       </Tabs>
     </div>

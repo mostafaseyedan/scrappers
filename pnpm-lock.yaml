@@ -13,7 +13,7 @@ importers:
         version: 2.5.2(deepmerge@4.3.1)(dotenv@17.2.3)(encoding@0.1.13)(react@19.2.0)(zod@4.1.12)
       '@elastic/elasticsearch':
         specifier: ^9.1.0
-        version: 9.1.1
+        version: 9.2.0
       '@firebase/app':
         specifier: ^0.14.1
         version: 0.14.4
@@ -439,8 +439,8 @@ packages:
   '@dabh/diagnostics@2.0.8':
     resolution: {integrity: sha512-R4MSXTVnuMzGD7bzHdW2ZhhdPC/igELENcq5IjEverBvq5hn1SXCWcsi6eSsdWP0/Ur+SItRRjAktmdoX/8R/Q==}
 
-  '@elastic/elasticsearch@9.1.1':
-    resolution: {integrity: sha512-s/JZtHZjtbAYC2gdSzm4LLOSReR724e7cf7ZauIAZlGvAyMgZPZCJpq7xHazSy4rZZhule4ubMs4vepBgWvKQA==}
+  '@elastic/elasticsearch@9.2.0':
+    resolution: {integrity: sha512-M59qmMOZOk8pTcI9Ns2ow18PlyMbYrpcXqYwkChjiyXSmmqoCTvFXkC2bGQLxrrQkXaPbYR7aZqWD9b5F1405A==}
     engines: {node: '>=18'}
 
   '@elastic/transport@9.2.0':
@@ -2682,6 +2682,9 @@ packages:
   '@types/node@22.18.12':
     resolution: {integrity: sha512-BICHQ67iqxQGFSzfCFTT7MRQ5XcBjG5aeKh5Ok38UBbPe5fxTyE+aHFxwVrGyr8GNlqFMLKD1D3P2K/1ks8tog==}
 
+  '@types/node@24.9.1':
+    resolution: {integrity: sha512-QoiaXANRkSXK6p0Duvt56W208du4P9Uye9hWLWgGMDTEoKPhuenzNcC4vGUmrNkiOKTlIrBoyNQYNpSwfEZXSg==}
+
   '@types/pg-pool@2.0.4':
     resolution: {integrity: sha512-qZAvkv1K3QbmHHFYSNRYPkRjOWRLBYrL4B9c+wG0GSVGBw0NtJwPcgx/DSddeDJvRGMHCEQ4VMEVfuJ/0gZ3XQ==}
 
@@ -2967,8 +2970,8 @@ packages:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
 
-  apache-arrow@20.0.0:
-    resolution: {integrity: sha512-JUeK0jFRUd7rbmrhhzR3O2KXjLaZ4YYYFOptyUfxOsMIoZCPi6bZR58gVi/xi3HTBMPseXm9PXyQ2V916930pA==}
+  apache-arrow@21.1.0:
+    resolution: {integrity: sha512-kQrYLxhC+NTVVZ4CCzGF6L/uPVOzJmD1T3XgbiUnP7oTeVFOFgEUu6IKNwCDkpFoBVqDKQivlX4RUFqqnWFlEA==}
     hasBin: true
 
   argparse@2.0.1:
@@ -3049,7 +3052,7 @@ packages:
     engines: {node: '>=8.0.0'}
 
   au@file:vendor/au.tgz:
-    resolution: {integrity: sha512-fYpSo2KhA/qCcZfdS4l6ASk68m8dHc8zB+cc2CqC9hNEfWXoyt270dNpbEXatDuWe7ZZkEYwtYSeRv7+buj7Bg==, tarball: file:vendor/au.tgz}
+    resolution: {integrity: sha512-wo4YDfZ7vlenF0HhaHEcRVo+rSklKMy8c+xhHo04uZ5W44FerCI4vsZMLc9oolS2i9j/eFGkz05UyUHUbHxEAA==, tarball: file:vendor/au.tgz}
     version: 0.1.0
 
   available-typed-arrays@1.0.7:
@@ -5680,6 +5683,9 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
+  undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+
   undici@7.16.0:
     resolution: {integrity: sha512-QEg3HPMll0o3t2ourKwOeUAZ159Kn9mx5pnzHRQO8+Wixmh88YdZRiIwat0iNzNNXn0yoEtXJqFpyW7eM8BV7g==}
     engines: {node: '>=20.18.1'}
@@ -6260,10 +6266,10 @@ snapshots:
       kuler: 2.0.0
     optional: true
 
-  '@elastic/elasticsearch@9.1.1':
+  '@elastic/elasticsearch@9.2.0':
     dependencies:
       '@elastic/transport': 9.2.0
-      apache-arrow: 20.0.0
+      apache-arrow: 21.1.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - '@75lb/nature'
@@ -9537,6 +9543,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/node@24.9.1':
+    dependencies:
+      undici-types: 7.16.0
+
   '@types/pg-pool@2.0.4':
     dependencies:
       '@types/pg': 8.6.1
@@ -9846,12 +9856,12 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
 
-  apache-arrow@20.0.0:
+  apache-arrow@21.1.0:
     dependencies:
       '@swc/helpers': 0.5.17
       '@types/command-line-args': 5.2.3
       '@types/command-line-usage': 5.0.4
-      '@types/node': 20.19.23
+      '@types/node': 24.9.1
       command-line-args: 6.0.1
       command-line-usage: 7.0.3
       flatbuffers: 25.9.23
@@ -13449,6 +13459,8 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@6.21.0: {}
+
+  undici-types@7.16.0: {}
 
   undici@7.16.0: {}
 

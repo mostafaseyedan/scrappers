@@ -146,6 +146,19 @@
     }
   }
 
+  &_aiScore {
+    font-weight: 600;
+    &[class*="green"] {
+      color: green;
+    }
+    &[class*="orange"] {
+      color: orange;
+    }
+    &[class*="red"] {
+      color: red;
+    }
+  }
+
   &_sourceRow {
     > * {
       margin-right: 5px;
