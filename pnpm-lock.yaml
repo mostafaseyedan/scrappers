@@ -131,6 +131,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      openai:
+        specifier: ^4.68.4
+        version: 4.104.0(encoding@0.1.13)(ws@8.18.3)(zod@4.1.12)
       playwright:
         specifier: ^1.56.0
         version: 1.56.1
