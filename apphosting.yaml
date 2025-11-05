@@ -117,3 +117,23 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: VERTEX_GCLOUD_PROJECT
+    value: cendien-sales-support-ai
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VERTEX_SEARCH_LOCATION
+    value: global
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VERTEX_RAG_CORPUS_ID
+    value: sharepoint-files-datastore
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VERTEX_AI_LOCATION
+    value: us-central1
+    availability:
+      - BUILD
+      - RUNTIME
