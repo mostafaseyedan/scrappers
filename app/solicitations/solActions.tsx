@@ -37,6 +37,8 @@ type SolActionsProps = {
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
   showExpandOption?: boolean;
   sol: Record<string, any>;
+  // Accepted but not used here (some callers pass it)
+  refreshSols?: (options?: { list?: boolean; topBar?: boolean }) => void;
   onDeleteSuccess?: (options?: { list?: boolean; topBar?: boolean }) => void;
   onEditSol?: (solId: string) => void;
 };

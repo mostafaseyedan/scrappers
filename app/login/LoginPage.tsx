@@ -200,8 +200,7 @@ export function LoginPage({
                         googleError ||
                         emailLinkError ||
                         googleUsingRedirectError ||
-                        microsoftError ||
-                        microsoftUsingRedirectError
+                        microsoftError
                       }
                       style={{ display: "none" }}
                     >
