@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { FilterOptions } from "./filterOptions";
 import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
@@ -197,7 +198,7 @@ const TopBar = forwardRef(
               title="AI Chat"
               className="h-8 w-8 bg-transparent rounded hover:bg-gray-100 disabled:opacity-50 flex items-center justify-center transition-colors"
             >
-              <img src="/images/gemini-icon.svg" alt="Chat" className="h-5 w-5" />
+              <Image src="/images/gemini-icon.svg" alt="Chat" width={20} height={20} />
             </button>
           )}
           <div>

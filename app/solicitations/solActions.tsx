@@ -7,11 +7,6 @@ import {
   Trash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { solicitation as solModel } from "../models";
 import Link from "next/link";
 import {
@@ -42,7 +37,6 @@ type SolActionsProps = {
   setExpandedSolIds?: Dispatch<SetStateAction<string[]>>;
   showExpandOption?: boolean;
   sol: Record<string, any>;
-  refreshSols?: (options?: { list?: boolean; topBar?: boolean }) => void;
   onDeleteSuccess?: (options?: { list?: boolean; topBar?: boolean }) => void;
   onEditSol?: (solId: string) => void;
 };
@@ -53,7 +47,6 @@ const SolActions = ({
   setExpandedSolIds,
   showExpandOption = true,
   sol,
-  refreshSols,
   onEditSol,
   onDeleteSuccess,
 }: SolActionsProps) => {

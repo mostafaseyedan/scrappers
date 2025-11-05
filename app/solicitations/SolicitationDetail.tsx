@@ -13,6 +13,7 @@ import { CreateCommentDialog } from "./createCommentDialog";
 import { UserContext } from "@/app/userContext";
 import { format as $d, formatDistanceToNowStrict as $dist } from "date-fns";
 import { Map as MapIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import solStyles from "./solicitation.module.scss";
 
 function isExpiring(date: Date | string | number): boolean {
@@ -449,7 +450,11 @@ export function SolicitationDetail({ solId, onRefresh }: SolicitationDetailProps
           <div className="space-y-4">
             {/* Description */}
             <div className="prose max-w-none">
-              {sol.description || "No description available"}
+              {sol.description ? (
+                <ReactMarkdown>{sol.description}</ReactMarkdown>
+              ) : (
+                "No description available"
+              )}
             </div>
           </div>
         )}

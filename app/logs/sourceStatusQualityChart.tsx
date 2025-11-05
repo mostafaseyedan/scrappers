@@ -127,7 +127,6 @@ export const SourceStatusQualityChart = () => {
           // Sort by quality ratio descending
           .sort((a, b) => b.qualityRatio - a.qualityRatio);
 
-        console.log("[SourceStatusQualityChart] Chart data:", chartData);
 
         setData(chartData);
       } catch (error) {

@@ -60,17 +60,14 @@
       min-height: 0;
       background: var(--card);
 
-      /* Hide scrollbar by default, show thin on hover for discoverability */
+      /* Completely hide scrollbar but keep scrolling */
       -ms-overflow-style: none; /* IE/Edge */
       scrollbar-width: none; /* Firefox */
       &::-webkit-scrollbar { /* Chrome/Safari */
+        display: none;
         width: 0;
         height: 0;
       }
-      &:hover { scrollbar-width: thin; }
-      &:hover::-webkit-scrollbar { width: 6px; height: 6px; }
-      &::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
-      &::-webkit-scrollbar-track { background: transparent; }
     }
 
     &_pagination {

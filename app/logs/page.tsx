@@ -78,14 +78,6 @@ export default function Page() {
           if (log.scriptName) sources.add(log.scriptName);
         });
 
-        console.log("Summary Stats Debug:", {
-          totalRFPsScraped,
-          successfulJobs,
-          failedJobs,
-          totalDuplicates,
-          totalJunk,
-          recentLogsCount: recentLogs.length
-        });
 
         const totalRFPs = totalRFPsScraped;
         const successRate =

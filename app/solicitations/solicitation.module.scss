@@ -83,7 +83,6 @@
     &[data-status="awarded"] {
       > button {
         color: rgb(0, 200, 117);
-        border-color: rgb(0, 200, 117);
         &:hover {
           background-color: rgba(0, 200, 117, 0.05);
         }
@@ -94,7 +93,6 @@
     &[data-status="foia"] {
       > button {
         color: rgb(102, 204, 255);
-        border-color: rgb(102, 204, 255);
         &:hover {
           background-color: rgba(102, 204, 255, 0.05);
         }
@@ -104,7 +102,6 @@
     &[data-status="notWon"] {
       > button {
         color: rgb(249, 115, 22);
-        border-color: rgb(249, 115, 22);
         &:hover {
           background-color: rgba(249, 115, 22, 0.05);
         }
@@ -113,7 +110,6 @@
     &[data-status="notPursuing"] {
       > button {
         color: rgb(156, 163, 175);
-        border-color: rgb(156, 163, 175);
         &:hover {
           background-color: rgba(156, 163, 175, 0.05);
         }
@@ -335,9 +331,9 @@
     font-size: var(--pill-font-size, 12px);
     color: var(--muted-foreground);
   }
-  &_pursuePill__green { color: rgb(0, 200, 117); border-color: rgb(0, 200, 117); }
-  &_pursuePill__orange { color: rgb(249, 115, 22); border-color: rgb(249, 115, 22); }
-  &_pursuePill__red { color: rgb(239, 68, 68); border-color: rgb(239, 68, 68); }
+  &_pursuePill__green { color: rgb(0, 200, 117); }
+  &_pursuePill__orange { color: rgb(249, 115, 22); }
+  &_pursuePill__red { color: rgb(239, 68, 68); }
 
   &_aiScore {
     font-weight: 600;

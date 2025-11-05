@@ -1,4 +1,4 @@
-import { Eye, Globe, Map, StickyNote, Tag } from "lucide-react";
+import { Eye, Globe, Map, Tag } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,12 +15,9 @@ import {
   SetStateAction,
   useEffect,
 } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { solicitation as solModel } from "../models";
 import { cnStatuses } from "../config";
 import { format as fnFormat, formatDistanceToNowStrict as fnDistance } from "date-fns";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -57,8 +54,6 @@ type SolicitationProps = {
 const Solicitation = ({
   sol,
   className,
-  expandedSolIds = [],
-  setExpandedSolIds,
   refreshSols,
   onSelectSol,
   isSelected = false,

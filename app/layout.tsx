@@ -183,7 +183,7 @@ export default function RootLayout({
                         height={30}
                       />
                       <div className={styles.layout_header_title}>
-                        <h2>Cendien's RFP Aggregation Hub</h2>
+                        <h2>Cendien RFP Aggregation Hub</h2>
                       </div>
                     </div>
 

@@ -92,9 +92,6 @@ export const SourceQualityChart = () => {
           sourceData[baseName].junk += log.junkCount || 0;
         });
 
-        console.log("[SourceQualityChart] All base names:", Array.from(allBaseNames));
-        console.log("[SourceQualityChart] Recent logs count:", recentLogs.length);
-        console.log("[SourceQualityChart] Source data (combined):", sourceData);
 
         // Convert to array
         const chartData = Object.entries(sourceData)

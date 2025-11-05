@@ -9,9 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { scriptLog as scriptLogModel } from "@/app/models";
+import { solicitation as solModel } from "@/app/models";
 
 type SourceDataPoint = {
   source: string;
@@ -35,44 +34,57 @@ export const SourcePerformanceChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get all script logs
-        const logs = await scriptLogModel.get({
-          limit: 1000,
+        // Get all solicitations
+        const solicitations = await solModel.get({
+          limit: 10000,
           sort: "created desc",
         });
 
-        // Filter to last 7 days on the client side
+        // Filter to last 7 days (including today) based on created date
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0); // Start of day 7 days ago
 
-        const recentLogs = logs.results?.filter((log: any) => {
-          const logDate = new Date(log.created);
-          return logDate >= sevenDaysAgo;
+        const recentSols = solicitations.results?.filter((sol: any) => {
+          const createdDate = new Date(sol.created);
+          return createdDate >= sevenDaysAgo;
         }) || [];
 
         // Aggregate by source
         const sourceData: Record<string, { success: number }> = {};
 
-        recentLogs.forEach((log: any) => {
-          const source = log.scriptName || "Unknown";
+        const biddirectSols: any[] = [];
+        recentSols.forEach((sol: any) => {
+          const source = sol.site || sol.siteId || "Unknown";
           if (!sourceData[source]) {
             sourceData[source] = { success: 0 };
           }
-          sourceData[source].success += log.successCount || 0;
+          sourceData[source].success += 1;
+
+          // Collect BidDirect solicitations for analysis
+          if (source.toLowerCase() === 'biddirect') {
+            biddirectSols.push({
+              id: sol.id,
+              title: sol.title?.substring(0, 40),
+              created: new Date(sol.created).toLocaleString(),
+              createdISO: sol.created,
+            });
+          }
         });
 
-        // Get all unique sources (including those with 0 counts)
+        // Log BidDirect details
+        if (biddirectSols.length > 0) {
+          console.log(`[SourcePerformanceChart] BidDirect: ${biddirectSols.length} solicitations in last 7 days`);
+          console.table(biddirectSols);
+        }
+
+        // Get all unique sources
         const allSources = Object.keys(sourceData);
 
-        // Convert to array with better source name formatting
+        // Convert to array
         const chartData = allSources.map((source) => {
-          // Extract the actual scraper name from paths like "Firefunctions/scrapers/sourceName"
-          let displayName = source;
-          if (source.includes('/')) {
-            const parts = source.split('/');
-            displayName = parts[parts.length - 1]; // Get last part
-          }
           // Limit to 20 chars for display
+          let displayName = source;
           if (displayName.length > 20) {
             displayName = displayName.slice(0, 20) + "...";
           }
@@ -84,7 +96,7 @@ export const SourcePerformanceChart = () => {
             total: sourceData[source]?.success || 0,
           };
         })
-        // Filter out sources with zero RFPs scraped
+        // Filter out sources with zero RFPs
         .filter((item) => item.success > 0)
         // Sort by success count descending
         .sort((a, b) => b.success - a.success);

@@ -90,17 +90,7 @@ export function LoginPage({
     }
   );
 
-  const [handleLoginWithMicrosoftUsingRedirect, , microsoftUsingRedirectError] =
-    useLoadingCallback(async () => {
-      setHasLogged(false);
-
-      const oldauth = getFirebaseAuth();
-      await loginWithProviderUsingRedirect(
-        oldauth,
-        getMicrosoftProvider(oldauth)
-      );
-      setHasLogged(true);
-    });
+  // Removed unused Microsoft redirect login handler
 
   async function handleLoginWithRedirect() {
     const credential = await getRedirectResult(auth);
@@ -248,19 +238,6 @@ export function LoginPage({
                       </Button>
                     </PasswordForm>
                     <Button
-                      variant="outline"
-                      onClick={handleLoginWithMicrosoftUsingRedirect}
-                    >
-                      <Image
-                        src="/msft.svg"
-                        alt="Microsoft logo"
-                        className="size-4 shrink-0"
-                        width={20}
-                        height={20}
-                      />{" "}
-                      Log in with Microsoft (Redirect)
-                    </Button>
-                    <Button
                       onClick={handleLoginWithMicrosoft}
                       variant="outline"
                     >
@@ -271,7 +248,7 @@ export function LoginPage({
                         width={20}
                         height={20}
                       />{" "}
-                      Log in with Microsoft (Popup)
+                      Log in with Microsoft
                     </Button>
                   </>
                 )}

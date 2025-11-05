@@ -82,9 +82,6 @@ export const ScrapingJobsChart = () => {
           jobCounts[baseName] = (jobCounts[baseName] || 0) + 1;
         });
 
-        console.log("[ScrapingJobsChart] All sources:", Array.from(allSources));
-        console.log("[ScrapingJobsChart] Recent logs count:", recentLogs.length);
-        console.log("[ScrapingJobsChart] Job counts (combined):", jobCounts);
 
         // Convert to array and sort by count
         const chartData = Object.entries(jobCounts)

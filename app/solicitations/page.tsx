@@ -1,15 +1,8 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Removed unused Select UI imports
 import { Input } from "@/components/ui/input";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +37,7 @@ type ActiveSection = "solicitations" | "logs" | "sources" | "chat";
 export default function Page() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("solicitations");
   const [sols, setSols] = useState<any[]>([]);
-  const [limit, setLimit] = useState(50);
+  const [limit] = useState(50);
   const [filterFacets, setFilterFacets] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
@@ -59,7 +52,7 @@ export default function Page() {
   const [totalFiltered, setTotalFiltered] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [activeSolId, setActiveSolId] = useState<string>("");
+  const [activeSolId] = useState<string>("");
   const [selectedSolId, setSelectedSolId] = useState<string | null>(null);
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
   const [showEditSol, setShowEditSol] = useState(false);
@@ -67,7 +60,7 @@ export default function Page() {
   const [showCreateSol, setShowCreateSol] = useState(false);
   const [isListCollapsed, setIsListCollapsed] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [calculatingScores, setCalculatingScores] = useState(false);
+  const [, setCalculatingScores] = useState(false);
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
 
@@ -215,27 +208,42 @@ export default function Page() {
     setCalculatingScores(true);
 
     try {
-      // Filter "new" solicitations
-      const newSols = sols.filter((sol) => sol.cnStatus === "new");
+      // Filter "new" solicitations that don't have scores yet
+      const newSols = sols.filter(
+        (sol) => sol.cnStatus === "new" && (sol.aiPursueScore === null || sol.aiPursueScore === undefined)
+      );
 
       if (newSols.length === 0) {
-        toast.info("No new solicitations found");
+        toast.info("No new solicitations without scores found");
         setCalculatingScores(false);
         return;
       }
 
       toast.info(`Calculating scores for ${newSols.length} solicitations...`);
 
-      // Prepare data to send (only necessary fields)
+      // Prepare data to send (include all fields for AI scoring)
       const solsToScore = newSols.map((sol) => ({
         id: sol.id,
         cnStatus: sol.cnStatus,
+        aiPursueScore: sol.aiPursueScore,
         title: sol.title,
         description: sol.description,
         issuer: sol.issuer,
         location: sol.location,
         keywords: sol.keywords,
         categories: sol.categories,
+        rfpType: sol.rfpType,
+        cnType: sol.cnType,
+        closingDate: sol.closingDate,
+        questionsDueByDate: sol.questionsDueByDate,
+        publishDate: sol.publishDate,
+        site: sol.site,
+        siteId: sol.siteId,
+        documents: sol.documents,
+        externalLinks: sol.externalLinks,
+        contactName: sol.contactName,
+        contactEmail: sol.contactEmail,
+        contactPhone: sol.contactPhone,
       }));
 
       // Call API endpoint
@@ -363,9 +371,9 @@ export default function Page() {
               {listError ? (
                 <p className="p-4 error">{listError}</p>
               ) : sols?.length ? (
-                sols.map((sol) => (
+                sols.map((sol, index) => (
                   <Solicitation
-                    key={`sol-${sol.id}`}
+                    key={sol.id || `sol-${index}`}
                     sol={sol}
                     refreshSols={refreshSols}
                     onSelectSol={() => handleSelectSol(sol.id)}
@@ -433,7 +441,7 @@ export default function Page() {
           {showChat ? (
             <div className={styles.pageLayout_rightPanel_chat}>
               <div className="bg-white rounded-lg shadow h-full">
-                <AiChat chatKey="aiChat" model={chatModel} />
+                <AiChat chatKey="solicitationsChat" model={chatModel} />
               </div>
             </div>
           ) : selectedSolId === "sources" ? (
@@ -448,7 +456,7 @@ export default function Page() {
                 solId={selectedSolId}
                 onRefresh={() => {
                   // Only refresh the single solicitation in the list, not everything
-                  solModel.getById({ id: selectedSolId }).then((updatedSol) => {
+                  solModel.getById({ id: selectedSolId }).then((updatedSol: any) => {
                     setSols((prevSols) =>
                       prevSols.map((s) => (s.id === selectedSolId ? updatedSol : s))
                     );

@@ -17,19 +17,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Filter to only process "new" status solicitations
+    // Filter to only process "new" status solicitations that don't have scores yet
     const newSolicitations = solicitations.filter(
-      (sol) => sol.cnStatus === "new"
+      (sol) => sol.cnStatus === "new" && (sol.aiPursueScore === null || sol.aiPursueScore === undefined)
     );
 
     if (newSolicitations.length === 0) {
       return NextResponse.json(
-        { error: "No solicitations with 'new' status found" },
+        { error: "No solicitations with 'new' status and no existing scores found" },
         { status: 400 }
       );
     }
 
-    console.log(`[Calculate Scores] Processing ${newSolicitations.length} solicitations with 'new' status`);
+    console.log(`[Calculate Scores] Processing ${newSolicitations.length} solicitations with 'new' status and no scores`);
 
     // Initialize Vertex AI client using SDK (like reference code)
     const vertexGenai = new GoogleGenAI({
@@ -54,7 +54,16 @@ Description: ${sol.description || 'N/A'}
 Issuer: ${sol.issuer || 'N/A'}
 Location: ${sol.location || 'N/A'}
 Keywords: ${sol.keywords?.join(", ") || 'N/A'}
-Categories: ${sol.categories?.join(", ") || 'N/A'}`
+Categories: ${sol.categories?.join(", ") || 'N/A'}
+RFP Type: ${sol.rfpType || 'N/A'}
+Cendien Type: ${sol.cnType || 'N/A'}
+Closing Date: ${sol.closingDate || 'N/A'}
+Questions Due By: ${sol.questionsDueByDate || 'N/A'}
+Published Date: ${sol.publishDate || 'N/A'}
+Source: ${sol.site || sol.siteId || 'N/A'}
+Documents: ${Array.isArray(sol.documents) ? sol.documents.length + ' document(s)' : 'N/A'}
+External Links: ${Array.isArray(sol.externalLinks) && sol.externalLinks.length > 0 ? sol.externalLinks.join(", ") : 'N/A'}
+Contact: ${sol.contactName || 'N/A'} ${sol.contactEmail ? `(${sol.contactEmail})` : ''} ${sol.contactPhone ? `(${sol.contactPhone})` : ''}`
     ).join("\n\n");
 
     // Build the prompt (DETAILED - task, criteria, examples)
@@ -77,6 +86,14 @@ Score each RFP based on alignment with Cendien's core competencies:
 - Financial systems (FSM, Financials, Supply Chain Management)
 - Public sector and government experience
 - System integrations, migrations, and upgrades
+
+Consider these additional factors:
+- Closing date urgency (sooner closing = higher priority if good fit)
+- Questions due date (indicates engagement timeline)
+- Published date (newer RFPs may be more active)
+- Document count (more documents = more detailed/serious RFP)
+- Contact availability (clear contact info = easier engagement)
+- Source quality (some sources are more reliable)
 
 ## SCORING GUIDELINES
 
