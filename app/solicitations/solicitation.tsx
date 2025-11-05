@@ -1,14 +1,4 @@
-import {
-  CalendarClock,
-  Clock,
-  Eye,
-  FileText,
-  Globe,
-  MapPin,
-  MessageCircle,
-  StickyNote,
-  Tag,
-} from "lucide-react";
+import { Eye, Globe, Map, StickyNote, Tag } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,7 +8,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, uidsToNames } from "@/lib/utils";
-import Link from "next/link";
 import {
   useContext,
   useState,
@@ -29,9 +18,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { solicitation as solModel } from "../models";
-import { SolActions } from "./solActions";
-import { cnStatuses, cnTypes } from "../config";
-import { format as fnFormat } from "date-fns";
+import { cnStatuses } from "../config";
+import { format as fnFormat, formatDistanceToNowStrict as fnDistance } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -44,10 +32,10 @@ import styles from "./solicitation.module.scss";
 
 function isExpiring(date: Date): boolean {
   const now = new Date();
-  const oneWeekFromNow = new Date(now);
-  oneWeekFromNow.setDate(now.getDate() + 14);
+  const thirtyDaysFromNow = new Date(now);
+  thirtyDaysFromNow.setDate(now.getDate() + 30);
   date = new Date(date);
-  return oneWeekFromNow > date;
+  return thirtyDaysFromNow > date;
 }
 
 const dateFormat = "MMM d y";
@@ -61,8 +49,8 @@ type SolicitationProps = {
     list?: boolean;
     topBar?: boolean;
   }) => Promise<void>;
-  onClickComment?: (solId: string) => void;
-  onEditSol: (solId: string) => void;
+  onSelectSol?: () => void;
+  isSelected?: boolean;
   variant?: "compact" | "expanded";
 };
 
@@ -72,13 +60,12 @@ const Solicitation = ({
   expandedSolIds = [],
   setExpandedSolIds,
   refreshSols,
-  onClickComment,
-  onEditSol,
+  onSelectSol,
+  isSelected = false,
   variant = "compact",
 }: SolicitationProps) => {
   const [expanded, setExpanded] = useState(false);
   const [cnStatus, setCnStatus] = useState(sol.cnStatus || "new");
-  const [cnType, setCnType] = useState(sol.cnType || "-");
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
   const [viewedBy, setViewedBy] = useState<string[]>([]);
@@ -112,77 +99,137 @@ const Solicitation = ({
     setCnStatus(sol.cnStatus);
   }, [sol.cnStatus]);
 
-  useEffect(() => {
-    setCnType(sol.cnType);
-  }, [sol.cnType]);
-
   return (
     <div
       className={cn(
         className,
         styles.sol,
-        expanded ? styles.sol__expanded : ""
+        expanded ? styles.sol__expanded : "",
+        isSelected ? styles.sol__selected : ""
       )}
       data-variant={variant}
+      data-cn-status={cnStatus}
+      onClick={onSelectSol}
+      style={{ cursor: 'pointer' }}
     >
-      <SolActions
-        className={styles.sol_actions}
-        expandedSolIds={expandedSolIds}
-        setExpandedSolIds={setExpandedSolIds}
-        sol={sol}
-        refreshSols={refreshSols}
-        onDeleteSuccess={refreshSols}
-        onEditSol={onEditSol}
-      />
       <div className={styles.sol_contentCol}>
-        <Link className={styles.sol_title} href={`/solicitations/${sol.id}`}>
-          {sol.title}
-        </Link>
-        <div className={styles.sol_issuerRow}>
-          {sol.issuer && <span>{sol.issuer}</span>}
-          {sol.location && (
-            <span>
-              <MapPin />
-              {sol.location}
-            </span>
-          )}
-          <a href={sol.siteUrl} target="_blank">
-            <Globe />
-            {sol.site}
-          </a>
-          {Boolean(sol.keywords?.length) && (
-            <span>
-              <Tag /> {sol.keywords.join(", ")}
-            </span>
-          )}
+        <div className={styles.sol_title}>{sol.title}</div>
+
+        <div className={styles.sol_midRow}>
+          <div className={styles.sol_issuerRow}>
+            {sol.location && (
+              <span className={styles.sol_chip} title={sol.location}>
+                <Map />
+                {sol.location}
+              </span>
+            )}
+            <a href={sol.siteUrl} target="_blank" rel="noopener noreferrer">
+              <Globe />
+              {sol.site}
+            </a>
+            {Boolean(sol.keywords?.length) && (
+              <span>
+                <Tag /> {sol.keywords.join(", ")}
+              </span>
+            )}
+          </div>
+          <div className={styles.sol_cnStatus} data-status={cnStatus} onClick={(e) => e.stopPropagation()}>
+            <Select
+              value={cnStatus}
+              onValueChange={async (value) => {
+                await solModel.patch({ id: sol.id, data: { cnStatus: value } });
+                setCnStatus(value);
+                await refreshSols({ list: false });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="New" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectGroup>
+                  {cnStatuses &&
+                    Object.entries(cnStatuses).map(([value, label]) => (
+                      <SelectItem
+                        className={styles[`sol_statusItem_${value}`]}
+                        key={value}
+                        value={value}
+                      >
+                        {label}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className={styles.sol_datesCol}>
-          {sol.closingDate && (
-            <div className={isExpiring(sol.closingDate) ? "red" : ""}>
-              <label>
-                <Clock />
-                Closing
-              </label>
-              <span>{fnFormat(new Date(sol.closingDate), dateFormat)}</span>
-            </div>
-          )}
-          {sol.publishDate && (
-            <div>
-              <label>
-                <CalendarClock /> Published
-              </label>
-              <span>{fnFormat(new Date(sol.publishDate), dateFormat)}</span>
-            </div>
-          )}
-          {sol.created && (
-            <div>
-              <label>
-                <FileText />
-                Extracted
-              </label>
-              <span>{fnFormat(new Date(sol.created), dateFormat)}</span>
-            </div>
-          )}
+
+        {/* Second row: dates on left, metrics/controls on right */}
+        <div className={styles.sol_metaRow}>
+          <div className={styles.sol_datesCol}>
+            {sol.closingDate && (
+              <div
+                className={cn(
+                  styles.sol_datePill,
+                  isExpiring(sol.closingDate) ? styles.sol_datePill__urgent : ""
+                )}
+              >
+                {fnFormat(new Date(sol.closingDate), dateFormat)}
+                <span className={styles.sol_datePill_rel}>
+                  {" • "}
+                  {fnDistance(new Date(sol.closingDate), { addSuffix: false })} left
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div
+            className={styles.sol_metaRight}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Views pill with tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={styles.sol_pill} aria-label="Views">
+                  <Eye /> {sol.viewedBy?.length || 0}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Viewed By
+                <br />
+                {viewedBy?.length > 0 ? (
+                  (() => {
+                    const max = 5;
+                    const shown = viewedBy.slice(0, max);
+                    const extra = viewedBy.length - shown.length;
+                    return (
+                      <div>
+                        {shown.map((v: string) => (
+                          <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
+                        ))}
+                        {extra > 0 && <div>+{extra} more</div>}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  "No one yet"
+                )}
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Pursue Score - unified pill size */}
+            {Boolean(sol.aiPursueScore) && (
+              <div
+                className={cn(
+                  styles.sol_pursuePill,
+                  styles[`sol_pursuePill__${aiScoreClass}`]
+                )}
+              >
+                {Math.round(aiScore * 100)}%
+              </div>
+            )}
+
+            {/* Status dropdown moved to middle row */}
+          </div>
         </div>
         <div
           className={styles.sol_descriptionBox}
@@ -197,6 +244,7 @@ const Solicitation = ({
                   key={`external-link-${sol.id}-${index}-${link}`}
                   href={link}
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {link}
                 </a>
@@ -216,132 +264,7 @@ const Solicitation = ({
           ))}
         </div>
       </div>
-      <div className={styles.sol_statusCol}>
-        <div className={styles.sol_iconCounts}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={"ghost"}
-                aria-label="Comments"
-                onClick={() => {
-                  if (onClickComment) {
-                    onClickComment(sol.id);
-                  }
-                }}
-              >
-                {sol.commentsCount} <MessageCircle />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Comments</TooltipContent>
-          </Tooltip>
-          {sol.cnNotes && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={"ghost"} aria-label="Notes">
-                  <StickyNote />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Notes - {sol.cnNotes.substr(0, 250)}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant={"ghost"} aria-label="Views">
-                {sol.viewedBy?.length || 0} <Eye />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Viewed By
-              <br />
-              {viewedBy?.length > 0
-                ? viewedBy.map((v: string) => (
-                    <div key={`viewedBy-${sol.id}-${v}`}>{v}</div>
-                  ))
-                : "No one yet"}
-            </TooltipContent>
-          </Tooltip>
-          {Boolean(sol.aiPursueScore) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={"ghost"} aria-label="Score">
-                  <span className={cn(styles.sol_aiScore, aiScoreClass)}>
-                    {aiScore.toFixed(2)}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="w-100">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {sol.aiPursueScoreNote || ""}
-                </ReactMarkdown>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-        <div className={styles.sol_cnStatus} data-status={cnStatus}>
-          <Select
-            value={cnStatus}
-            onValueChange={async (value) => {
-              await solModel.patch({ id: sol.id, data: { cnStatus: value } });
-              setCnStatus(value);
-              await refreshSols({ list: false });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="New" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectGroup>
-                {cnStatuses &&
-                  Object.entries(cnStatuses).map(([value, label]) => (
-                    <SelectItem
-                      className={styles[`sol_statusItem_${value}`]}
-                      key={value}
-                      value={value}
-                    >
-                      {label}
-                    </SelectItem>
-                  ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className={styles.sol_cnType}>
-          <Select
-            value={cnType}
-            onValueChange={async (value) => {
-              await solModel.patch({ id: sol.id, data: { cnType: value } });
-              setCnType(value);
-              await refreshSols({ list: false });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="-" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectGroup>
-                <SelectItem
-                  key={"default"}
-                  value={"-"}
-                  className={styles[`sol_typeItem_default`]}
-                >
-                  -
-                </SelectItem>
-                {cnTypes.map((type) => (
-                  <SelectItem
-                    key={type.key}
-                    value={type.key}
-                    className={styles[`sol_typeItem_${type.key}`]}
-                  >
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Right column removed to give title more space; metrics now in second row */}
     </div>
   );
 };

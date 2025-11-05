@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft } from "lucide-react";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,11 @@ import { TopBar } from "./topBar";
 import { UserContext } from "../userContext";
 import { uidsToNames } from "@/lib/utils";
 import { solicitation as solModel } from "@/app/models";
+import LogsPage from "../logs/page";
+import SourcesPage from "../sources/page";
+import { SolicitationDetail } from "./SolicitationDetail";
+import { AiChat } from "au/components/AiChat";
+import { chat as chatModel } from "@/app/models2";
 
 import styles from "./page.module.scss";
 
@@ -33,9 +39,12 @@ type SearchSolsParams = {
   filters?: Record<string, any>;
 };
 
+type ActiveSection = "solicitations" | "logs" | "sources" | "chat";
+
 export default function Page() {
+  const [activeSection, setActiveSection] = useState<ActiveSection>("solicitations");
   const [sols, setSols] = useState<any[]>([]);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(50);
   const [filterFacets, setFilterFacets] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
@@ -51,10 +60,14 @@ export default function Page() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [activeSolId, setActiveSolId] = useState<string>("");
+  const [selectedSolId, setSelectedSolId] = useState<string | null>(null);
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
   const [showEditSol, setShowEditSol] = useState(false);
   const [showCreateComment, setShowCreateComment] = useState(false);
   const [showCreateSol, setShowCreateSol] = useState(false);
+  const [isListCollapsed, setIsListCollapsed] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [calculatingScores, setCalculatingScores] = useState(false);
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
 
@@ -198,6 +211,76 @@ export default function Page() {
     if (topBar) await topBarRef.current?.refresh?.();
   };
 
+  const calculateScores = async () => {
+    setCalculatingScores(true);
+
+    try {
+      // Filter "new" solicitations
+      const newSols = sols.filter((sol) => sol.cnStatus === "new");
+
+      if (newSols.length === 0) {
+        toast.info("No new solicitations found");
+        setCalculatingScores(false);
+        return;
+      }
+
+      toast.info(`Calculating scores for ${newSols.length} solicitations...`);
+
+      // Prepare data to send (only necessary fields)
+      const solsToScore = newSols.map((sol) => ({
+        id: sol.id,
+        cnStatus: sol.cnStatus,
+        title: sol.title,
+        description: sol.description,
+        issuer: sol.issuer,
+        location: sol.location,
+        keywords: sol.keywords,
+        categories: sol.categories,
+      }));
+
+      // Call API endpoint
+      const response = await fetch("/api/solicitations/calculate-scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ solicitations: solsToScore }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to calculate scores");
+      }
+
+      const { scores, processedCount } = data;
+
+      // Update each solicitation with its score
+      let updatedCount = 0;
+      for (const [solId, score] of Object.entries(scores)) {
+        try {
+          await solModel.patch({
+            id: solId,
+            data: { aiPursueScore: score },
+          });
+          updatedCount++;
+        } catch (err) {
+          console.error(`Failed to update score for ${solId}:`, err);
+        }
+      }
+
+      toast.success(
+        `Successfully calculated and updated ${updatedCount} out of ${processedCount} scores`
+      );
+
+      // Refresh the list
+      await refreshSols();
+    } catch (error: any) {
+      console.error("Calculate scores error:", error);
+      toast.error(error.message || "Failed to calculate scores");
+    } finally {
+      setCalculatingScores(false);
+    }
+  };
+
   useEffect(() => {
     getFilterFacets();
   }, []);
@@ -219,11 +302,32 @@ export default function Page() {
     refreshSols({ list: true, topBar: false });
   }, [page, limit, sort]);
 
+  const handleSelectSol = (solId: string) => {
+    setSelectedSolId(solId);
+    setShowChat(false); // Close chat when selecting a solicitation
+    // Don't update URL - it causes unnecessary re-renders and slows down navigation
+  };
+
   return (
     <div className={styles.page}>
-      <div className={styles.pageMain}>
-        <div className={styles.pageMain_content}>
-          <div className={styles.pageMain_solsSection}>
+      {activeSection === "solicitations" && (
+      <div className={styles.pageLayout}>
+        {/* Left Panel - Solicitations List */}
+        <div
+          className={styles.pageLayout_leftPanel}
+          data-collapsed={isListCollapsed || undefined}
+        >
+          {/* Collapse/Expand Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsListCollapsed(!isListCollapsed)}
+            aria-label={isListCollapsed ? "Expand list" : "Collapse list"}
+            className={styles.pageLayout_toggleButton}
+          >
+            <ChevronLeft className={styles.pageLayout_toggleButton_icon} />
+          </button>
+
+          <div className={styles.pageLayout_leftPanel_content}>
             <TopBar
               q={q}
               filterFacets={filterFacets}
@@ -236,9 +340,26 @@ export default function Page() {
               expandedSolIds={expandedSolIds}
               setExpandedSolIds={setExpandedSolIds}
               onClickCreateSol={() => setShowCreateSol(true)}
+              onShowLogs={() => {
+                setSelectedSolId(null);
+                setShowChat(false); // Close chat
+                setActiveSection("solicitations"); // Keep in solicitations view
+              }}
+              onShowSources={() => {
+                setSelectedSolId("sources"); // Use special "sources" value
+                setShowChat(false); // Close chat
+                setActiveSection("solicitations");
+              }}
+              onShowChat={() => {
+                setShowChat(!showChat);
+                if (!showChat) {
+                  setSelectedSolId(null); // Clear selection when opening chat
+                }
+              }}
+              onCalculateScores={calculateScores}
               ref={topBarRef}
             />
-            <div className={styles.pageMain_solsSection_list}>
+            <div className={styles.pageLayout_leftPanel_list}>
               {listError ? (
                 <p className="p-4 error">{listError}</p>
               ) : sols?.length ? (
@@ -247,14 +368,8 @@ export default function Page() {
                     key={`sol-${sol.id}`}
                     sol={sol}
                     refreshSols={refreshSols}
-                    onClickComment={() => {
-                      setActiveSolId(sol.id);
-                      setShowCreateComment(true);
-                    }}
-                    onEditSol={() => {
-                      setActiveSolId(sol.id);
-                      setShowEditSol(true);
-                    }}
+                    onSelectSol={() => handleSelectSol(sol.id)}
+                    isSelected={selectedSolId === sol.id}
                     expandedSolIds={expandedSolIds}
                     setExpandedSolIds={setExpandedSolIds}
                     variant={
@@ -266,7 +381,7 @@ export default function Page() {
                 <p className="p-4">No results found</p>
               )}
             </div>
-            <div className={styles.pageMain_solsSection_pagination}>
+            <div className={styles.pageLayout_leftPanel_pagination}>
               {q || Object.keys(filters).length > 0 ? (
                 <>
                   {totalFiltered} out {totalRecords} items.
@@ -274,27 +389,6 @@ export default function Page() {
               ) : (
                 <>Showing all {totalRecords} items.</>
               )}
-              <div className={styles.pageMain_solsSection_pagination_perPage}>
-                <Select
-                  onValueChange={(value) => {
-                    setLimit(Number(value));
-                    setPage(1);
-                  }}
-                  defaultValue="20"
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="20" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                per page
-              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -304,7 +398,7 @@ export default function Page() {
                 <ChevronLeft />
               </Button>
               <Input
-                className={styles.pageMain_solsSection_pagination_page}
+                className={styles.pageLayout_leftPanel_pagination_page}
                 type="text"
                 onChange={(e) => {
                   const newPage = Number(e.target.value);
@@ -324,29 +418,73 @@ export default function Page() {
                 <ChevronRight />
               </Button>
             </div>
+
+            {/* Collapsed state hint */}
+            {isListCollapsed && (
+              <div className={styles.pageLayout_leftPanel_collapsedHint}>
+                <span>RFPs</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <EditSolDialog
-          solId={activeSolId}
-          open={showEditSol}
-          onOpenChange={setShowEditSol}
-          onSubmitSuccess={() => refreshSols()}
-        />
-
-        <CreateCommentDialog
-          solId={activeSolId}
-          open={showCreateComment}
-          onOpenChange={setShowCreateComment}
-          onSubmitSuccess={() => refreshSols()}
-        />
-
-        <CreateSolDialog
-          open={showCreateSol}
-          onOpenChange={setShowCreateSol}
-          onSubmitSuccess={() => refreshSols()}
-        />
+        {/* Right Panel - Detail, Logs, Sources, or Chat */}
+        <div className={styles.pageLayout_rightPanel}>
+          {showChat ? (
+            <div className={styles.pageLayout_rightPanel_chat}>
+              <div className="bg-white rounded-lg shadow h-full">
+                <AiChat chatKey="aiChat" model={chatModel} />
+              </div>
+            </div>
+          ) : selectedSolId === "sources" ? (
+            <div className={styles.pageLayout_rightPanel_sources}>
+              <div className="bg-white rounded-lg shadow p-6">
+                <SourcesPage />
+              </div>
+            </div>
+          ) : selectedSolId ? (
+            <div className={styles.pageLayout_rightPanel_detail}>
+              <SolicitationDetail
+                solId={selectedSolId}
+                onRefresh={() => {
+                  // Only refresh the single solicitation in the list, not everything
+                  solModel.getById({ id: selectedSolId }).then((updatedSol) => {
+                    setSols((prevSols) =>
+                      prevSols.map((s) => (s.id === selectedSolId ? updatedSol : s))
+                    );
+                  }).catch(console.error);
+                }}
+              />
+            </div>
+          ) : (
+            <div className={styles.pageLayout_rightPanel_logs}>
+              <LogsPage />
+            </div>
+          )}
+        </div>
       </div>
+      )}
+
+      {/* Dialogs */}
+      <EditSolDialog
+        solId={activeSolId}
+        open={showEditSol}
+        onOpenChange={setShowEditSol}
+        onSubmitSuccess={() => refreshSols()}
+      />
+
+      <CreateCommentDialog
+        solId={activeSolId}
+        open={showCreateComment}
+        onOpenChange={setShowCreateComment}
+        onSubmitSuccess={() => refreshSols()}
+      />
+
+      <CreateSolDialog
+        open={showCreateSol}
+        onOpenChange={setShowCreateSol}
+        onSubmitSuccess={() => refreshSols()}
+      />
     </div>
   );
 }

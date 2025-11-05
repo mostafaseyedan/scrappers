@@ -3,7 +3,6 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   EllipsisVertical,
-  Heart,
   Pencil,
   Trash,
 } from "lucide-react";
@@ -60,31 +59,6 @@ const SolActions = ({
 }: SolActionsProps) => {
   return (
     <div className={cn(styles.solActions, className)}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            className={
-              sol.cnLiked
-                ? styles.solActions_likeButton__active
-                : styles.solActions_likeButton
-            }
-            variant="ghost"
-            size="icon"
-            aria-label="Save solicitation"
-            onClick={async (e) => {
-              e.stopPropagation();
-              await solModel.patch({
-                id: sol.id,
-                data: { cnLiked: !sol.cnLiked },
-              });
-              if (refreshSols) await refreshSols();
-            }}
-          >
-            <Heart />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">Save to favorites</TooltipContent>
-      </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label="More actions">
@@ -129,7 +103,7 @@ const SolActions = ({
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/solicitations/${sol.id}/jsonEdit`} target="_blank">
+            <Link href={`/solicitations/${sol.id}/jsonEdit`} target="_blank" rel="noopener noreferrer">
               <Braces />
               JSON edit
             </Link>

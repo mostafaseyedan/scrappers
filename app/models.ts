@@ -210,7 +210,12 @@ const defaultCalls = {
       data = schema.parse(data) as Record<string, any>;
     }
 
-    const resp = await fetch(`${baseUrl || ""}/api/${collection}`, {
+    // Ensure absolute URL for server-side fetches
+    const url = baseUrl
+      ? `${baseUrl}/api/${collection}`
+      : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/${collection}`;
+
+    const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -600,7 +605,7 @@ const solicitation_log: any = {
   }) =>
     await defaultCalls.post({
       ...options,
-      data: { ...data, parentCollection: "solicitations" },
+      data: { ...data, solId, parentCollection: "solicitations" },
       collection: `solicitations/${solId}/logs`,
     }),
 };

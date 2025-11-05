@@ -1,20 +1,16 @@
 "use client";
 
 import { stat as StatModel } from "@/app/models";
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useEffect, useState } from "react";
 import { format as $d, addDays, subDays } from "date-fns";
 import {
@@ -25,9 +21,14 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 
-import styles from "./scraperChart.module.scss";
-
-const chartConfig = {} satisfies ChartConfig;
+const EmptyState = ({ message }: { message: string }) => (
+  <div
+    className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
+    style={{ minHeight: 224 }}
+  >
+    {message}
+  </div>
+);
 
 function generateChartData(
   statData: Record<string, any>[],
@@ -136,87 +137,115 @@ const ScraperChart = () => {
     refresh();
   }, [days]);
 
+  const hasActivity = chartData.some((point) => point.total > 0);
+
   return (
-    <Card className={styles.scraperChart}>
-      <CardHeader>
-        <CardTitle>Solicitations Success Count</CardTitle>
-        <CardDescription className={styles.scraperChart_cardDescription}>
-          last{" "}
-          <Select
-            value={days.toString()}
-            onValueChange={(value) => {
-              setDays(Number(value));
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">30</SelectItem>
-              <SelectItem value="60">60</SelectItem>
-            </SelectContent>
-          </Select>{" "}
-          days
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer
-          className={styles.scraperChart_chart}
-          config={chartConfig}
-        >
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              top: 20,
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={true}
-              axisLine={true}
-              tickMargin={8}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent className="w-[180px]" />}
-            />
-            {vendors.map((vendor, i) => (
-              <Bar
-                key={vendor}
-                stackId="a"
-                dataKey={vendor}
-                fill={`var(--chart-${i + 1 >= 10 ? 3 : i + 1})`}
-              >
-                {i === vendors.length - 1 ? (
-                  <LabelList
-                    dataKey="total"
-                    position="top"
-                    fill="#ccc"
-                    content={(props: any) => {
-                      const { value, x, y, width } = props;
-                      if (!value) return null; // hide when total is 0 or falsy
-                      const cx =
-                        typeof x === "number" && typeof width === "number"
-                          ? x + width / 2
-                          : x;
-                      return (
-                        <text x={cx} y={y - 4} fill="#ccc" textAnchor="middle">
-                          {value}
-                        </text>
-                      );
-                    }}
-                  />
-                ) : null}
-              </Bar>
-            ))}
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            Successful Solicitations by Source
+          </h3>
+          <p className="text-sm text-gray-500">
+            Daily breakdown by vendor/source (last{" "}
+            <Select
+              value={days.toString()}
+              onValueChange={(value) => {
+                setDays(Number(value));
+              }}
+            >
+              <SelectTrigger className="inline-flex w-16 h-6 text-xs px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30">30</SelectItem>
+                <SelectItem value="60">60</SelectItem>
+              </SelectContent>
+            </Select>{" "}
+            days)
+          </p>
+        </div>
+      </div>
+
+      {hasActivity ? (
+        <div className="mt-4 h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{
+                top: 20,
+                left: 12,
+                right: 12,
+              }}
+            >
+              <CartesianGrid
+                stroke="#E5E7EB"
+                strokeDasharray="6 6"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(229, 231, 235, 0.3)" }}
+                contentStyle={{ borderRadius: 12, borderColor: "#E5E7EB" }}
+              />
+              {vendors.map((vendor, i) => (
+                <Bar
+                  key={vendor}
+                  stackId="a"
+                  dataKey={vendor}
+                  fill={`hsl(${(i * 360) / vendors.length}, 70%, 50%)`}
+                  name={vendor}
+                >
+                  {i === vendors.length - 1 ? (
+                    <LabelList
+                      dataKey="total"
+                      position="top"
+                      fill="#9CA3AF"
+                      style={{ fontSize: 11 }}
+                      content={(props: any) => {
+                        const { value, x, y, width } = props;
+                        if (!value) return null;
+                        const cx =
+                          typeof x === "number" && typeof width === "number"
+                            ? x + width / 2
+                            : x;
+                        return (
+                          <text
+                            x={cx}
+                            y={y - 4}
+                            fill="#9CA3AF"
+                            textAnchor="middle"
+                            fontSize={11}
+                          >
+                            {value}
+                          </text>
+                        );
+                      }}
+                    />
+                  ) : null}
+                </Bar>
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <EmptyState message="No successful solicitations in the selected time period." />
+        </div>
+      )}
+    </div>
   );
 };
 

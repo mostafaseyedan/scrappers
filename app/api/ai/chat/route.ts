@@ -1,18 +1,22 @@
-import { genkit } from "genkit/beta";
-import { googleAI } from "@genkit-ai/google-genai";
 import { NextRequest, NextResponse } from "next/server";
-import determineIntent from "@/ai/flows/determineIntent";
-import { chat_message as chatMessageModel } from "@/app/models2Server";
+import { AlgoliaGeminiTool } from "@/ai/tools/algoliaGeminiTool";
 import { checkSession } from "@/lib/serverUtils";
 
-const model = googleAI.model("gemini-2.0-flash");
+// Initialize the Algolia Gemini Tool (singleton instance)
+let algoliaGeminiTool: AlgoliaGeminiTool | null = null;
 
-const ai = genkit({
-  plugins: [googleAI({ apiKey: process.env.GEMINI_KEY })],
-  model,
-});
-
-const determineIntentFlow = determineIntent(ai);
+function getAlgoliaGeminiTool(): AlgoliaGeminiTool {
+  if (!algoliaGeminiTool) {
+    algoliaGeminiTool = new AlgoliaGeminiTool({
+      algolia_app_id: process.env.ALGOLIA_ID,
+      algolia_search_api_key: process.env.ALGOLIA_SEARCH_KEY,
+      algolia_index: "solicitations",
+      gemini_api_key: process.env.GEMINI_API_KEY,
+      model: "gemini-2.0-flash-exp",
+    });
+  }
+  return algoliaGeminiTool;
+}
 
 export const POST = async (request: NextRequest) => {
   const user = await checkSession(request);
@@ -20,39 +24,27 @@ export const POST = async (request: NextRequest) => {
   if (!user) throw new Error("Not authenticated");
 
   const { chatKey, message } = await request.json();
-  let results,
-    status = 200,
-    responseMessage;
-
-  chatMessageModel.set({
-    apiBaseUrl: process.env.BASE_URL + "/api",
-    token: process.env.SERVICE_KEY,
-    parentKey: chatKey,
-  });
+  let results;
+  let status = 200;
 
   try {
-    const intent = await determineIntentFlow({ inputMessage: message });
-    const chat = ai.chat({ system: intent.system, tools: intent.tools });
-    const response = await chat.send(message).catch((err) => {
-      console.error("AI chat error:", err);
-    });
+    // Get the Algolia Gemini Tool instance
+    const tool = getAlgoliaGeminiTool();
 
-    responseMessage =
-      response?.message?.content?.[0]?.text ||
-      "I'm sorry, I didn't understand that.";
+    // Send message and get response with function calling
+    const { response, functionCalls, sources } = await tool.sendMessage(
+      message,
+      chatKey // Use chatKey as thread ID for conversation continuity
+    );
 
-    await chatMessageModel.post({
-      data: { senderId: user.uid, content: message },
-    });
-    await chatMessageModel.post({
-      data: { senderId: "ai", content: responseMessage },
-    });
-
-    results = { response: responseMessage, intent };
+    results = {
+      response: response,
+      functionCalls,
+      sources,
+    };
   } catch (error) {
-    console.error(`Failed to process ai chat post`, error);
+    console.error("Failed to process AI chat post:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    responseMessage = errorMessage;
     results = { error: errorMessage };
     status = 500;
   }

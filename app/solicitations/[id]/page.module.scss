@@ -55,7 +55,7 @@
   }
 
   &_description {
-    color: #666;
+    color: var(--muted-foreground);
     display: block;
     margin-bottom: 5px;
   }
@@ -78,7 +78,7 @@
 
   &_category,
   &_keyword {
-    border: 1px solid #eee;
+    border: 1px solid var(--border);
     display: inline-block;
     margin: 0 5px 3px 0;
     padding: 0 10px;
@@ -93,13 +93,13 @@
 
   &_logsContent {
     &_log {
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--border);
       display: flex;
       width: 100%;
       padding: 10px 20px;
       pre {
         display: block;
-        color: #c7c7c7;
+        color: var(--muted-foreground);
         margin: 0;
         max-width: 60vw;
         overflow-y: auto;
@@ -109,7 +109,7 @@
       }
       &_created {
         white-space: nowrap;
-        color: #c7c7c7;
+        color: var(--muted-foreground);
         display: block;
         width: 160px;
       }
@@ -164,7 +164,7 @@
   &_tabs {
     &_commentsContent {
       &_comment {
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border);
         color: gray;
         padding: 10px 20px;
         &_author {
@@ -178,7 +178,7 @@
     }
     &_documentsContent {
       &_document {
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border);
         padding: 5px 10px;
       }
     }
@@ -190,7 +190,7 @@
   }
 
   :global(pre.json) {
-    border: 1px solid #eee;
+    border: 1px solid var(--border);
     padding: 10px;
     font-size: 14px;
     max-height: 300px;

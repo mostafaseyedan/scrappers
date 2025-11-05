@@ -1,28 +1,167 @@
 .page {
-  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.pageMain_solsSection {
-  &_list {
-    border: 2px solid #eee;
-    border-radius: 15px;
-    height: calc(100vh - 195px);
-    margin: 10px 0;
-    overflow-y: auto;
+.pageContent {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--background);
+  padding: 24px;
+}
+
+.pageLayout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+
+  &_leftPanel {
+    position: relative;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    flex-basis: 32%;
+    max-width: 500px;
+    min-width: 350px;
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 1024px) {
+      flex-basis: 42%;
+    }
+
+    &[data-collapsed="true"] {
+      /* Ensure the flex item actually collapses instead of just hiding content */
+      flex-basis: 70px;
+      max-width: 70px;
+      min-width: 70px;
+      width: 70px;
+
+      .pageLayout_leftPanel_content {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    &_content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    &_list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      background: var(--card);
+
+      /* Hide scrollbar by default, show thin on hover for discoverability */
+      -ms-overflow-style: none; /* IE/Edge */
+      scrollbar-width: none; /* Firefox */
+      &::-webkit-scrollbar { /* Chrome/Safari */
+        width: 0;
+        height: 0;
+      }
+      &:hover { scrollbar-width: thin; }
+      &:hover::-webkit-scrollbar { width: 6px; height: 6px; }
+      &::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+      &::-webkit-scrollbar-track { background: transparent; }
+    }
+
+    &_pagination {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+      font-size: 14px;
+
+      &_page {
+        width: 50px;
+        text-align: center;
+      }
+
+      &_perPage {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+      }
+    }
+
+    &_collapsedHint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+
+      span {
+        transform: rotate(-90deg);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+      }
+    }
   }
-  &_pagination {
+
+  &_toggleButton {
+    position: absolute;
+    /* Adjusted to align with second header row */
+    top: 16px;
+    right: -14px;
+    z-index: 10;
     display: flex;
     align-items: center;
-    gap: 5px;
-    &_page {
-      width: 50px;
-      text-align: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--accent);
     }
-    &_perPage {
-      align-items: center;
-      display: flex;
-      gap: 10px;
-      margin-left: auto;
+
+    &_icon {
+      width: 16px;
+      height: 16px;
+      color: var(--muted-foreground);
+      transition: transform 0.3s;
+    }
+
+    [data-collapsed="true"] & {
+      .pageLayout_toggleButton_icon {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &_rightPanel {
+    flex: 1;
+    background: hsl(0 0% 98%); // Light gray background like reference
+    overflow-y: auto;
+    padding: 24px;
+
+    &_detail,
+    &_logs,
+    &_sources,
+    &_chat {
+      max-width: 1200px;
+      margin: 0 auto;
     }
   }
 }

@@ -10,13 +10,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/cendien/Combobox";
 import { FilterOptions } from "./filterOptions";
 import { Input } from "@/components/ui/input";
 import { Dispatch, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { cnStatuses, cnTypes } from "../config";
+import { cnStatuses } from "../config";
 import {
   Select,
   SelectContent,
@@ -33,6 +32,10 @@ type TopBarProps = {
   expandedSolIds: string[];
   filterFacets?: Record<string, Array<{ value: string; count: number }>>;
   onClickCreateSol?: () => void;
+  onShowLogs?: () => void;
+  onShowSources?: () => void;
+  onShowChat?: () => void;
+  onCalculateScores?: () => void;
   q: string;
   queryParams: {
     q: string;
@@ -56,6 +59,10 @@ const TopBar = forwardRef(
       expandedSolIds,
       filterFacets,
       onClickCreateSol,
+      onShowLogs,
+      onShowSources,
+      onShowChat,
+      onCalculateScores,
       q,
       queryParams,
       setFilters,
@@ -90,170 +97,148 @@ const TopBar = forwardRef(
 
     return (
       <div className={cn(styles.topBar, className)}>
-        <Button onClick={onClickCreateSol}>Create</Button>
-        <Input
-          className={styles.topBar_search}
-          type="text"
-          placeholder="Search"
-          value={q}
-          onChange={(e) => {
-            setPage(1);
-            setFilters((prev) => {
-              const newValues = { ...prev };
-              delete newValues.cnStatus;
-              return newValues;
-            });
-            setQ(e.target.value);
-          }}
-        />
-        <div
-          className={styles.cnStatusDropdown}
-          data-status={queryParams.filters.cnStatus}
-        >
-          <Select
-            value={
-              queryParams.filters.cnStatus === undefined
-                ? "all"
-                : queryParams.filters.cnStatus || "new"
-            }
-            onValueChange={async (value) => {
-              setPage(1);
-              setFilters((prev) => {
-                if (value === "all") {
-                  const newValues = { ...prev };
-                  delete newValues.cnStatus;
-                  return newValues;
-                } else {
-                  return { ...prev, cnStatus: value };
-                }
-              });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="New" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectGroup>
-                {Object.entries(cnStatuses).map(([value, label]) => (
-                  <SelectItem
-                    className={styles[`sol_statusItem_${value}`]}
-                    key={value}
-                    value={value}
-                  >
-                    {label} <span>({counts[value] || 0})</span>
-                  </SelectItem>
-                ))}
-                <SelectItem
-                  className={styles[`sol_statusItem_all`]}
-                  value="all"
-                >
-                  All <span>({counts.total || 0})</span>
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+        {/* Row 1: Create, Sources, AI Score, Logs */}
+        <div className="flex items-center gap-2 w-full">
+          <Button onClick={onClickCreateSol}>Create</Button>
+          {onShowSources && (
+            <button
+              onClick={onShowSources}
+              className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+            >
+              Sources
+            </button>
+          )}
+          {onCalculateScores && (
+            <button
+              onClick={onCalculateScores}
+              title="AI Score"
+              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            >
+              AI Score
+            </button>
+          )}
+          {onShowLogs && (
+            <button
+              onClick={onShowLogs}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Logs
+            </button>
+          )}
         </div>
-        <div className={styles.cnTypeDropdown}>
-          <Select
-            value={queryParams.filters.cnType || "-"}
-            onValueChange={async (value) => {
-              setPage(1);
-              setFilters((prev) => {
-                if (value === "-") {
-                  const newValues = { ...prev };
-                  delete newValues.cnType;
-                  return newValues;
-                } else {
-                  return { ...prev, cnType: value };
-                }
-              });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="-" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectGroup>
-                <SelectItem
-                  key={"default"}
-                  value={"-"}
-                  className={styles[`sol_typeItem_default`]}
-                >
-                  -
-                </SelectItem>
-                {cnTypes.map((type) => (
-                  <SelectItem
-                    key={type.key}
-                    value={type.key}
-                    className={styles[`sol_typeItem_${type.key}`]}
-                  >
-                    {type.label} {`(${counts[type.key] || 0})`}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <Combobox
-          className="width-[200px]"
-          initialSuggestions={filterFacets?.site?.map((site) => ({
-            value: site.value,
-            label: `${site.value} (${site.count})`,
-          }))}
-          onChange={(value) => {
-            setPage(1);
-            setSort("created desc");
-            setFilters((prev) => {
-              const next = { ...prev };
-              if (!value) {
-                delete next.site;
-                return next;
-              }
-              delete next.cnStatus;
-              return { ...next, site: value };
-            });
-          }}
-          value={queryParams.filters.site || ""}
-        />
 
-        <div className={styles.topBar_filter}>
-          <Popover>
+        {/* Row 2: Search, Status dropdown, Gemini, Filter */}
+        <div className="flex items-center gap-2 w-full mt-2">
+          <Input
+            className={styles.topBar_search}
+            type="text"
+            placeholder="Search"
+            value={q}
+            onChange={(e) => {
+              setPage(1);
+              setFilters((prev) => {
+                const newValues = { ...prev };
+                delete newValues.cnStatus;
+                return newValues;
+              });
+              setQ(e.target.value);
+            }}
+          />
+          <div
+            className={styles.cnStatusDropdown}
+            data-status={queryParams.filters.cnStatus}
+          >
+            <Select
+              value={
+                queryParams.filters.cnStatus === undefined
+                  ? "all"
+                  : queryParams.filters.cnStatus || "new"
+              }
+              onValueChange={async (value) => {
+                setPage(1);
+                setFilters((prev) => {
+                  if (value === "all") {
+                    const newValues = { ...prev };
+                    delete newValues.cnStatus;
+                    return newValues;
+                  } else {
+                    return { ...prev, cnStatus: value };
+                  }
+                });
+              }}
+            >
+              <SelectTrigger className="h-8 px-3 text-xs">
+                <SelectValue placeholder="New" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectGroup>
+                  {Object.entries(cnStatuses).map(([value, label]) => (
+                    <SelectItem
+                      className={styles[`sol_statusItem_${value}`]}
+                      key={value}
+                      value={value}
+                    >
+                      {label} <span>({counts[value] || 0})</span>
+                    </SelectItem>
+                  ))}
+                  <SelectItem
+                    className={styles[`sol_statusItem_all`]}
+                    value="all"
+                  >
+                    All <span>({counts.total || 0})</span>
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          {onShowChat && (
+            <button
+              onClick={onShowChat}
+              title="AI Chat"
+              className="h-8 w-8 bg-transparent rounded hover:bg-gray-100 disabled:opacity-50 flex items-center justify-center transition-colors"
+            >
+              <img src="/images/gemini-icon.svg" alt="Chat" className="h-5 w-5" />
+            </button>
+          )}
+          <div>
+            <Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Filter />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Filter results</TooltipContent>
+              </Tooltip>
+              <PopoverContent className={styles.popover}>
+                <FilterOptions
+                  filterFacets={filterFacets}
+                  setFilters={setFilters}
+                  setQ={setQ}
+                  setSort={setSort}
+                  setPage={setPage}
+                  queryParams={queryParams}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          {expandedSolIds.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Filter />
-                  </Button>
-                </PopoverTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setExpandedSolIds([])}
+                >
+                  <ChevronsDownUp />
+                </Button>
               </TooltipTrigger>
-              <TooltipContent>Filter results</TooltipContent>
+              <TooltipContent>Collapse all</TooltipContent>
             </Tooltip>
-            <PopoverContent className={styles.popover}>
-              <FilterOptions
-                filterFacets={filterFacets}
-                setFilters={setFilters}
-                setQ={setQ}
-                setSort={setSort}
-                setPage={setPage}
-                queryParams={queryParams}
-              />
-            </PopoverContent>
-          </Popover>
+          )}
         </div>
-        {expandedSolIds.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setExpandedSolIds([])}
-              >
-                <ChevronsDownUp />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Collapse all</TooltipContent>
-          </Tooltip>
-        )}
       </div>
     );
   }

@@ -1,13 +1,10 @@
 .solActions {
-  float: left;
-  margin-right: 5px;
+  display: inline-block;
   text-align: center;
-  width: 50px;
 
   button {
     border-radius: 50%;
     color: gray;
-    margin-bottom: 5px;
     a[href] {
       color: gray;
     }

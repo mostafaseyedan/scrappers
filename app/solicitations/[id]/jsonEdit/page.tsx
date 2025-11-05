@@ -78,11 +78,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <span>{sol.issuer}</span>
             </div>
             <div className={styles.sol_sourceRow}>
-              <Link href={`/solicitations/${sol.id}`} target="_blank">
+              <Link href={`/solicitations/${sol.id}`} target="_blank" rel="noopener noreferrer">
                 {sol.id}
               </Link>
               <span>/</span>
-              <a href={sol.siteUrl} target="_blank">
+              <a href={sol.siteUrl} target="_blank" rel="noopener noreferrer">
                 <span>{sol.siteId}</span> <span>{sol.site}</span>
               </a>
             </div>

@@ -1,20 +1,117 @@
 "use client";
 
-import { List as CnList } from "@/components/cendien/List";
-import { ScraperChart } from "./scraperChart";
 import { PursuingChart } from "./pursuingChart";
+import { WeeklyActivityChart } from "./weeklyActivityChart";
+import { SourcePerformanceChart } from "./sourcePerformanceChart";
+import { ScrapingJobsChart } from "./scrapingJobsChart";
+import { SourceQualityChart } from "./sourceQualityChart";
+import { SourceStatusQualityChart } from "./sourceStatusQualityChart";
+import { PotentialIssues } from "./potentialIssues";
+import { SummaryStat } from "./summaryStat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContext } from "react";
-import { format as $d } from "date-fns";
-import { UserContext } from "@/app/userContext";
-import { uidsToNames } from "@/lib/utils";
-import { solicitation as solModel } from "@/app/models";
+import { useEffect, useState } from "react";
+import { scriptLog as scriptLogModel } from "@/app/models";
 
 import styles from "./page.module.scss";
 
+type SummaryStats = {
+  totalRFPs: number;
+  successRate: number;
+  activeSources: number;
+  totalJobs: number;
+  totalDuplicates: number;
+  totalJunk: number;
+};
+
 export default function Page() {
-  const userContext = useContext(UserContext);
-  const getUser = userContext?.getUser;
+  const [summaryStats, setSummaryStats] = useState<SummaryStats>({
+    totalRFPs: 0,
+    successRate: 0,
+    activeSources: 0,
+    totalJobs: 0,
+    totalDuplicates: 0,
+    totalJunk: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch summary statistics for scraping
+  useEffect(() => {
+    const fetchSummaryStats = async () => {
+      try {
+        // Get all script logs
+        const logs = await scriptLogModel.get({
+          limit: 1000,
+          sort: "created desc",
+        });
+
+        // Filter to last 30 days on the client side
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentLogs = logs.results?.filter((log: any) => {
+          const logDate = new Date(log.created);
+          return logDate >= thirtyDaysAgo;
+        }) || [];
+
+        let totalRFPsScraped = 0;
+        let successfulJobs = 0;
+        let failedJobs = 0;
+        let totalDuplicates = 0;
+        let totalJunk = 0;
+        const sources = new Set<string>();
+
+        recentLogs.forEach((log: any) => {
+          // Count RFPs scraped
+          totalRFPsScraped += log.successCount || 0;
+
+          // Count successful vs failed jobs
+          if (log.status === 'success') {
+            successfulJobs += 1;
+          } else if (log.status === 'error') {
+            failedJobs += 1;
+          }
+
+          // Count duplicates and junk
+          totalDuplicates += log.dupCount || 0;
+          totalJunk += log.junkCount || 0;
+
+          if (log.scriptName) sources.add(log.scriptName);
+        });
+
+        console.log("Summary Stats Debug:", {
+          totalRFPsScraped,
+          successfulJobs,
+          failedJobs,
+          totalDuplicates,
+          totalJunk,
+          recentLogsCount: recentLogs.length
+        });
+
+        const totalRFPs = totalRFPsScraped;
+        const successRate =
+          successfulJobs + failedJobs > 0
+            ? Math.round((successfulJobs / (successfulJobs + failedJobs)) * 100)
+            : 0;
+        const activeSources = sources.size;
+        const totalJobs = recentLogs.length;
+
+        setSummaryStats({
+          totalRFPs,
+          successRate,
+          activeSources,
+          totalJobs,
+          totalDuplicates,
+          totalJunk,
+        });
+      } catch (error) {
+        console.error("Failed to fetch summary stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummaryStats();
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -24,115 +121,64 @@ export default function Page() {
           <TabsTrigger value="solicitations">Solicitation</TabsTrigger>
         </TabsList>
         <TabsContent value="scraping">
-          <ScraperChart />
-          <CnList
-            className={styles.logsList}
-            url="/api/scriptLogs"
-            itemTemplate={(item) => (
-              <article
-                className={styles.logsList_item}
-                key={`logsList-item-${item.id}`}
-              >
-                <div className={styles.logsList_item_created}>
-                  {$d(item.created, "M/d/yyyy h:mm a")}
-                </div>
-                <div className={styles.logsList_item_main}>
-                  {item.message}{" "}
-                  <span className={styles.logsList_item_timeStr}>
-                    <var>{item.timeStr}</var>
-                  </span>
-                  <div className={styles.logsList_item_scriptName}>
-                    {item.scriptName}
-                  </div>
-                </div>
-                <div className={styles.logsList_item_results}>
-                  <span className={styles.logsList_item_results_success}>
-                    <label>Success</label> <var>{item.successCount || 0}</var>
-                  </span>
-                  <span className={styles.logsList_item_results_fail}>
-                    <label>Fail</label> <var>{item.failCount || 0}</var>
-                  </span>
-                  <span className={styles.logsList_item_results_junk}>
-                    <label>Junk</label> <var>{item.junkCount || 0}</var>
-                  </span>
-                  <span className={styles.logsList_item_results_duplicates}>
-                    <label>Dups</label> <var>{item.dupCount || 0}</var>
-                  </span>
-                </div>
-              </article>
-            )}
-          />
+          {/* Summary Statistics Cards */}
+          {loading ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="text-gray-500">Loading statistics...</div>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 mb-6">
+              <SummaryStat
+                title="RFPs Scraped (30 days)"
+                value={summaryStats.totalRFPs.toLocaleString()}
+                helper="Total successful"
+              />
+              <SummaryStat
+                title="Success Rate"
+                value={`${summaryStats.successRate}%`}
+                helper="Success / Total"
+              />
+              <SummaryStat
+                title="Active Sources"
+                value={summaryStats.activeSources.toString()}
+                helper="Unique scrapers"
+              />
+              <SummaryStat
+                title="Total Scrapping Jobs (30 days)"
+                value={summaryStats.totalJobs.toLocaleString()}
+                helper="Scraping executions"
+              />
+              <SummaryStat
+                title="Duplicates (30 days)"
+                value={summaryStats.totalDuplicates.toLocaleString()}
+                helper="Already in system"
+              />
+              <SummaryStat
+                title="Junk (30 days)"
+                value={summaryStats.totalJunk.toLocaleString()}
+                helper="Filtered out"
+              />
+            </div>
+          )}
+
+          {/* Potential Issues Card */}
+          <div className="mb-6">
+            <PotentialIssues />
+          </div>
+
+          {/* Charts Grid - Stacked Vertically */}
+          <div className="flex flex-col gap-6">
+            <SourcePerformanceChart />
+            <ScrapingJobsChart />
+            <SourceQualityChart />
+            <WeeklyActivityChart />
+          </div>
         </TabsContent>
         <TabsContent value="solicitations">
+          <div className="mb-6">
+            <SourceStatusQualityChart />
+          </div>
           <PursuingChart />
-          <CnList
-            className={styles.solsList}
-            url="/api/solicitations/logs"
-            onPreResults={async (logs) => {
-              if (!getUser) return logs;
-
-              // Get user name for each actionUserId
-              const userIds = new Set<string>();
-              const solIds = new Set<string>();
-
-              logs.forEach((log) => {
-                if (log.actionUserId) userIds.add(log.actionUserId as string);
-                if (log.solId) solIds.add(log.solId as string);
-              });
-
-              const userIdsArr: string[] = Array.from(userIds);
-              const solIdsArr: string[] = Array.from(solIds);
-
-              const userNames = await uidsToNames(userIdsArr, getUser);
-              const userMap = new Map(
-                userIdsArr.map((id, idx) => [id, userNames[idx]])
-              );
-              const solsEntries: [string, any][] = await Promise.all(
-                solIdsArr.map(async (id) => {
-                  const sol =
-                    (await solModel.getById({ id }).catch(() => null)) || {};
-                  return [id, sol] as [string, any];
-                })
-              );
-              const solsMap = new Map(solsEntries);
-
-              return logs
-                .sort(
-                  (a, b) =>
-                    new Date(b.created).getTime() -
-                    new Date(a.created).getTime()
-                )
-                .map((log) => ({
-                  ...log,
-                  actionUser: userMap.get(log.actionUserId) || log.actionUserId,
-                  sol: solsMap.get(log.solId) || {},
-                }));
-            }}
-            itemTemplate={(item) => (
-              <article
-                className={styles.solsList_item}
-                key={`solsList-item-${item.id}`}
-              >
-                <div className={styles.logsList_item_created}>
-                  {$d(new Date(item.created), "M/d/yyyy h:mm a")}
-                </div>
-                <div className={styles.solsList_item_main}>
-                  {item.actionUser} {item.test}{" "}
-                  {item.actionType +
-                    (item.actionType.charAt(item.actionType.length - 1) === "e"
-                      ? "d"
-                      : "ed")}{" "}
-                  solicitation {item.sol?.title} {item.solId}
-                  <div className={styles.solsList_item_actionData}>
-                    {JSON.stringify(item.actionData)}
-                  </div>
-                </div>
-                <div className={styles.solsList_item_actionType}>
-                  {item.actionType}
-                </div>
-              </article>
-            )}
-          />
         </TabsContent>
       </Tabs>
     </div>

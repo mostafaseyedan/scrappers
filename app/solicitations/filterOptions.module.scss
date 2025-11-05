@@ -47,7 +47,7 @@
 }
 .cnStatusItem_ignore,
 .cnStatusItem_notPursuing {
-  background-color: #eee;
+  background-color: var(--muted);
   color: gray;
 }
 

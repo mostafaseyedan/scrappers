@@ -126,6 +126,25 @@
   }
 }
 
+/* Scrollbar styling - thin and subtle like Reference frontend */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
 body {
   a[href] {
     color: #0664c9;

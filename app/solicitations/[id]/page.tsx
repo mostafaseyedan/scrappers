@@ -167,7 +167,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <div className={styles.sol_sourceRow}>
                 <span>{sol.id}</span>
                 <span>/</span>
-                <a href={sol.siteUrl} target="_blank">
+                <a href={sol.siteUrl} target="_blank" rel="noopener noreferrer">
                   <span>{sol.siteId}</span> <span>{sol.site}</span>
                 </a>
               </div>
@@ -175,6 +175,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <Link
                 href={`https://sales.cendien.com/index.html?source=reconrfp&solicitationId=${sol.id}`}
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 <Button className="mt-3 mb-3">AI Analyze</Button>
               </Link>
@@ -187,7 +188,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 {sol.mondayUrl && (
                   <div className={styles.sol_mondayUrl}>
                     <label>Monday URL</label>
-                    <a href={sol.mondayUrl} target="_blank">
+                    <a href={sol.mondayUrl} target="_blank" rel="noopener noreferrer">
                       {sol.mondayUrl}
                     </a>
                   </div>
@@ -196,7 +197,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 {sol.sharepointUrl && (
                   <div className={styles.sol_sharepointUrl}>
                     <label>Sharepoint URL</label>
-                    <a href={sol.sharepointUrl} target="_blank">
+                    <a href={sol.sharepointUrl} target="_blank" rel="noopener noreferrer">
                       {sol.sharepointUrl}
                     </a>
                   </div>
@@ -207,7 +208,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <div>
                     {sol.externalLinks?.map((link: string) => (
                       <div key={`external-link-${link}`}>
-                        <a href={link} target="_blank">
+                        <a href={link} target="_blank" rel="noopener noreferrer">
                           {link}
                         </a>
                       </div>

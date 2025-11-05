@@ -4,22 +4,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "./layout.module.scss";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { useEffect, useRef, useState } from "react";
 import { UserContext } from "./userContext";
 import { Toaster } from "@/components/ui/sonner";
 import { AiChat } from "au/components/AiChat";
-import { X } from "lucide-react";
-import { RiGeminiLine } from "react-icons/ri";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { chat as chatModel } from "@/app/models2";
 import {
   ResizableHandle,
@@ -41,16 +30,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const navLinks: Array<{ href: string; label: string; className?: string }> = [
-  { href: "/solicitations", label: "Solicitations" },
-  { href: "/contacts", label: "Contacts", className: "hidden" },
-  { href: "/knowledge", label: "Knowledge", className: "hidden" },
-  { href: "/logs", label: "Logs" },
-  { href: "/sources", label: "Sources" },
-  { href: "/datasheets", label: "Tables", className: "hidden" },
-  { href: "/changelog", label: "Changelog" },
-];
 
 const publicPaths = ["/login", "/register", "/reset-password"];
 
@@ -149,7 +128,8 @@ export default function RootLayout({
 
     if (json.error) {
       usersCache.current[uid] = null;
-      console.error("Failed to get user", json.error);
+      // Silently handle missing users - they may have been deleted or are invalid IDs
+      // The calling code will fall back to showing the UID instead
       return;
     }
 
@@ -166,20 +146,18 @@ export default function RootLayout({
     fetch("/api/logout").catch(console.error);
   }
 
-  function isActive(path: string) {
-    return pathname === path;
-  }
-
   return (
     <UserContext.Provider value={{ user, getUser }}>
-      <html lang="en">
-        <title>Cendien Recon</title>
+      <html lang="en" suppressHydrationWarning>
+        <title>Cendien RFP</title>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased ${
             showChatPanel ? styles.showChatPanel : ""
           }`}
+          suppressHydrationWarning
         >
           <ResizablePanelGroup
+            id="main-layout-panel-group"
             className={styles.layoutWrapper}
             direction="horizontal"
             onLayout={(sizes: number[]) => {
@@ -189,93 +167,88 @@ export default function RootLayout({
             }}
           >
             <ResizablePanel
+              id="main-content-panel"
               className={styles.layout}
               defaultSize={panelSizes[0]}
             >
               {!isPublic && (
                 <header className={styles.layout_header}>
-                  <div className={styles.layout_header_1stRow}>
-                    <Image
-                      src="/cendien_corp_logo.jpg"
-                      alt="logo"
-                      className={styles.cendienLogo}
-                      width={30}
-                      height={30}
-                    />
-                    <a href="https://sales.cendien.com/">Analyze</a>
-                    <a href="https://cendien.monday.com/boards/4374039553">
-                      Monday
-                    </a>
-                    <a href="https://rag.cendien.com/">RAG Chatbot</a>
-                    <a href="https://reconrfp.cendien.com/">Recon</a>
-                    <a href="https://resume.cendien.com/">Resume</a>
-                  </div>
-                  <div className={styles.layout_header_2ndRow}>
-                    <h1>Recon</h1>
+                  <div className={styles.layout_header_content}>
+                    <div className={styles.layout_header_left}>
+                      <Image
+                        src="/cendien_corp_logo.jpg"
+                        alt="logo"
+                        className={styles.cendienLogo}
+                        width={30}
+                        height={30}
+                      />
+                      <div className={styles.layout_header_title}>
+                        <h2>Cendien's RFP Aggregation Hub</h2>
+                      </div>
+                    </div>
 
-                    <nav className={styles.layout_nav}>
-                      {navLinks.map((link) => (
-                        <Link
-                          className={link.className || ""}
-                          key={link.href}
-                          href={link.href}
-                          data-state={
-                            isActive(link.href) ? "active" : undefined
-                          }
+                    <div className={styles.layout_header_right}>
+                      <nav className={styles.layout_header_quickLinks}>
+                        <a
+                          href="https://sales.cendien.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </nav>
+                          Analyze
+                        </a>
+                        <a
+                          href="https://cendien.monday.com/boards/4374039553"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Monday
+                        </a>
+                        <a
+                          href="https://rag.cendien.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          RAG
+                        </a>
+                        <a
+                          href="https://resume.cendien.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Resume
+                        </a>
+                      </nav>
+
+                      {user?.uid && (
+                        <button
+                          onClick={logout}
+                          className="inline-flex items-center justify-center rounded-lg border border-gray-300 p-2 text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
+                          title="Logout"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </header>
               )}
               <main className={styles.layout_main}>
-                {/* Render public pages immediately; gate protected pages until auth is checked */}
                 {isPublic || authChecked ? children : null}
               </main>
-              <footer className={styles.layout_footer}>Cendien Recon</footer>
-              {user?.uid && (
-                <div className={styles.layout_userBox}>
-                  <Button
-                    className={showChatPanel ? styles.closeChat_active : ""}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowChatPanel(!showChatPanel)}
-                  >
-                    <RiGeminiLine />
-                    {showChatPanel ? <X /> : ""}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className={styles.layout_userBoxTrigger}
-                    >
-                      <Avatar className={styles.layout_userBox_avatar}>
-                        <AvatarImage />
-                        <AvatarFallback></AvatarFallback>
-                      </Avatar>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className={styles.layout_userBoxContent}
-                      align="end"
-                    >
-                      <DropdownMenuItem
-                        onSelect={() => router.push("/settings")}
-                      >
-                        Settings
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={logout}>
-                        Logout
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
+              <footer className={styles.layout_footer}>Cendien RFP</footer>
             </ResizablePanel>
             {!isPublic && showChatPanel && (
               <>
                 <ResizableHandle />
                 <ResizablePanel
+                  id="chat-panel"
                   className={styles.aiChat}
                   defaultSize={panelSizes[1]}
                 >

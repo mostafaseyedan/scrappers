@@ -21,19 +21,34 @@
 }
 
 .page {
-  padding: 0 20px;
-  height: calc(100vh - 95px);
-  overflow-y: auto;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  :global([data-slot="tabs"]) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  :global([data-slot="tabs-content"]) {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
 }
 
 .sourceItem {
   padding: 10px 20px 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 10px;
 
   &_created {
-    color: #c7c7c7;
+    color: var(--muted-foreground);
     display: block;
     font-size: 12px;
   }
@@ -48,7 +63,7 @@
   }
 
   &_type {
-    color: #c7c7c7;
+    color: var(--muted-foreground);
     float: right;
   }
 }
