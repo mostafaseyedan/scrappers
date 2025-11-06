@@ -15,6 +15,8 @@ export const daily = onSchedule(
       "DEV_BIDDIRECT_PASS",
       "DEV_BIDSYNC_USER",
       "DEV_BIDSYNC_PASS",
+      "DEV_BONFIRE_USER",
+      "DEV_BONFIRE_PASS",
       "DEV_BROWSERBASE_KEY",
       "DEV_DEMANDSTAR_USER",
       "DEV_DEMANDSTAR_PASS",
@@ -44,6 +46,7 @@ export const daily = onSchedule(
     const vendors: Array<Parameters<typeof runVendor>[0]> = [
       "biddirect",
       "bidsync",
+      "bonfirehub",
       "cammnet",
       "commbuys",
       "demandstar",

@@ -29,13 +29,13 @@ async function login(page: Page, user: string, pass: string) {
     waitUntil: "domcontentloaded",
   });
 
-  await page.waitForSelector('input[name="email"]');
-  await page.fill('input[name="email"]', user);
-  await page.click('button:has-text("Continue")');
+  await page.waitForSelector("input[name=\"email\"]");
+  await page.fill("input[name=\"email\"]", user);
+  await page.click("button:has-text(\"Continue\")");
 
-  await page.waitForSelector('input[name="password"]');
-  await page.fill('input[name="password"]', pass);
-  await page.click('button:has-text("Log In")');
+  await page.waitForSelector("input[name=\"password\"]");
+  await page.fill("input[name=\"password\"]", pass);
+  await page.click("button:has-text(\"Log In\")");
 
   await page.waitForLoadState("networkidle");
 }
@@ -49,7 +49,7 @@ async function processAgency({
   env: Record<string, any>;
   _context: BrowserContext;
 }) {
-  const registered = el.locator(':has-text("Registered")').first();
+  const registered = el.locator(":has-text(\"Registered\")").first();
   const locationEl = await el.locator(
     ".MuiTypography-subtitle2 + .MuiTypography-body3"
   );
@@ -88,11 +88,13 @@ async function processAgency({
 
     if (newPage) {
       await newPage
-        .waitForFunction(() =>
-          location.href.match(
+        .waitForFunction(() => {
+          // eslint-disable-next-line no-undef
+          const href = (window as any).location.href;
+          return href.match(
             /^https:\/\/([a-z0-9-]+)?\.bonfirehub\.c(om|a)\/(portal|registration)/
-          )
-        )
+          );
+        })
         .catch((err: unknown) => {
           logger.warn("Not able to load agency page", err);
         });
@@ -264,26 +266,26 @@ async function scrapeAgencies({
   });
 
   // Choose page size to 80
-  await page.waitForSelector('[data-cy="pagination_show_per_page_dropdown"]');
+  await page.waitForSelector("[data-cy=\"pagination_show_per_page_dropdown\"]");
   const pageSize = page.locator(
-    '[data-cy="pagination_show_per_page_dropdown"]'
+    "[data-cy=\"pagination_show_per_page_dropdown\"]"
   );
   await pageSize.click();
   const pageSizeOption = page.locator(
-    '[data-cy="pagination_show_per_page_80"]'
+    "[data-cy=\"pagination_show_per_page_80\"]"
   );
   await pageSizeOption.click();
 
   // Get total pages
   const pageNav = page.locator(
-    'nav[aria-label="Pagination Navigation"] ul li:nth-last-child(3) button[aria-label*="Go to page"]'
+    "nav[aria-label=\"Pagination Navigation\"] ul li:nth-last-child(3) button[aria-label*=\"Go to page\"]"
   );
   totalPages = parseInt((await pageNav.innerText()) || "0");
 
   // Resume from last session if applicable
   if (resume) {
     do {
-      const nextPage = page.locator(`button[data-testid="next"]`).first();
+      const nextPage = page.locator("button[data-testid=\"next\"]").first();
       await nextPage.click();
       currPage++;
     } while (currPage < lastLog.data.currPage);
@@ -296,8 +298,8 @@ async function scrapeAgencies({
   do {
     logger.log(`${env.VENDOR} - page:${currPage}`);
 
-    await page.waitForSelector('[data-testid="agency-card"]');
-    const agencyEls = page.locator('[data-testid="agency-card"]');
+    await page.waitForSelector("[data-testid=\"agency-card\"]");
+    const agencyEls = page.locator("[data-testid=\"agency-card\"]");
     const agencyElsCount = await agencyEls.count();
 
     for (let i = 0; i < agencyElsCount; i++) {
@@ -327,7 +329,7 @@ async function scrapeAgencies({
     }
     */
 
-    const nextPage = page.locator(`button[data-testid="next"]`).first();
+    const nextPage = page.locator("button[data-testid=\"next\"]").first();
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {
@@ -358,7 +360,7 @@ async function scrapeSols({
   await newPage.goto(url, { waitUntil: "domcontentloaded" });
 
   const rowsSelector =
-    '#openOpportunitiesTabPane [id*="DataTables_Table_"] tbody tr';
+    "#openOpportunitiesTabPane [id*=\"DataTables_Table_\"] tbody tr";
   try {
     await newPage.waitForSelector(rowsSelector, { timeout: 10000 });
 

@@ -62,7 +62,9 @@ type Results = {
   [key: string]: any;
 };
 
-const LOCAL = true;
+// Use environment variable to control LOCAL vs Browserbase mode
+// Defaults to false (Browserbase) for production
+const LOCAL = process.env.USE_LOCAL_CHROME === "true";
 
 export async function runVendor(
   vendor: keyof typeof vendors,
