@@ -23,6 +23,7 @@
     "@openai/agents-core": "^0.0.16",
     "@openai/agents-openai": "^0.0.16",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.4.0",
     "openai": "^5.12.2",
