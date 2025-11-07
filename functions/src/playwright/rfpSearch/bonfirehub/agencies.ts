@@ -39,6 +39,13 @@ async function login(page: Page, user: string, pass: string) {
   await page.click("button:has-text(\"Log In\")");
 
   await page.waitForLoadState("networkidle");
+
+  // Check if there's a second "Log In" button on the welcome page
+  const secondLoginButton = page.locator("text=Log In").first();
+  if (await secondLoginButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await secondLoginButton.click();
+    await page.waitForLoadState("networkidle");
+  }
 }
 
 async function processAgency({
