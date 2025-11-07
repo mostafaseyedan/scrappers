@@ -3,7 +3,6 @@ import { z } from "zod";
 import chalk from "chalk";
 import HyperAgent from "@hyperbrowser/agent";
 import { ChatOpenAI } from "@langchain/openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { scriptLog as logModel } from "@/app/models";
 import { secToTimeStr } from "@/lib/utils";
 import { createHash } from "node:crypto";
@@ -35,7 +34,7 @@ type InitHyperAgentParams = {
   vendor: string;
 };
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY!);
+// NOTE: AI-based relevance checks removed. Keep scrapers independent of AI keys.
 
 export async function endScript({
   agent,
@@ -178,19 +177,9 @@ export function initHyperAgent(options: InitHyperAgentParams) {
   return agent;
 }
 
-export async function isItRelated(record: any): Promise<boolean> {
-  const prompt = `
-Given the following bid record, is it related to any of the following categories: ERP Consulting, ERP Upgrades, ERP Implementation, ERP Migration, ERP Integration, Infor Support ,Infor Consulting, Infor Managed Services, Infor CloudSuite Implementation, CloudSuite Implementation, Lawson Consulting, Lawson Managed Services, Workday HCM, Workday Migration, PeopleSoft Services, PeopleSoft Migration, PeopleSoft Support, Oracle ERP, PeopleSoft Services, IT Staffing, IT Services, IT Support, Information Technology Consulting, Managed IT services, System Modernization, Oracle Support, or Oracle Database Managed Services in the USA? 
-Respond with yes or no
-
-Record:
-${JSON.stringify(record)}`; // and a short explanation
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().toLowerCase();
-
-  return text === "yes";
+// Keep API surface; always return true to bypass filtering without AI
+export async function isItRelated(_record: any): Promise<boolean> {
+  return true;
 }
 
 export function md5(input: string): string {

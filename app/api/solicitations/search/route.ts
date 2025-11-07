@@ -30,6 +30,12 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Always exclude nonRelevant items from search results
+  if (filterString) filterString += " AND ";
+  filterString += `NOT cnType:"nonRelevant"`;
+
+  console.log('[Search API] Filter string:', filterString);
+
   // There is no sorting. You have to create a replicated index in Algolia
   // const sort = searchParams.get("sort") || "publishDate desc";
 

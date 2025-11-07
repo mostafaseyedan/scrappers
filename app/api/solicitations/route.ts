@@ -22,13 +22,20 @@ export async function GET(req: NextRequest) {
     if (!user) throw new Error("Unauthenticated");
 
     const records = await fireGet(COLLECTION, queryOptions);
+
+    // Filter out nonRelevant items after fetching
+    const filteredRecords = records.filter(
+      (record: any) => record.cnType !== "nonRelevant"
+    );
+
     const total = await count(COLLECTION, {
       filters: { ...queryOptions.filters },
     });
+
     results = {
-      total,
-      count: records.length,
-      results: records,
+      total: filteredRecords.length,
+      count: filteredRecords.length,
+      results: filteredRecords,
     };
   } catch (error) {
     console.error(`Failed to get ${COLLECTION}`, error);

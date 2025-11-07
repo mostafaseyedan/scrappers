@@ -1,4 +1,4 @@
-import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
+import { isNotExpired, isSolDuplicate } from "../../../lib/script";
 import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
@@ -17,8 +17,8 @@ async function login(page: Page, user: string, pass: string) {
   await page.goto("https://www.instantmarkets.com/signin", {
     waitUntil: "domcontentloaded",
   });
-  await page.fill('input[placeholder="Enter your email address"]', user);
-  await page.fill('input[placeholder="Enter your password"]', pass);
+  await page.fill("input[placeholder=\"Enter your email address\"]", user);
+  await page.fill("input[placeholder=\"Enter your password\"]", pass);
   await page.click("button:has-text('Login')");
 }
 
@@ -73,15 +73,6 @@ async function processRow(
     return false;
   }
 
-  const solIsIt = await isItRelated(sol).catch((err) => {
-    logger.error("isItRelated failed", err, sol);
-    failCount++;
-  });
-  if (solIsIt === false) {
-    nonItCount++;
-    return false;
-  }
-
   const newRecord = await solModel
     .post({
       baseUrl: env.BASE_URL,
@@ -132,14 +123,14 @@ async function scrapeAllSols(
     }
 
     const popupDismiss = await page.locator(
-      'button:has-text("Don\'t Ask Again")'
+      "button:has-text(\"Don't Ask Again\")"
     );
     const popupDismissCount = await popupDismiss.count();
     if (popupDismissCount > 0) await popupDismiss.click();
 
     await page.waitForTimeout(1000);
 
-    const nextPage = page.locator('pagination-async button:has-text("Next ")');
+    const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
     const nextPageCount = await nextPage.count();
 
     if (nextPageCount === 0) {

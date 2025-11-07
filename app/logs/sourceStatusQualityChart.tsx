@@ -210,7 +210,7 @@ export const SourceStatusQualityChart = () => {
                     style: { fontSize: 12, fill: "#64748b" },
                   }}
                 />
-                <ZAxis type="number" dataKey="highValueCount" range={[150, 3500]} name="High-Value Count" />
+                <ZAxis type="number" dataKey="totalSolicitations" range={[150, 3500]} name="Total Solicitations" />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   contentStyle={{ borderRadius: 12, borderColor: "#E5E7EB" }}

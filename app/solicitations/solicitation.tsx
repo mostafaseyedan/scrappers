@@ -211,8 +211,8 @@ const Solicitation = ({
               </TooltipContent>
             </Tooltip>
 
-            {/* Pursue Score - unified pill size */}
-            {Boolean(sol.aiPursueScore) && (
+            {/* Pursue Score - unified pill size (render even when score is 0) */}
+            {sol.aiPursueScore !== null && sol.aiPursueScore !== undefined && (
               <div
                 className={cn(
                   styles.sol_pursuePill,

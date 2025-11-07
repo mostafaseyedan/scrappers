@@ -218,8 +218,8 @@ export function SolicitationDetail({ solId, onRefresh }: SolicitationDetailProps
   }
 
   // Use same color coding as sidebar pills
-  const aiScoreRaw = typeof sol.aiPursueScore === 'number' ? sol.aiPursueScore : Number(sol.aiPursueScore || 0);
-  const aiScorePct = Number.isFinite(aiScoreRaw) && aiScoreRaw > 0 ? Math.round(aiScoreRaw * 100) : null;
+  const aiScoreRaw = typeof sol.aiPursueScore === 'number' ? sol.aiPursueScore : Number(sol.aiPursueScore);
+  const aiScorePct = Number.isFinite(aiScoreRaw) ? Math.round(aiScoreRaw * 100) : null;
   const aiScoreClass = aiScoreRaw >= 0.9 ? 'green' : aiScoreRaw >= 0.7 ? 'orange' : 'red';
 
   return (
@@ -340,7 +340,7 @@ export function SolicitationDetail({ solId, onRefresh }: SolicitationDetailProps
               </Select>
             </div>
 
-            {/* Score pill (match sidebar design) */}
+            {/* Score pill (match sidebar design) - render even when score is 0 */}
             {aiScorePct !== null && (
               <div className={`${solStyles.sol_pursuePill} ${solStyles[`sol_pursuePill__${aiScoreClass}`]}`}>
                 {aiScorePct}%

@@ -17,10 +17,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // First, check for solicitations that already have scores < 50% but aren't marked as nonRelevant
+    // These should be marked as nonRelevant without calling LLM
+    const solsWithLowScores = solicitations.filter(
+      (sol) => sol.aiPursueScore !== null &&
+               sol.aiPursueScore !== undefined &&
+               sol.aiPursueScore < 0.5 &&
+               sol.cnType !== "nonRelevant"  // Only update if not already marked
+    );
+
+    const lowScoreUpdates: Record<string, { score: number; cnType: string }> = {};
+    for (const sol of solsWithLowScores) {
+      lowScoreUpdates[sol.id] = {
+        score: sol.aiPursueScore,
+        cnType: "nonRelevant"
+      };
+    }
+
+    console.log(`[Calculate Scores] Found ${solsWithLowScores.length} items with existing scores < 50% that need cnType update`);
+
     // Filter to only process "new" status solicitations that don't have scores yet
     const newSolicitations = solicitations.filter(
       (sol) => sol.cnStatus === "new" && (sol.aiPursueScore === null || sol.aiPursueScore === undefined)
     );
+
+    // If no new solicitations to score but we have low score updates, return those
+    if (newSolicitations.length === 0 && Object.keys(lowScoreUpdates).length > 0) {
+      return NextResponse.json({
+        success: true,
+        scores: {},
+        updates: lowScoreUpdates,
+        processedCount: 0,
+        lowScoreUpdatesCount: Object.keys(lowScoreUpdates).length,
+        totalCount: solicitations.length,
+        message: `No new scores to calculate, but ${Object.keys(lowScoreUpdates).length} items with low scores marked as nonRelevant`
+      });
+    }
 
     if (newSolicitations.length === 0) {
       return NextResponse.json(
@@ -195,10 +227,25 @@ RFP ID xyz789: 0.92
       );
     }
 
+    // Build updates including cnType for low scores
+    const updates: Record<string, { score: number; cnType?: string }> = {};
+    for (const [id, score] of Object.entries(scores)) {
+      updates[id] = { score };
+      // Set cnType to "nonRelevant" for scores < 50%
+      if (score < 0.5) {
+        updates[id].cnType = "nonRelevant";
+      }
+    }
+
+    // Merge with lowScoreUpdates
+    const allUpdates = { ...lowScoreUpdates, ...updates };
+
     return NextResponse.json({
       success: true,
       scores,
+      updates: allUpdates,
       processedCount: Object.keys(scores).length,
+      lowScoreUpdatesCount: Object.keys(lowScoreUpdates).length,
       totalCount: newSolicitations.length,
     });
   } catch (error: any) {

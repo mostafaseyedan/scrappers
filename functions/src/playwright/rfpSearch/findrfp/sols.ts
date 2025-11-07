@@ -1,6 +1,5 @@
 import {
   isNotExpired,
-  isItRelated,
   isSolDuplicate,
   isWithinDays,
 } from "../../../lib/script";
@@ -89,15 +88,6 @@ async function processSol(
   );
   if (isDup) {
     dupCount++;
-    return false;
-  }
-
-  const solIsIt = await isItRelated(sol).catch((err) => {
-    logger.error("isItRelated failed", err, sol);
-    failCount++;
-  });
-  if (solIsIt === false) {
-    nonItCount++;
     return false;
   }
 

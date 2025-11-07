@@ -1,4 +1,4 @@
-import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
+import { isNotExpired, isSolDuplicate } from "../../../lib/script";
 import { solicitation as solModel } from "../../../models";
 import { sanitizeDateString } from "../../../lib/utils";
 import { logger } from "firebase-functions";
@@ -44,15 +44,6 @@ async function processRow(row: Locator, env: Record<string, any>) {
   );
   if (isDup) {
     dupCount++;
-    return false;
-  }
-
-  const solIsIt = await isItRelated(sol).catch((err) => {
-    logger.error("isItRelated failed", err, sol);
-    failCount++;
-  });
-  if (solIsIt === false) {
-    nonItCount++;
     return false;
   }
 

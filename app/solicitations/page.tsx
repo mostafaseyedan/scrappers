@@ -208,21 +208,39 @@ export default function Page() {
     setCalculatingScores(true);
 
     try {
-      // Filter "new" solicitations that don't have scores yet
-      const newSols = sols.filter(
-        (sol) => sol.cnStatus === "new" && (sol.aiPursueScore === null || sol.aiPursueScore === undefined)
+      // Filter solicitations that need scoring or cnType update:
+      // 1. "new" status without scores, OR
+      // 2. Items with scores < 50% that aren't marked as nonRelevant
+      const solsToProcess = sols.filter(
+        (sol) => {
+          const needsScore = sol.cnStatus === "new" && (sol.aiPursueScore === null || sol.aiPursueScore === undefined);
+          const needsNonRelevant = sol.aiPursueScore !== null &&
+                                   sol.aiPursueScore !== undefined &&
+                                   sol.aiPursueScore < 0.5 &&
+                                   (!sol.cnType || !sol.cnType.includes("nonRelevant"));
+          return needsScore || needsNonRelevant;
+        }
       );
 
-      if (newSols.length === 0) {
-        toast.info("No new solicitations without scores found");
+      console.log(`[Calculate Scores] Total sols: ${sols.length}`);
+      console.log(`[Calculate Scores] Sols to process: ${solsToProcess.length}`);
+      console.log(`[Calculate Scores] Sample sols:`, sols.slice(0, 3).map(s => ({
+        id: s.id,
+        cnStatus: s.cnStatus,
+        aiPursueScore: s.aiPursueScore,
+        cnType: s.cnType
+      })));
+
+      if (solsToProcess.length === 0) {
+        toast.info("No solicitations to process");
         setCalculatingScores(false);
         return;
       }
 
-      toast.info(`Calculating scores for ${newSols.length} solicitations...`);
+      toast.info(`Processing ${solsToProcess.length} solicitations...`);
 
       // Prepare data to send (include all fields for AI scoring)
-      const solsToScore = newSols.map((sol) => ({
+      const solsToScore = solsToProcess.map((sol) => ({
         id: sol.id,
         cnStatus: sol.cnStatus,
         aiPursueScore: sol.aiPursueScore,
@@ -259,24 +277,42 @@ export default function Page() {
         throw new Error(data.error || "Failed to calculate scores");
       }
 
-      const { scores, processedCount } = data;
+      const { scores, updates, lowScoreUpdatesCount } = data;
 
-      // Update each solicitation with its score
+      // Update each solicitation with its score and cnType if needed
       let updatedCount = 0;
-      for (const [solId, score] of Object.entries(scores)) {
-        try {
-          await solModel.patch({
-            id: solId,
-            data: { aiPursueScore: score },
-          });
-          updatedCount++;
-        } catch (err) {
-          console.error(`Failed to update score for ${solId}:`, err);
+
+      // Handle updates object which includes both new scores and low score updates
+      if (updates && typeof updates === 'object') {
+        for (const [solId, updateData] of Object.entries(updates)) {
+          try {
+            const patchData: Record<string, any> = {};
+            const update = updateData as { score?: number; cnType?: string };
+
+            // Add score if it's a new calculation
+            if (scores && scores[solId] !== undefined) {
+              const numericScore = typeof scores[solId] === 'number' ? scores[solId] : Number(scores[solId]);
+              patchData.aiPursueScore = numericScore;
+            }
+
+            // Add cnType if specified (for scores < 50%)
+            if (update.cnType) {
+              patchData.cnType = update.cnType;
+            }
+
+            // Only patch if we have data to update
+            if (Object.keys(patchData).length > 0) {
+              await solModel.patch({ id: solId, data: patchData });
+              updatedCount++;
+            }
+          } catch (err) {
+            console.error(`Failed to update ${solId}:`, err);
+          }
         }
       }
 
       toast.success(
-        `Successfully calculated and updated ${updatedCount} out of ${processedCount} scores`
+        `Successfully updated ${updatedCount} solicitations${lowScoreUpdatesCount > 0 ? ` (${lowScoreUpdatesCount} existing low scores marked as nonRelevant)` : ''}`
       );
 
       // Refresh the list
