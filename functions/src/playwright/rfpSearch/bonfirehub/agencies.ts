@@ -1,6 +1,7 @@
 import { isNotExpired, isItRelated, isSolDuplicate } from "../../../lib/script";
-import { issuer as issuerModel, site as siteModel } from "../../../models2";
 import {
+  issuer as issuerModel,
+  site as siteModel,
   solicitation as solModel,
   scriptLog as scriptLogModel,
 } from "../../../models";
@@ -71,11 +72,30 @@ async function processAgency({
   }
 
   const checkIssuer = await issuerModel.get({
-    queryOptions: { filters: { key }, limit: 1 },
+    filters: { key },
+    limit: 1,
+    baseUrl: env.BASE_URL,
+    token: env.SERVICE_KEY,
   });
-  const checkSubsite = await siteModel.submodels?.subsites.get({
-    queryOptions: { filters: { key }, limit: 1 },
+
+  // Get bonfirehub site first to access subsites
+  const siteResp = await siteModel.get({
+    filters: { key: "bonfirehub" },
+    limit: 1,
+    baseUrl: env.BASE_URL,
+    token: env.SERVICE_KEY,
   });
+  const bonfirehubSite = siteResp.records?.[0];
+
+  const checkSubsite = bonfirehubSite
+    ? await siteModel.submodels.subsites.get({
+      siteId: bonfirehubSite.id,
+      filters: { key },
+      limit: 1,
+      baseUrl: env.BASE_URL,
+      token: env.SERVICE_KEY,
+    })
+    : null;
 
   if (checkIssuer && checkIssuer.records.length > 0)
     agency = checkIssuer.records[0];
@@ -114,7 +134,11 @@ async function processAgency({
 
       if (!checkIssuer || checkIssuer.records.length === 0) {
         await issuerModel
-          .post({ data: { ...agency, bidsUrl: url, url: "" } })
+          .post({
+            data: { ...agency, bidsUrl: url, url: "" },
+            baseUrl: env.BASE_URL,
+            token: env.SERVICE_KEY,
+          })
           .catch((err: unknown) => {
             logger.error("Error creating issuer", err);
           })
@@ -125,9 +149,17 @@ async function processAgency({
         console.log("Issuer already exists", agency.key);
       }
 
-      if (!checkSubsite || checkSubsite.records.length === 0) {
-        await siteModel.submodels?.subsites
-          .post({ data: agency })
+      if (
+        bonfirehubSite &&
+        (!checkSubsite || checkSubsite.records.length === 0)
+      ) {
+        await siteModel.submodels.subsites
+          .post({
+            siteId: bonfirehubSite.id,
+            data: agency,
+            baseUrl: env.BASE_URL,
+            token: env.SERVICE_KEY,
+          })
           .catch((err: unknown) => {
             logger.error("Error creating subsite", err);
           })
@@ -395,34 +427,8 @@ export async function run(
   const VENDOR = "bonfirehub";
   let results = {};
 
-  issuerModel.set({
-    token: SERVICE_KEY,
-    apiBaseUrl: env.BASE_URL + "/api/",
-  });
-
-  siteModel.set({
-    token: SERVICE_KEY,
-    apiBaseUrl: env.BASE_URL + "/api/",
-  });
-
   if (!USER) throw new Error("Missing USER environment variable for run");
   if (!PASS) throw new Error("Missing PASS environment variable for run");
-
-  // Grab site record
-  const siteResp = await siteModel.get({
-    queryOptions: { filters: { key: "bonfirehub" }, limit: 1 },
-  });
-  const site = siteResp.records?.[0];
-
-  if (siteModel.submodels?.subsites) {
-    siteModel.submodels.subsites.set({
-      token: SERVICE_KEY,
-      apiBaseUrl: env.BASE_URL + "/api/",
-      path: `sites/${site?.id}/subsites`,
-    });
-  } else {
-    throw new Error("Missing subsites submodel from site model");
-  }
 
   await login(page, USER, PASS);
 

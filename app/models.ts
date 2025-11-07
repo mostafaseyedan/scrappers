@@ -193,14 +193,12 @@ const defaultCalls = {
       throw new Error(
         `Failed to fetch data by key: ${key}. ${json.error} (defaultCalls.getByKey/${collection})`
       );
-      return null;
     }
 
     if (!json.results || !json.results.length) {
       throw new Error(
         `Failed to fetch data by key: ${key}. Record not found. (defaultCalls.getByKey/${collection})`
       );
-      return null;
     }
 
     return json.results[0];
@@ -213,7 +211,7 @@ const defaultCalls = {
     // Ensure absolute URL for server-side fetches
     const url = baseUrl
       ? `${baseUrl}/api/${collection}`
-      : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/${collection}`;
+      : `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/${collection}`;
 
     const resp = await fetch(url, {
       method: "POST",
@@ -712,6 +710,98 @@ const stat: any = {
     }),
 };
 
+const issuer: any = {
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string(),
+      description: z.string().optional(),
+      bidsUrl: z.string().optional(),
+      location: z.string().optional(),
+      locationKey: z.string().optional(),
+      isRegistered: z.boolean().default(false),
+      url: z.string().optional(),
+    }),
+  },
+  get: async ({ ...options }: Partial<GetParams> = {}) =>
+    await defaultCalls.get({ collection: "issuers", ...options }),
+  getById: async ({ id, ...options }: GetByIdParams) =>
+    await defaultCalls.getById({ ...options, collection: "issuers", id }),
+  post: async ({ data, ...options }: PostParams) =>
+    await defaultCalls.post({
+      ...options,
+      collection: "issuers",
+      data,
+    }),
+  patch: async ({ id, data, ...options }: PatchParams) =>
+    await defaultCalls.patch({
+      ...options,
+      collection: "issuers",
+      id,
+      data,
+    }),
+};
+
+const site_subsite: any = {
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string(),
+      description: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  },
+  get: async ({ siteId, ...options }: { siteId: string } & Partial<GetParams>) =>
+    await defaultCalls.get({
+      collection: `sites/${siteId}/subsites`,
+      ...options,
+    }),
+  post: async ({
+    siteId,
+    data,
+    ...options
+  }: {
+    siteId: string;
+    data: Record<string, any>;
+  }) =>
+    await defaultCalls.post({
+      ...options,
+      collection: `sites/${siteId}/subsites`,
+      data,
+    }),
+};
+
+const site: any = {
+  schema: {
+    db: z.object({
+      name: z.string(),
+      key: z.string(),
+      description: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  },
+  submodels: {
+    subsites: site_subsite,
+  },
+  get: async ({ ...options }: Partial<GetParams> = {}) =>
+    await defaultCalls.get({ collection: "sites", ...options }),
+  getById: async ({ id, ...options }: GetByIdParams) =>
+    await defaultCalls.getById({ ...options, collection: "sites", id }),
+  post: async ({ data, ...options }: PostParams) =>
+    await defaultCalls.post({
+      ...options,
+      collection: "sites",
+      data,
+    }),
+  patch: async ({ id, data, ...options }: PatchParams) =>
+    await defaultCalls.patch({
+      ...options,
+      collection: "sites",
+      id,
+      data,
+    }),
+};
+
 export {
   solicitation,
   solicitation_comment,
@@ -719,4 +809,6 @@ export {
   source,
   scriptLog,
   stat,
+  issuer,
+  site,
 };

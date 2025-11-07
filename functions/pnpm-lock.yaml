@@ -19,13 +19,13 @@ importers:
         version: 0.24.1
       '@openai/agents':
         specifier: ^0.0.16
-        version: 0.0.16(ws@8.18.3)(zod@3.25.76)
+        version: 0.0.16(ws@8.18.3)(zod@4.1.12)
       '@openai/agents-core':
         specifier: ^0.0.16
-        version: 0.0.16(ws@8.18.3)(zod@3.25.76)
+        version: 0.0.16(ws@8.18.3)(zod@4.1.12)
       '@openai/agents-openai':
         specifier: ^0.0.16
-        version: 0.0.16(ws@8.18.3)(zod@3.25.76)
+        version: 0.0.16(ws@8.18.3)(zod@4.1.12)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -37,7 +37,7 @@ importers:
         version: 6.4.0(firebase-admin@12.7.0)
       openai:
         specifier: ^5.12.2
-        version: 5.12.2(ws@8.18.3)(zod@3.25.76)
+        version: 5.12.2(ws@8.18.3)(zod@4.1.12)
       playwright-core:
         specifier: ^1.54.2
         version: 1.54.2
@@ -48,12 +48,12 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       zod:
-        specifier: ^3.25.67
-        version: 3.25.76
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@eslint/js':
-        specifier: ^9.0.0
-        version: 9.35.0
+        specifier: ^9.39.1
+        version: 9.39.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.39.1
         version: 8.39.1(@typescript-eslint/parser@8.39.1(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(typescript@5.9.2)
@@ -290,6 +290,10 @@ packages:
 
   '@eslint/js@9.35.0':
     resolution: {integrity: sha512-30iXE9whjlILfWobBkNerJo+TXYsgVM5ERQwMcMKCHckHflCmf7wXDAHlARoWnh0s1U72WqlbeyE7iAcCzuCPw==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@eslint/js@9.39.1':
+    resolution: {integrity: sha512-S26Stp4zCy88tH94QbBv3XCuzRQiZ9yXofEILmglYTh/Ug/a9/umqvgFtYBAo3Lp0nsI/5/qH1CCrbdK3AP1Tw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/object-schema@2.1.6':
@@ -2803,6 +2807,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.1.12:
+    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
+
 snapshots:
 
   '@ampproject/remapping@2.3.0':
@@ -3068,6 +3075,8 @@ snapshots:
       - supports-color
 
   '@eslint/js@9.35.0': {}
+
+  '@eslint/js@9.39.1': {}
 
   '@eslint/object-schema@2.1.6': {}
 
@@ -3459,32 +3468,32 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@openai/agents-core@0.0.16(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents-core@0.0.16(ws@8.18.3)(zod@4.1.12)':
     dependencies:
       '@openai/zod': zod@3.25.67
       debug: 4.4.1
-      openai: 5.12.2(ws@8.18.3)(zod@3.25.76)
+      openai: 5.12.2(ws@8.18.3)(zod@4.1.12)
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.17.3
-      zod: 3.25.76
+      zod: 4.1.12
     transitivePeerDependencies:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.0.16(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents-openai@0.0.16(ws@8.18.3)(zod@4.1.12)':
     dependencies:
-      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@4.1.12)
       '@openai/zod': zod@3.25.67
       debug: 4.4.1
-      openai: 5.12.2(ws@8.18.3)(zod@3.25.76)
+      openai: 5.12.2(ws@8.18.3)(zod@4.1.12)
     transitivePeerDependencies:
       - supports-color
       - ws
       - zod
 
-  '@openai/agents-realtime@0.0.16(zod@3.25.76)':
+  '@openai/agents-realtime@0.0.16(zod@4.1.12)':
     dependencies:
-      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@4.1.12)
       '@openai/zod': zod@3.25.67
       '@types/ws': 8.18.1
       debug: 4.4.1
@@ -3495,13 +3504,13 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@openai/agents@0.0.16(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents@0.0.16(ws@8.18.3)(zod@4.1.12)':
     dependencies:
-      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@3.25.76)
-      '@openai/agents-openai': 0.0.16(ws@8.18.3)(zod@3.25.76)
-      '@openai/agents-realtime': 0.0.16(zod@3.25.76)
+      '@openai/agents-core': 0.0.16(ws@8.18.3)(zod@4.1.12)
+      '@openai/agents-openai': 0.0.16(ws@8.18.3)(zod@4.1.12)
+      '@openai/agents-realtime': 0.0.16(zod@4.1.12)
       debug: 4.4.1
-      openai: 5.12.2(ws@8.18.3)(zod@3.25.76)
+      openai: 5.12.2(ws@8.18.3)(zod@4.1.12)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -5512,10 +5521,10 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@5.12.2(ws@8.18.3)(zod@3.25.76):
+  openai@5.12.2(ws@8.18.3)(zod@4.1.12):
     optionalDependencies:
       ws: 8.18.3
-      zod: 3.25.76
+      zod: 4.1.12
 
   optionator@0.9.4:
     dependencies:
@@ -6177,4 +6186,7 @@ snapshots:
 
   zod@3.25.67: {}
 
-  zod@3.25.76: {}
+  zod@3.25.76:
+    optional: true
+
+  zod@4.1.12: {}
