@@ -222,7 +222,7 @@ async function processSol({
     issuerKey: issuer.key,
     location: issuer.location || "",
     siteUrl: solUrl ? urlJoin(url, solUrl).replace("/portal/", "/") : "",
-    site: "bonafirehub",
+    site: "bonfirehub",
     siteId: "bonfirehub-" + (solUrl ? solUrl.split("/").pop() : ""),
     siteData: {
       refNo: (await refEl.isVisible()) ? await refEl.innerText() : "",
@@ -255,10 +255,14 @@ async function processSol({
     .catch((err: unknown) => {
       logger.error("Failed to save sol", err, sol);
       failCount++;
+      return null;
     });
-  successCount++;
-  sols.push(newRecord.id);
-  logger.log(`Saved sol: ${newRecord.id}`);
+
+  if (newRecord) {
+    successCount++;
+    sols.push(newRecord.id);
+    logger.log(`Saved sol: ${newRecord.id}`);
+  }
 
   return newRecord;
 }

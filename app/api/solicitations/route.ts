@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
 import { solicitation as solModel } from "@/app/models";
 import {
-  count,
   get as fireGet,
   post as firePost,
   parseQueryString,
@@ -27,10 +26,6 @@ export async function GET(req: NextRequest) {
     const filteredRecords = records.filter(
       (record: any) => record.cnType !== "nonRelevant"
     );
-
-    const total = await count(COLLECTION, {
-      filters: { ...queryOptions.filters },
-    });
 
     results = {
       total: filteredRecords.length,

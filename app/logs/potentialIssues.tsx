@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { scriptLog as scriptLogModel } from "@/app/models";
+import { solicitation as solModel } from "@/app/models";
 
 type IssueData = {
   scraperIssues: string[]; // Sources with jobs but zero results
@@ -18,15 +19,21 @@ export const PotentialIssues = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Filter to last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
         // Get all script logs
         const logs = await scriptLogModel.get({
           limit: 1000,
           sort: "created desc",
         });
 
-        // Filter to last 7 days
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // Get recent solicitations to check which scrapers are actually producing results
+        const recentSols = await solModel.get({
+          limit: 10000,
+          sort: "created desc",
+        });
 
         const recentLogs = logs.results?.filter((log: any) => {
           const logDate = new Date(log.created);
@@ -49,12 +56,12 @@ export const PotentialIssues = () => {
         // Track job counts and results by source
         const sourceStats: Record<
           string,
-          { jobs: number; scraped: number; duplicates: number; junk: number }
+          { jobs: number; scraped: number; duplicates: number; junk: number; errors: number; successes: number }
         > = {};
 
         // Initialize all sources
         allBaseNames.forEach((baseName) => {
-          sourceStats[baseName] = { jobs: 0, scraped: 0, duplicates: 0, junk: 0 };
+          sourceStats[baseName] = { jobs: 0, scraped: 0, duplicates: 0, junk: 0, errors: 0, successes: 0 };
         });
 
         // Count from recent logs
@@ -71,6 +78,24 @@ export const PotentialIssues = () => {
             sourceStats[baseName].scraped += log.successCount || 0;
             sourceStats[baseName].duplicates += log.dupCount || 0;
             sourceStats[baseName].junk += log.junkCount || 0;
+
+            // Track error vs success status
+            if (log.status === "error") {
+              sourceStats[baseName].errors += 1;
+            } else if (log.status === "success") {
+              sourceStats[baseName].successes += 1;
+            }
+          }
+        });
+
+        // Check which sites have actually created solicitations in the last 7 days
+        const sitesWithRecentSols = new Set<string>();
+        recentSols.results?.forEach((sol: any) => {
+          const solDate = new Date(sol.created);
+          if (solDate >= sevenDaysAgo && sol.site) {
+            // Normalize site name (handle typos like "bonafirehub" -> "bonfirehub")
+            const normalizedSite = sol.site.replace('bonafi', 'bonfi');
+            sitesWithRecentSols.add(normalizedSite);
           }
         });
 
@@ -80,12 +105,13 @@ export const PotentialIssues = () => {
 
         Object.entries(sourceStats).forEach(([source, stats]) => {
           const totalResults = stats.scraped + stats.duplicates + stats.junk;
+          const hasRecentSolicitations = sitesWithRecentSols.has(source);
 
-          if (stats.jobs > 0 && totalResults === 0) {
-            // Has jobs but zero results - scraper issue
+          if (stats.jobs > 0 && totalResults === 0 && stats.errors > 0 && stats.successes === 0 && !hasRecentSolicitations) {
+            // Has jobs with ONLY errors, zero results in logs, AND no actual solicitations created - scraper issue
             scraperIssues.push(source);
-          } else if (stats.jobs === 0) {
-            // No jobs - not being scraped
+          } else if (stats.jobs === 0 && !hasRecentSolicitations) {
+            // No jobs and no solicitations - not being scraped
             inactiveSources.push(source);
           }
         });
