@@ -124,7 +124,20 @@ export async function runVendor(
   } catch (e: any) {
     logger.error(e);
     status = 500;
-    results = { error: e.message };
+    if (e?.counts) {
+      counts = { ...counts, ...e.counts };
+    }
+    if (e?.partialResults) {
+      results = {
+        error: e.message,
+        data: {
+          ...(e.partialResults.sols ? { sols: e.partialResults.sols } : {}),
+          ...(e.partialResults.agencies ? { agencies: e.partialResults.agencies } : {}),
+        },
+      };
+    } else {
+      results = { error: e.message };
+    }
     logger.debug("BODY OUTPUT", await page?.locator("body").innerText());
   } finally {
     await browser.close();

@@ -427,48 +427,80 @@ export async function run(
   const USER = env.DEV_BONFIRE_USER!;
   const PASS = env.DEV_BONFIRE_PASS!;
   const VENDOR = "bonfirehub";
-  let results = {};
+
+  // Reset counters/state for each invocation
+  failCount = 0;
+  successCount = 0;
+  expiredCount = 0;
+  nonItCount = 0;
+  dupCount = 0;
+  lastAgencyKey = "";
+  totalPages = 0;
+  currPage = 1;
+  sols = [];
+  resume = false;
 
   if (!USER) throw new Error("Missing USER environment variable for run");
   if (!PASS) throw new Error("Missing PASS environment variable for run");
 
-  await login(page, USER, PASS);
+  let agencies: Record<string, any>[] = [];
 
-  let agencies =
-    (await scrapeAgencies({
-      page,
-      env: {
-        ...env,
-        BASE_URL,
-        VENDOR,
-        SERVICE_KEY,
+  try {
+    await login(page, USER, PASS);
+
+    agencies =
+      (await scrapeAgencies({
+        page,
+        env: {
+          ...env,
+          BASE_URL,
+          VENDOR,
+          SERVICE_KEY,
+        },
+        _context,
+      })) || [];
+    console.log({ agencies });
+    const agencyIds = agencies.map((a) => a.id);
+
+    logger.log(
+      `${VENDOR} - Finished saving agencies and sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${
+        expiredCount + nonItCount
+      }.`
+    );
+
+    return {
+      agencies: agencyIds,
+      sols,
+      counts: {
+        success: successCount,
+        fail: failCount,
+        dup: dupCount,
+        junk: expiredCount + nonItCount,
       },
-      _context,
-    })) || [];
-  console.log({ agencies });
-  agencies = agencies.map((a) => a.id);
+      data: {
+        lastAgencyKey,
+        currPage,
+        totalPages,
+      },
+    };
+  } catch (error) {
+    const err = error as Error;
+    logger.error("bonfirehub run failed", err);
 
-  logger.log(
-    `${VENDOR} - Finished saving agencies and sols. Success: ${successCount}. Fail: ${failCount}. Duplicates: ${dupCount}. Junk: ${
-      expiredCount + nonItCount
-    }.`
-  );
-
-  results = {
-    agencies,
-    sols,
-    counts: {
+    const enrichedError = new Error(`bonfirehub scraper failed: ${err.message}`);
+    (enrichedError as any).counts = {
       success: successCount,
       fail: failCount,
       dup: dupCount,
       junk: expiredCount + nonItCount,
-    },
-    data: {
+    };
+    (enrichedError as any).partialResults = {
+      agencies: agencies.map((a) => a.id),
+      sols,
       lastAgencyKey,
       currPage,
       totalPages,
-    },
-  };
-
-  return results;
+    };
+    throw enrichedError;
+  }
 }
