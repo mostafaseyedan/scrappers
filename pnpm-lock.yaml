@@ -3061,7 +3061,7 @@ packages:
     engines: {node: '>=8.0.0'}
 
   au@file:vendor/au.tgz:
-    resolution: {integrity: sha512-wo4YDfZ7vlenF0HhaHEcRVo+rSklKMy8c+xhHo04uZ5W44FerCI4vsZMLc9oolS2i9j/eFGkz05UyUHUbHxEAA==, tarball: file:vendor/au.tgz}
+    resolution: {integrity: sha512-s3jTt0pCxSx9K1WFC4+xs0IGyre9zlGUVZME7layGsqnhpCqRGN8lab6S7zuRPMOfXSg1K+WMzy1vKu2QBsqpw==, tarball: file:vendor/au.tgz}
     version: 0.1.0
 
   available-typed-arrays@1.0.7:
