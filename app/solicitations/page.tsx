@@ -37,7 +37,7 @@ type ActiveSection = "solicitations" | "logs" | "sources" | "chat";
 export default function Page() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("solicitations");
   const [sols, setSols] = useState<any[]>([]);
-  const [limit] = useState(50);
+  const [limit] = useState(10000); // Effectively no limit
   const [filterFacets, setFilterFacets] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});

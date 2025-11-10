@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
+    // Fetch records from Firestore
     const records = await fireGet(COLLECTION, queryOptions);
 
     // Filter out nonRelevant items after fetching
@@ -27,8 +28,17 @@ export async function GET(req: NextRequest) {
       (record: any) => record.cnType !== "nonRelevant"
     );
 
+    // Count total matching records (including the cnType filter)
+    const allRecords = await fireGet(COLLECTION, {
+      ...queryOptions,
+      limit: 10000, // Fetch large batch to count properly
+    });
+    const totalCount = allRecords.filter(
+      (record: any) => record.cnType !== "nonRelevant"
+    ).length;
+
     results = {
-      total: filteredRecords.length,
+      total: totalCount,
       count: filteredRecords.length,
       results: filteredRecords,
     };

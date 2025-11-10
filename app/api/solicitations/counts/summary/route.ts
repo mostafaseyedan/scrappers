@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkSession } from "@/lib/serverUtils";
-import { count as fireCount } from "au/server/firebase";
+import { get as fireGet } from "au/server/firebase";
 
 const COLLECTION = "solicitations";
 
@@ -12,53 +12,51 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
+    // Fetch recent records (sorted by updated desc to get most recent)
+    console.log("[Counts] Fetching all solicitations...");
+    const allRecords = await fireGet(COLLECTION, {
+      limit: 3000,
+      sort: "updated desc"
+    });
+    console.log(`[Counts] Fetched ${allRecords.length} total records`);
+
+    // Filter out nonRelevant once
+    const relevantRecords = allRecords.filter(
+      (r: any) => r.cnType !== "nonRelevant"
+    );
+    console.log(`[Counts] ${relevantRecords.length} records after filtering nonRelevant`);
+
+    // Count by cnStatus
+    const countByStatus = (status: string) =>
+      relevantRecords.filter((r: any) => r.cnStatus === status).length;
+
+    // Count by cnType
+    const countByType = (type: string) =>
+      relevantRecords.filter((r: any) => r.cnType === type).length;
+
     results = {
-      new: await fireCount(COLLECTION, { filters: { cnStatus: "new" } }),
-      researching: await fireCount(COLLECTION, {
-        filters: { cnStatus: "researching" },
-      }),
-      pursuing: await fireCount(COLLECTION, {
-        filters: { cnStatus: "pursuing" },
-      }),
-      preApproval: await fireCount(COLLECTION, {
-        filters: { cnStatus: "preApproval" },
-      }),
-      submitted: await fireCount(COLLECTION, {
-        filters: { cnStatus: "submitted" },
-      }),
-      negotiation: await fireCount(COLLECTION, {
-        filters: { cnStatus: "negotiation" },
-      }),
-      monitor: await fireCount(COLLECTION, {
-        filters: { cnStatus: "monitor" },
-      }),
-      foia: await fireCount(COLLECTION, {
-        filters: { cnStatus: "foia" },
-      }),
-      awarded: await fireCount(COLLECTION, {
-        filters: { cnStatus: "awarded" },
-      }),
-      notWon: await fireCount(COLLECTION, { filters: { cnStatus: "notWon" } }),
-      notPursuing: await fireCount(COLLECTION, {
-        filters: { cnStatus: "notPursuing" },
-      }),
-      erp: await fireCount(COLLECTION, { filters: { cnType: "erp" } }),
-      staffing: await fireCount(COLLECTION, {
-        filters: { cnType: "staffing" },
-      }),
-      itSupport: await fireCount(COLLECTION, {
-        filters: { cnType: "itSupport" },
-      }),
-      cloud: await fireCount(COLLECTION, { filters: { cnType: "cloud" } }),
-      other: await fireCount(COLLECTION, { filters: { cnType: "other" } }),
-      facilitiesTelecomHardware: await fireCount(COLLECTION, {
-        filters: { cnType: "facilitiesTelecomHardware" },
-      }),
-      nonRelevant: await fireCount(COLLECTION, {
-        filters: { cnType: "nonRelevant" },
-      }),
-      total: await fireCount(COLLECTION),
+      new: countByStatus("new"),
+      researching: countByStatus("researching"),
+      pursuing: countByStatus("pursuing"),
+      preApproval: countByStatus("preApproval"),
+      submitted: countByStatus("submitted"),
+      negotiation: countByStatus("negotiation"),
+      monitor: countByStatus("monitor"),
+      foia: countByStatus("foia"),
+      awarded: countByStatus("awarded"),
+      notWon: countByStatus("notWon"),
+      notPursuing: countByStatus("notPursuing"),
+      erp: countByType("erp"),
+      staffing: countByType("staffing"),
+      itSupport: countByType("itSupport"),
+      cloud: countByType("cloud"),
+      other: countByType("other"),
+      facilitiesTelecomHardware: countByType("facilitiesTelecomHardware"),
+      nonRelevant: countByType("nonRelevant"),
+      total: relevantRecords.length,
     };
+
+    console.log("[Counts] Results:", results);
   } catch (error) {
     console.error(`Failed to get ${COLLECTION} count`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
