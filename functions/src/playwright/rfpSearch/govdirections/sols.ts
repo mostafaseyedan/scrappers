@@ -183,7 +183,7 @@ async function processDetailPage(
       'dt:has-text("If online, then documents are here:") + dd a'
     );
     if ((await linkEl.count()) > 0) {
-      externalLink = await linkEl.getAttribute("href");
+      externalLink = (await linkEl.getAttribute("href")) || "";
     }
 
     // Extract description from summary section
