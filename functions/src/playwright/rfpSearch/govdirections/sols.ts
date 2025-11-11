@@ -27,41 +27,40 @@ async function login(page: Page, user: string, pass: string) {
   // Wait for login page to be ready
   console.log("🔐 [LOGIN] Waiting for login page...");
 
-  // Wait a bit for the page to fully render (form may be hidden initially)
+  // Wait a bit for the page to fully render
   await page.waitForTimeout(1000);
 
-  // Try to find username field with various selectors - don't wait for form visibility
-  console.log("✓ [LOGIN] Looking for username field...");
-  const usernameField = await page
-    .locator('input[name="username"]')
-    .or(page.locator('input[name="userName"]'))
-    .or(page.locator('input[type="text"]').first())
-    .or(page.locator('input[id*="user"]').first());
+  // Find email field - the actual field name is "data[User][email]" with id="UserEmail"
+  console.log("✓ [LOGIN] Looking for email field...");
+  const emailField = await page
+    .locator('input[id="UserEmail"]')
+    .or(page.locator('input[name="data[User][email]"]'))
+    .or(page.locator('input[type="email"]'));
 
-  await usernameField.waitFor({ timeout: 10000, state: 'attached' });
-  console.log("✓ [LOGIN] Username field found");
+  await emailField.waitFor({ timeout: 10000 });
+  console.log("✓ [LOGIN] Email field found");
 
-  // Try to find password field
+  // Find password field - the actual field name is "data[User][passwd]" with id="UserPasswd"
   const passwordField = await page
-    .locator('input[name="password"]')
+    .locator('input[id="UserPasswd"]')
+    .or(page.locator('input[name="data[User][passwd]"]'))
     .or(page.locator('input[type="password"]'));
 
-  await passwordField.waitFor({ timeout: 10000, state: 'attached' });
+  await passwordField.waitFor({ timeout: 10000 });
   console.log("✓ [LOGIN] Password field found");
 
-  // Fill login form - force fill even if hidden
-  await usernameField.fill(user, { force: true });
-  await passwordField.fill(pass, { force: true });
+  // Fill login form
+  await emailField.fill(user);
+  await passwordField.fill(pass);
   console.log("✓ [LOGIN] Credentials filled");
 
-  // Click submit button - force click if needed
+  // Click submit button - actual button is: <input type="submit" value="LOG In | See Terms">
   const submitButton = await page
-    .locator("button[type='submit']")
-    .or(page.locator("input[type='submit']"))
-    .or(page.locator("button:has-text('Login')"))
-    .or(page.locator("button:has-text('LOG IN')"));
+    .locator('input[type="submit"][value*="LOG In"]')
+    .or(page.locator('input[type="submit"].btn-primary'))
+    .or(page.locator('input[type="submit"]'));
 
-  await submitButton.click({ force: true });
+  await submitButton.click();
   console.log("✓ [LOGIN] Submit clicked, waiting for login to complete...");
 
   await page.waitForTimeout(3000);
