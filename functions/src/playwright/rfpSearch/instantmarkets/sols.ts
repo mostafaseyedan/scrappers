@@ -10,6 +10,44 @@ let expiredCount = 0;
 let nonItCount = 0;
 let dupCount = 0;
 
+// Helper function to dismiss push notification modal
+async function dismissPushNotificationModal(page: Page) {
+  try {
+    // Wait briefly for modal to appear
+    await page.waitForTimeout(1000);
+
+    // Try multiple button selectors - click "Don't Ask Again" if available
+    const dontAskButton = page.locator("button:has-text(\"Don't Ask Again\")");
+    if ((await dontAskButton.count()) > 0) {
+      console.log("  Dismissing push notification modal - Don't Ask Again");
+      await dontAskButton.click();
+      await page.waitForTimeout(500);
+      return;
+    }
+
+    // Otherwise try "Not Now"
+    const notNowButton = page.locator("button:has-text(\"Not Now\")");
+    if ((await notNowButton.count()) > 0) {
+      console.log("  Dismissing push notification modal - Not Now");
+      await notNowButton.click();
+      await page.waitForTimeout(500);
+      return;
+    }
+
+    // Or click the X close button
+    const closeButton = page.locator("button[aria-label='Close']");
+    if ((await closeButton.count()) > 0) {
+      console.log("  Dismissing push notification modal - Close X");
+      await closeButton.click();
+      await page.waitForTimeout(500);
+      return;
+    }
+  } catch (err) {
+    // Modal might not appear, that's okay
+    console.log("  No push notification modal to dismiss");
+  }
+}
+
 async function login(page: Page, user: string, pass: string) {
   if (!pass) throw new Error("Password parameter is missing for login");
   if (!user) throw new Error("User parameter is missing for login");
@@ -20,6 +58,12 @@ async function login(page: Page, user: string, pass: string) {
   await page.fill("input[placeholder=\"Enter your email address\"]", user);
   await page.fill("input[placeholder=\"Enter your password\"]", pass);
   await page.click("button:has-text('Login')");
+
+  // Wait for navigation after login
+  await page.waitForTimeout(2000);
+
+  // Dismiss push notification modal if it appears
+  await dismissPushNotificationModal(page);
 }
 
 async function processRow(
@@ -103,6 +147,9 @@ async function scrapeAllSols(
     { waitUntil: "domcontentloaded" }
   );
 
+  // Dismiss push notification modal if it appears after navigation
+  await dismissPushNotificationModal(page);
+
   do {
     logger.log(`${env.VENDOR} - page ${currPage}`);
     await page.waitForSelector("app-opp-list-view li.collection-item-desc");
@@ -122,13 +169,8 @@ async function scrapeAllSols(
       if (sol) allSols.push(sol);
     }
 
-    const popupDismiss = await page.locator(
-      "button:has-text(\"Don't Ask Again\")"
-    );
-    const popupDismissCount = await popupDismiss.count();
-    if (popupDismissCount > 0) await popupDismiss.click();
-
-    await page.waitForTimeout(1000);
+    // Dismiss modal again in case it reappears during pagination
+    await dismissPushNotificationModal(page);
 
     const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
     const nextPageCount = await nextPage.count();
