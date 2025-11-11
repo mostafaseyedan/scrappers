@@ -18,16 +18,51 @@ async function login(page: Page, user: string, pass: string) {
     waitUntil: "domcontentloaded",
   });
 
-  // Click login button
-  await page.click(".btn.btn-default a[href='/users/login']");
-  await page.waitForSelector("input[name='username']");
+  // Click login button and wait for navigation
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+    page.click(".btn.btn-default a[href='/users/login']"),
+  ]);
+
+  // Wait for login form to appear - try multiple selectors
+  logger.log("Waiting for login form...");
+  await page.waitForSelector("form", { timeout: 10000 });
+  logger.log("Form found, looking for username field...");
+
+  // Try to find username field with various selectors
+  const usernameField = await page
+    .locator('input[name="username"]')
+    .or(page.locator('input[name="userName"]'))
+    .or(page.locator('input[type="text"]').first())
+    .or(page.locator('input[id*="user"]').first());
+
+  await usernameField.waitFor({ timeout: 10000 });
+  logger.log("Username field found");
+
+  // Try to find password field
+  const passwordField = await page
+    .locator('input[name="password"]')
+    .or(page.locator('input[type="password"]'));
+
+  await passwordField.waitFor({ timeout: 10000 });
+  logger.log("Password field found");
 
   // Fill login form
-  await page.fill("input[name='username']", user);
-  await page.fill("input[name='password']", pass);
-  await page.click("button[type='submit'], input[type='submit']");
+  await usernameField.fill(user);
+  await passwordField.fill(pass);
+
+  // Click submit button
+  const submitButton = await page
+    .locator("button[type='submit']")
+    .or(page.locator("input[type='submit']"))
+    .or(page.locator("button:has-text('Login')"))
+    .or(page.locator("button:has-text('LOG IN')"));
+
+  await submitButton.click();
+  logger.log("Submit clicked, waiting for login to complete...");
 
   await page.waitForTimeout(3000);
+  logger.log("Login completed");
 }
 
 async function searchITOpportunities(page: Page) {
