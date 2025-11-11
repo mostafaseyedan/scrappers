@@ -215,6 +215,7 @@ async function processDetailPage(
     }
 
     // Extract description from summary section - ALL <p> tags after the h3
+    // Description is optional - some records may not have it
     let description = "";
     const descParagraphs = detailPage.locator(
       'h3:has-text("Summary Information") ~ p'
@@ -223,13 +224,6 @@ async function processDetailPage(
       const allDescTexts = await descParagraphs.allInnerTexts();
       // Join all paragraphs with double newline, then clean up whitespace
       description = allDescTexts.join("\n\n").replace(/\s+/g, " ").trim();
-    }
-
-    // Skip if no meaningful description (less than 20 characters suggests missing content)
-    if (!description || description.length < 20) {
-      console.log(`  ⚠️ Skipping - No description found (length: ${description.length})`);
-      nonItCount++;
-      return false;
     }
 
     // Extract reference number
