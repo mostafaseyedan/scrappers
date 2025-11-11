@@ -10,6 +10,19 @@ let expiredCount = 0;
 let nonItCount = 0;
 let dupCount = 0;
 
+// Helper function to clean govdirections date format
+// Converts "Thu, Nov 12th 2026, 00:00" to "Nov 12 2026"
+function cleanGovDirectionsDate(dateStr: string): string {
+  if (!dateStr) return "";
+
+  // Remove ordinal suffixes (st, nd, rd, th) from dates
+  // "Nov 12th 2026" -> "Nov 12 2026"
+  return dateStr
+    .replace(/(\d+)(st|nd|rd|th)/g, "$1")  // Remove ordinals
+    .replace(/,/g, "")  // Remove commas
+    .trim();
+}
+
 async function debugPageElements(page: Page, context: string) {
   console.log(`\n🔍 [DEBUG] Capturing page elements for: ${context}`);
   try {
@@ -260,7 +273,7 @@ async function processDetailPage(
       title,
       description,
       issuer,
-      closingDate: sanitizeDateString(closingDate),
+      closingDate: sanitizeDateString(cleanGovDirectionsDate(closingDate)),
       contactInfo,
       externalLinks: externalLink ? [externalLink] : [],
       site: "govdirections",
