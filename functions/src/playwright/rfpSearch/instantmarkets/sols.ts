@@ -172,14 +172,32 @@ async function scrapeAllSols(
     // Dismiss modal again in case it reappears during pagination
     await dismissPushNotificationModal(page);
 
+    // Check for next page button
     const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
     const nextPageCount = await nextPage.count();
+    console.log(`  Looking for Next button: found ${nextPageCount}`);
 
     if (nextPageCount === 0) {
+      console.log("  No Next button found - last page reached");
       lastPage = true;
     } else {
-      await nextPage.click();
-      await page.waitForTimeout(1000);
+      try {
+        // Check if button is enabled
+        const isDisabled = await nextPage.getAttribute("disabled");
+        if (isDisabled !== null) {
+          console.log("  Next button is disabled - last page reached");
+          lastPage = true;
+        } else {
+          console.log("  Clicking Next button...");
+          await nextPage.click({ timeout: 5000 });
+          await page.waitForTimeout(1000);
+          console.log("  ✓ Navigated to next page");
+        }
+      } catch (err) {
+        console.log(`  ⚠️ Failed to click Next button: ${err.message}`);
+        console.log("  Assuming last page reached");
+        lastPage = true;
+      }
     }
     currPage++;
   } while (!lastPage);
