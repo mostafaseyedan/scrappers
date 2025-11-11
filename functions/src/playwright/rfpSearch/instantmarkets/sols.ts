@@ -95,7 +95,7 @@ async function processRow(
       .innerText(),
     location: location.substr(1, location.length - 2),
     issuer,
-    closingDate: sanitizeDateString(closingDate),
+    closingDate: closingDate === "N/A" ? null : sanitizeDateString(closingDate),
     site: "instantmarkets",
     siteUrl: "https://www.instantmarkets.com" + siteUrl,
     siteId,
