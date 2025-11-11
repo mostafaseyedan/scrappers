@@ -20,22 +20,33 @@ export async function GET(req: NextRequest) {
   try {
     if (!user) throw new Error("Unauthenticated");
 
+    // Check if caller wants to include nonRelevant items (for duplicate checks by scrapers)
+    const { searchParams } = new URL(req.url);
+    const includeNonRelevant = searchParams.get("includeNonRelevant") === "true";
+
     // Fetch records from Firestore
     const records = await fireGet(COLLECTION, queryOptions);
 
-    // Filter out nonRelevant items after fetching
-    const filteredRecords = records.filter(
-      (record: any) => record.cnType !== "nonRelevant"
-    );
+    // Filter out nonRelevant items unless explicitly requested to include them
+    const filteredRecords = includeNonRelevant
+      ? records
+      : records.filter((record: any) => record.cnType !== "nonRelevant");
 
-    // Count total matching records (including the cnType filter)
-    const allRecords = await fireGet(COLLECTION, {
-      ...queryOptions,
-      limit: 10000, // Fetch large batch to count properly
-    });
-    const totalCount = allRecords.filter(
-      (record: any) => record.cnType !== "nonRelevant"
-    ).length;
+    // Count total matching records
+    let totalCount: number;
+    if (includeNonRelevant) {
+      // When including nonRelevant, just count what we fetched
+      totalCount = filteredRecords.length;
+    } else {
+      // For UI requests, count all non-relevant records
+      const allRecords = await fireGet(COLLECTION, {
+        ...queryOptions,
+        limit: 10000, // Fetch large batch to count properly
+      });
+      totalCount = allRecords.filter(
+        (record: any) => record.cnType !== "nonRelevant"
+      ).length;
+    }
 
     results = {
       total: totalCount,

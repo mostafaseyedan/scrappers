@@ -151,16 +151,33 @@ Key Differentiators (Score Boosters):
       }]
     };
 
-    // 5. BUILD USER PROMPT (Task Definition - Detailed Instructions & Data)
-    const solicitationsText = newSolicitations.map((sol) =>
+    // 5. BATCH PROCESSING - Process in chunks of 100
+    const BATCH_SIZE = 100;
+    const batches: typeof newSolicitations[] = [];
+
+    for (let i = 0; i < newSolicitations.length; i += BATCH_SIZE) {
+      batches.push(newSolicitations.slice(i, i + BATCH_SIZE));
+    }
+
+    console.log(`[Calculate Scores] Split into ${batches.length} batches of up to ${BATCH_SIZE} items`);
+
+    const allScores: Record<string, number> = {};
+
+    // Process each batch sequentially
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`[Calculate Scores] Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} items)`);
+
+      // BUILD USER PROMPT for this batch
+      const solicitationsText = batch.map((sol) =>
 `ID: ${sol.id}
 Title: ${sol.title || 'N/A'}
 Description: ${sol.description || 'N/A'}
 Issuer: ${sol.issuer || 'N/A'}
 Location: ${sol.location || 'N/A'}`
-    ).join("\n\n");
+      ).join("\n\n");
 
-    const prompt = `Evaluate the following RFPs and assign a relevance score (0.0 to 1.0) for each based on Cendien's profile.
+      const prompt = `Evaluate the following RFPs and assign a relevance score (0.0 to 1.0) for each based on Cendien's profile.
 
 SCORING LOGIC:
 
@@ -216,86 +233,78 @@ RFPs TO EVALUATE:
 
 ${solicitationsText}`;
 
-    // 6. CONFIGURE GENERATION (Format Control)
-    const generationConfig = {
-      responseMimeType: "application/json",
-      responseSchema: scoreJsonSchema as any,
-      maxOutputTokens: 1000,
-      temperature: 0.2,
-      topP: 0.85,
-    };
+      // 6. CONFIGURE GENERATION (Format Control)
+      const generationConfig = {
+        responseMimeType: "application/json",
+        responseSchema: scoreJsonSchema as any,
+        maxOutputTokens: 4000, // Increased for larger batches
+        temperature: 0.2,
+        topP: 0.85,
+      };
 
-    // 7. EXECUTE API CALL (Correct Structure)
-    console.log(`[Calculate Scores] Calling Gemini with model: ${modelName}`);
-    console.log(`[Calculate Scores] Generation Config:`, JSON.stringify(generationConfig, null, 2));
-    console.log(`[Calculate Scores] Response Schema:`, JSON.stringify(scoreJsonSchema, null, 2));
+      // 7. EXECUTE API CALL for this batch
+      const requestConfig = {
+        model: modelName,
+        systemInstruction,
+        generationConfig,
+        contents: [{
+          role: "user",
+          parts: [{ text: prompt }]
+        }]
+      } as any;
 
-    const requestConfig = {
-      model: modelName,
-      systemInstruction,
-      generationConfig,
-      contents: [{
-        role: "user",
-        parts: [{ text: prompt }]
-      }]
-    } as any;
+      const response = await ai.models.generateContent(requestConfig);
 
-    console.log(`[Calculate Scores] Full Request Config:`, JSON.stringify(requestConfig, null, 2));
+      // 8. EXTRACT AND VALIDATE RESPONSE
+      let jsonText = response.text;
 
-    const response = await ai.models.generateContent(requestConfig);
+      if (!jsonText) {
+        console.error(`[Calculate Scores] Batch ${batchIndex + 1}: No response text from AI`);
+        continue; // Skip this batch, continue with next
+      }
 
-    // 8. EXTRACT AND VALIDATE RESPONSE
-    let jsonText = response.text;
-    console.log(`[Calculate Scores] Raw JSON response:`, jsonText);
+      // Strip markdown code blocks if present
+      jsonText = jsonText.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.slice(7);
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.slice(3);
+      }
+      if (jsonText.endsWith('```')) {
+        jsonText = jsonText.slice(0, -3);
+      }
+      jsonText = jsonText.trim();
 
-    if (!jsonText) {
-      throw new Error("No response text from AI");
+      // Parse JSON
+      const parsedJson = JSON.parse(jsonText);
+
+      // VALIDATE using Zod schema
+      const validatedResponse: RobustResponse = RobustScoreSchema.parse(parsedJson);
+
+      // 9. HANDLE BATCH RESPONSE
+      if (!validatedResponse.success) {
+        console.error(`[Calculate Scores] Batch ${batchIndex + 1} error:`, validatedResponse.error);
+        continue; // Skip this batch, continue with next
+      }
+
+      // Merge scores from this batch
+      const batchScores = validatedResponse.scores;
+      Object.assign(allScores, batchScores);
+
+      console.log(`[Calculate Scores] Batch ${batchIndex + 1} completed: ${Object.keys(batchScores).length} scores`);
     }
 
-    // Strip markdown code blocks if present (workaround for SDK issue)
-    jsonText = jsonText.trim();
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7);
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3);
-    }
-    if (jsonText.endsWith('```')) {
-      jsonText = jsonText.slice(0, -3);
-    }
-    jsonText = jsonText.trim();
+    console.log(`[Calculate Scores] All batches completed. Total validated scores: ${Object.keys(allScores).length}`);
 
-    console.log(`[Calculate Scores] Cleaned JSON:`, jsonText);
-
-    // Parse JSON
-    const parsedJson = JSON.parse(jsonText);
-
-    // VALIDATE using Zod schema (Runtime Type Safety)
-    const validatedResponse: RobustResponse = RobustScoreSchema.parse(parsedJson);
-
-    // 9. HANDLE ROBUST RESPONSE
-    if (!validatedResponse.success) {
-      // Model reported an error
-      console.error(`[Calculate Scores] Model error:`, validatedResponse.error);
+    if (Object.keys(allScores).length === 0) {
       return NextResponse.json(
-        {
-          error: "AI could not process the solicitations",
-          details: validatedResponse.error
-        },
+        { error: "No valid scores returned from AI across all batches" },
         { status: 500 }
       );
     }
 
-    // Success case - extract scores (already in the right format)
-    const scores = validatedResponse.scores;
-
-    console.log(`[Calculate Scores] Validated ${Object.keys(scores).length} scores`);
-
-    if (Object.keys(scores).length === 0) {
-      return NextResponse.json(
-        { error: "No valid scores returned from AI" },
-        { status: 500 }
-      );
-    }
+    // Use allScores instead of scores for the rest of the logic
+    const scores = allScores;
 
     // 10. BUILD UPDATES INCLUDING cnType FOR LOW SCORES
     const updates: Record<string, { score: number; cnType?: string }> = {};

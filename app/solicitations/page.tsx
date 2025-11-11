@@ -1,11 +1,9 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 // Removed unused Select UI imports
-import { Input } from "@/components/ui/input";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Solicitation } from "./solicitation";
 import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
@@ -37,7 +35,7 @@ type ActiveSection = "solicitations" | "logs" | "sources" | "chat";
 export default function Page() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("solicitations");
   const [sols, setSols] = useState<any[]>([]);
-  const [limit] = useState(10000); // Effectively no limit
+  const [limit] = useState(2000); // Sidebar fetches up to 2000 records
   const [filterFacets, setFilterFacets] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
@@ -51,7 +49,6 @@ export default function Page() {
   const [sort, setSort] = useState("updated desc");
   const [totalFiltered, setTotalFiltered] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [activeSolId] = useState<string>("");
   const [selectedSolId, setSelectedSolId] = useState<string | null>(null);
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
@@ -141,7 +138,6 @@ export default function Page() {
       setTotalRecords(total);
     }
 
-    setTotalPages(Math.ceil(total / finalLimit));
   }
 
   const getFilterFacets = async () => {
@@ -184,7 +180,6 @@ export default function Page() {
       setTotalRecords(total);
     }
 
-    setTotalPages(Math.ceil(total / limit));
   }
 
   const refreshSols: (options?: {
@@ -284,7 +279,8 @@ export default function Page() {
 
       // Handle updates object which includes both new scores and low score updates
       if (updates && typeof updates === 'object') {
-        for (const [solId, updateData] of Object.entries(updates)) {
+        // Build all patch operations first
+        const patchPromises = Object.entries(updates).map(async ([solId, updateData]) => {
           try {
             const patchData: Record<string, any> = {};
             const update = updateData as { score?: number; cnType?: string };
@@ -303,12 +299,18 @@ export default function Page() {
             // Only patch if we have data to update
             if (Object.keys(patchData).length > 0) {
               await solModel.patch({ id: solId, data: patchData });
-              updatedCount++;
+              return true; // Success
             }
+            return false; // Nothing to update
           } catch (err) {
             console.error(`Failed to update ${solId}:`, err);
+            return false; // Failed
           }
-        }
+        });
+
+        // Execute all patches in parallel
+        const results = await Promise.all(patchPromises);
+        updatedCount = results.filter(Boolean).length;
       }
 
       toast.success(
@@ -351,6 +353,10 @@ export default function Page() {
     setShowChat(false); // Close chat when selecting a solicitation
     // Don't update URL - it causes unnecessary re-renders and slows down navigation
   };
+
+  const isFilteredView = Boolean(q || Object.keys(filters).length > 0);
+  const matchingTotal = isFilteredView ? totalFiltered : totalRecords;
+  const totalDisplayed = matchingTotal || sols.length;
 
   return (
     <div className={styles.page}>
@@ -426,41 +432,11 @@ export default function Page() {
               )}
             </div>
             <div className={styles.pageLayout_leftPanel_pagination}>
-              {q || Object.keys(filters).length > 0 ? (
-                <>
-                  {totalFiltered} out {totalRecords} items.
-                </>
+              {totalDisplayed > 0 ? (
+                <>Showing {totalDisplayed} items.</>
               ) : (
-                <>Showing all {totalRecords} items.</>
+                <>Showing 0 items.</>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Previous page"
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronLeft />
-              </Button>
-              <Input
-                className={styles.pageLayout_leftPanel_pagination_page}
-                type="text"
-                onChange={(e) => {
-                  const newPage = Number(e.target.value);
-                  if (newPage > 0 && newPage <= totalPages) {
-                    setPage(newPage);
-                  }
-                }}
-                value={page}
-              />
-              / {totalPages}
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Next page"
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight />
-              </Button>
             </div>
 
             {/* Collapsed state hint */}

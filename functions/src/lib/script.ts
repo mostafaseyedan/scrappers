@@ -34,6 +34,7 @@ export async function isSolDuplicate(
     baseUrl,
     filters: { siteId: sol.siteId },
     token: serviceKey,
+    includeNonRelevant: true, // Include nonRelevant to prevent re-scraping
   });
   return respCheck.results?.length > 0;
 }

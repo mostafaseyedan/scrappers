@@ -16,6 +16,7 @@ type GetParams = {
   filters?: Record<string, any>;
   token?: string;
   baseUrl?: string;
+  includeNonRelevant?: boolean;
 };
 
 type GetByIdParams = {
@@ -130,6 +131,7 @@ const defaultCalls = {
     filters,
     token,
     baseUrl,
+    includeNonRelevant,
   }: GetParams) => {
     const flattenedFilters: Record<string, any> = {};
     for (const [key, value] of Object.entries(filters || {})) {
@@ -137,6 +139,7 @@ const defaultCalls = {
     }
 
     const urlQueryString = queryString.stringify({
+      ...(includeNonRelevant ? { includeNonRelevant: "true" } : {}),
       limit,
       sort,
       page,
