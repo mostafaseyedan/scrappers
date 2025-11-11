@@ -323,24 +323,75 @@ async function scrapeAllSols(
   let currPage = 1;
 
   do {
+    console.log(`📊 [SCRAPE] Processing page ${currPage}...`);
     logger.log(`${env.VENDOR} - page:${currPage}`);
-    await page.waitForSelector("table#bidTable").catch(() => {
+
+    // Try to find the table
+    const tableFound = await page.waitForSelector("table#bidTable").catch(() => {
+      console.log("⚠️ [SCRAPE] table#bidTable not found");
       lastPage = true;
+      return null;
     });
+
+    if (!tableFound) {
+      console.log("🔍 [SCRAPE] Debugging table structure...");
+      await debugPageElements(page, "Search Results - No Table Found");
+
+      // Try to find any tables
+      const allTables = await page.locator("table").all();
+      console.log(`  Found ${allTables.length} table(s) on page`);
+      for (let i = 0; i < allTables.length; i++) {
+        const table = allTables[i];
+        const id = await table.getAttribute("id").catch(() => null);
+        const className = await table.getAttribute("class").catch(() => null);
+        console.log(`    Table ${i}: id="${id}", class="${className}"`);
+      }
+      continue;
+    }
+
     const rows = await page.locator("table#bidTable tbody tr[class*='Row']");
     const rowCount = await rows.count();
+    console.log(`✓ [SCRAPE] Found ${rowCount} rows in table`);
 
     if (rowCount === 0) {
+      console.log("⚠️ [SCRAPE] No rows found with selector: table#bidTable tbody tr[class*='Row']");
+      console.log("🔍 [SCRAPE] Trying alternative row selectors...");
+
+      // Try alternative selectors
+      const allTableRows = await page.locator("table#bidTable tbody tr").count();
+      const tableRows = await page.locator("table#bidTable tr").count();
+      const anyRows = await page.locator("table tbody tr").count();
+
+      console.log(`  table#bidTable tbody tr: ${allTableRows} rows`);
+      console.log(`  table#bidTable tr: ${tableRows} rows`);
+      console.log(`  table tbody tr: ${anyRows} rows`);
+
+      if (allTableRows > 0 || tableRows > 0 || anyRows > 0) {
+        console.log("🔍 [SCRAPE] Rows exist but class selector doesn't match. Debugging first row...");
+        const firstRow = await page.locator("table#bidTable tbody tr, table#bidTable tr").first();
+        const rowClass = await firstRow.getAttribute("class").catch(() => null);
+        const rowId = await firstRow.getAttribute("id").catch(() => null);
+        const rowHTML = await firstRow.innerHTML().catch(() => "").then(html => html.substring(0, 500));
+        console.log(`    First row: class="${rowClass}", id="${rowId}"`);
+        console.log(`    First row HTML (500 chars): ${rowHTML}`);
+      }
+
       lastPage = true;
       continue;
     }
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const sol = await processRow(row, env, context).catch((err) =>
-        logger.error("processRow failed", err)
-      );
-      if (sol) allSols.push(sol);
+      console.log(`  Processing row ${i + 1}/${rowCount}...`);
+      const sol = await processRow(row, env, context).catch((err) => {
+        console.error(`  ❌ Row ${i + 1} failed:`, err);
+        logger.error("processRow failed", err);
+        return null;
+      });
+      if (sol) {
+        console.log(`  ✓ Row ${i + 1} saved successfully`);
+        allSols.push(sol);
+      }
     }
 
     if (expiredCount >= 30) {
@@ -354,13 +405,16 @@ async function scrapeAllSols(
 
     if (nextPageCount === 0) {
       lastPage = true;
+      console.log("📄 [SCRAPE] No more pages");
     } else {
       await nextPage.first().click();
       await page.waitForTimeout(1000);
+      console.log("📄 [SCRAPE] Moving to next page...");
     }
     currPage++;
   } while (!lastPage);
 
+  console.log(`✅ [SCRAPE] Completed. Total sols collected: ${allSols.length}`);
   return allSols;
 }
 
