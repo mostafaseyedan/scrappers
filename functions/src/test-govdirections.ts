@@ -45,6 +45,25 @@ async function test() {
   const page = context.pages()[0];
 
   try {
+    // Add page event listeners for debugging
+    page.on('console', msg => {
+      const type = msg.type();
+      if (type === 'error' || type === 'warning') {
+        console.log(`[Browser ${type}]:`, msg.text());
+      }
+    });
+
+    page.on('pageerror', error => {
+      console.log('[Browser Page Error]:', error.message);
+    });
+
+    // Log page navigation
+    page.on('load', () => {
+      console.log(`📄 Page loaded: ${page.url()}`);
+    });
+
+    console.log("🔍 Starting scraper with debug logging enabled...\n");
+
     const results = await govdirections(
       page,
       {
@@ -57,10 +76,33 @@ async function test() {
       context
     );
 
-    console.log("✅ Test completed successfully!");
+    console.log("\n✅ Test completed successfully!");
     console.log("Results:", JSON.stringify(results, null, 2));
   } catch (error) {
-    console.error("❌ Test failed:", error);
+    console.error("\n❌ Test failed:", error);
+
+    // Capture debug info on error
+    try {
+      console.log("\n🔍 Debug Info:");
+      console.log("  Current URL:", page.url());
+      console.log("  Page title:", await page.title().catch(() => "Unable to get title"));
+
+      // Try to get page HTML for debugging
+      const bodyHTML = await page.locator("body").innerHTML().catch(() => "Unable to get HTML");
+      if (bodyHTML.length < 2000) {
+        console.log("\n📄 Page HTML:\n", bodyHTML);
+      } else {
+        console.log("  Body HTML length:", bodyHTML.length, "characters");
+      }
+
+      // Take screenshot
+      const screenshot = await page.screenshot({ fullPage: false }).catch(() => null);
+      if (screenshot) {
+        console.log("  📸 Screenshot captured (not displayed in terminal)");
+      }
+    } catch (debugError) {
+      console.error("  Failed to capture debug info:", debugError);
+    }
   } finally {
     await browser.close();
     console.log("");

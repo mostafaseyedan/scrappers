@@ -25,9 +25,9 @@ async function login(page: Page, user: string, pass: string) {
   ]);
 
   // Wait for login form to appear - try multiple selectors
-  logger.log("Waiting for login form...");
+  console.log("🔐 [LOGIN] Waiting for login form...");
   await page.waitForSelector("form", { timeout: 10000 });
-  logger.log("Form found, looking for username field...");
+  console.log("✓ [LOGIN] Form found, looking for username field...");
 
   // Try to find username field with various selectors
   const usernameField = await page
@@ -37,7 +37,7 @@ async function login(page: Page, user: string, pass: string) {
     .or(page.locator('input[id*="user"]').first());
 
   await usernameField.waitFor({ timeout: 10000 });
-  logger.log("Username field found");
+  console.log("✓ [LOGIN] Username field found");
 
   // Try to find password field
   const passwordField = await page
@@ -45,11 +45,12 @@ async function login(page: Page, user: string, pass: string) {
     .or(page.locator('input[type="password"]'));
 
   await passwordField.waitFor({ timeout: 10000 });
-  logger.log("Password field found");
+  console.log("✓ [LOGIN] Password field found");
 
   // Fill login form
   await usernameField.fill(user);
   await passwordField.fill(pass);
+  console.log("✓ [LOGIN] Credentials filled");
 
   // Click submit button
   const submitButton = await page
@@ -59,23 +60,28 @@ async function login(page: Page, user: string, pass: string) {
     .or(page.locator("button:has-text('LOG IN')"));
 
   await submitButton.click();
-  logger.log("Submit clicked, waiting for login to complete...");
+  console.log("✓ [LOGIN] Submit clicked, waiting for login to complete...");
 
   await page.waitForTimeout(3000);
-  logger.log("Login completed");
+  console.log("✅ [LOGIN] Login completed");
 }
 
 async function searchITOpportunities(page: Page) {
   // Wait for industries dropdown
+  console.log("🔍 [SEARCH] Waiting for industries dropdown...");
   await page.waitForSelector("select[name='industries[]']");
+  console.log("✓ [SEARCH] Industries dropdown found");
 
   // Select "IT: Support Services, Help Desk" option (value="940")
   await page.selectOption("select[name='industries[]']", "940");
+  console.log("✓ [SEARCH] Selected IT category (value=940)");
 
   // Click search button
   await page.click("input.btn.btn-primary[type='submit'][value='Search']");
+  console.log("✓ [SEARCH] Search button clicked");
 
   await page.waitForTimeout(2000);
+  console.log("✅ [SEARCH] Search completed");
 }
 
 async function processDetailPage(
