@@ -186,10 +186,10 @@ async function processDetailPage(
       externalLink = (await linkEl.getAttribute("href")) || "";
     }
 
-    // Extract description from summary section
+    // Extract description from summary section - the <p> after the h3
     let description = "";
     const descSection = detailPage.locator(
-      'h3:has-text("Summary Information") ~ p, h3:has-text("Summary Information") ~ dl'
+      'h3:has-text("Summary Information") ~ p'
     );
     if ((await descSection.count()) > 0) {
       description = await descSection.first().innerText();
@@ -213,14 +213,20 @@ async function processDetailPage(
       issuer = await agencyEl.innerText();
     }
 
-    // Extract contact info
+    // Extract contact info - get email from dd containing mailto link
     let contactInfo = "";
-    const contactPhoneEl = detailPage.locator(
-      'dt:has-text("Agency Contact Information") + dd'
-    );
-    if ((await contactPhoneEl.count()) > 0) {
-      const contactText = await contactPhoneEl.innerText();
-      contactInfo = contactText.replace(/\n/g, " ").trim();
+    const contactEmailEl = detailPage.locator('dd a[href^="mailto:"]');
+    if ((await contactEmailEl.count()) > 0) {
+      contactInfo = await contactEmailEl.innerText();
+    } else {
+      // Fallback: try to get all dd elements after "Agency Contact Information"
+      const contactDds = detailPage.locator(
+        'dt:has-text("Agency Contact Information") ~ dd'
+      );
+      if ((await contactDds.count()) > 0) {
+        const allContactText = await contactDds.allInnerTexts();
+        contactInfo = allContactText.join(" ").replace(/\s+/g, " ").trim();
+      }
     }
 
     const siteUrl = detailPage.url();
