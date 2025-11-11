@@ -326,9 +326,9 @@ async function scrapeAllSols(
     console.log(`📊 [SCRAPE] Processing page ${currPage}...`);
     logger.log(`${env.VENDOR} - page:${currPage}`);
 
-    // Try to find the table
-    const tableFound = await page.waitForSelector("table#bidTable").catch(() => {
-      console.log("⚠️ [SCRAPE] table#bidTable not found");
+    // Try to find the table - actual class is "tableLinkHead", not id="bidTable"
+    const tableFound = await page.waitForSelector("table.tableLinkHead, table.table-hover").catch(() => {
+      console.log("⚠️ [SCRAPE] table.tableLinkHead not found");
       lastPage = true;
       return null;
     });
@@ -349,26 +349,25 @@ async function scrapeAllSols(
       continue;
     }
 
-    const rows = await page.locator("table#bidTable tbody tr[class*='Row']");
+    // Rows have class "altRow" or "evenRow"
+    const rows = await page.locator("table.tableLinkHead tbody tr.altRow, table.tableLinkHead tbody tr.evenRow");
     const rowCount = await rows.count();
     console.log(`✓ [SCRAPE] Found ${rowCount} rows in table`);
 
     if (rowCount === 0) {
-      console.log("⚠️ [SCRAPE] No rows found with selector: table#bidTable tbody tr[class*='Row']");
+      console.log("⚠️ [SCRAPE] No rows found with selector: table.tableLinkHead tbody tr.altRow, tr.evenRow");
       console.log("🔍 [SCRAPE] Trying alternative row selectors...");
 
       // Try alternative selectors
-      const allTableRows = await page.locator("table#bidTable tbody tr").count();
-      const tableRows = await page.locator("table#bidTable tr").count();
-      const anyRows = await page.locator("table tbody tr").count();
+      const allTableRows = await page.locator("table.tableLinkHead tbody tr").count();
+      const tableRows = await page.locator("table tbody tr").count();
 
-      console.log(`  table#bidTable tbody tr: ${allTableRows} rows`);
-      console.log(`  table#bidTable tr: ${tableRows} rows`);
-      console.log(`  table tbody tr: ${anyRows} rows`);
+      console.log(`  table.tableLinkHead tbody tr: ${allTableRows} rows`);
+      console.log(`  table tbody tr: ${tableRows} rows`);
 
-      if (allTableRows > 0 || tableRows > 0 || anyRows > 0) {
+      if (allTableRows > 0 || tableRows > 0) {
         console.log("🔍 [SCRAPE] Rows exist but class selector doesn't match. Debugging first row...");
-        const firstRow = await page.locator("table#bidTable tbody tr, table#bidTable tr").first();
+        const firstRow = await page.locator("table.tableLinkHead tbody tr, table tbody tr").first();
         const rowClass = await firstRow.getAttribute("class").catch(() => null);
         const rowId = await firstRow.getAttribute("id").catch(() => null);
         const rowHTML = await firstRow.innerHTML().catch(() => "").then(html => html.substring(0, 500));
