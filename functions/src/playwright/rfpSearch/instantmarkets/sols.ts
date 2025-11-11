@@ -194,7 +194,8 @@ async function scrapeAllSols(
           console.log("  ✓ Navigated to next page");
         }
       } catch (err) {
-        console.log(`  ⚠️ Failed to click Next button: ${err.message}`);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.log(`  ⚠️ Failed to click Next button: ${errorMsg}`);
         console.log("  Assuming last page reached");
         lastPage = true;
       }
