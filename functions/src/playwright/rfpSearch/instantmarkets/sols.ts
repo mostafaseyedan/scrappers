@@ -172,6 +172,9 @@ async function scrapeAllSols(
     // Dismiss modal again in case it reappears during pagination
     await dismissPushNotificationModal(page);
 
+    // Wait for any modal animations to complete
+    await page.waitForTimeout(1500);
+
     // Check for next page button
     const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
     const nextPageCount = await nextPage.count();
@@ -189,8 +192,9 @@ async function scrapeAllSols(
           lastPage = true;
         } else {
           console.log("  Clicking Next button...");
-          await nextPage.click({ timeout: 5000 });
-          await page.waitForTimeout(1000);
+          // Use force:true to bypass actionability checks if modal overlay is blocking
+          await nextPage.click({ timeout: 5000, force: true });
+          await page.waitForTimeout(2000);
           console.log("  ✓ Navigated to next page");
         }
       } catch (err) {
