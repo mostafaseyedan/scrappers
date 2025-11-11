@@ -11,8 +11,8 @@ async function test() {
   console.log("📝 Environment check:");
   console.log("  BASE_URL:", process.env.BASE_URL || "https://reconrfp.cendien.com");
   console.log("  SERVICE_KEY:", process.env.SERVICE_KEY ? "✓ Set" : "✗ Missing");
-  console.log("  GOVEDIRECTIONS_USER:", process.env.GOVEDIRECTIONS_USER ? "✓ Set" : "✗ Missing");
-  console.log("  GOVEDIRECTIONS_PASS:", process.env.GOVEDIRECTIONS_PASS ? "✓ Set" : "✗ Missing");
+  console.log("  GOVDIRECTIONS_USER:", process.env.GOVDIRECTIONS_USER ? "✓ Set" : "✗ Missing");
+  console.log("  GOVDIRECTIONS_PASS:", process.env.GOVDIRECTIONS_PASS ? "✓ Set" : "✗ Missing");
   console.log("  BROWSERBASE_KEY:", process.env.BROWSERBASE_KEY ? "✓ Set" : "✗ Missing");
   console.log("");
 
@@ -50,8 +50,8 @@ async function test() {
       {
         BASE_URL: process.env.BASE_URL || "https://reconrfp.cendien.com",
         DEV_SERVICE_KEY: process.env.SERVICE_KEY || process.env.DEV_SERVICE_KEY,
-        DEV_GOVEDIRECTIONS_USER: process.env.GOVEDIRECTIONS_USER || process.env.DEV_GOVEDIRECTIONS_USER,
-        DEV_GOVEDIRECTIONS_PASS: process.env.GOVEDIRECTIONS_PASS || process.env.DEV_GOVEDIRECTIONS_PASS,
+        DEV_GOVDIRECTIONS_USER: process.env.GOVDIRECTIONS_USER || process.env.DEV_GOVDIRECTIONS_USER,
+        DEV_GOVDIRECTIONS_PASS: process.env.GOVDIRECTIONS_PASS || process.env.DEV_GOVDIRECTIONS_PASS,
         DEV_BROWSERBASE_KEY: BROWSERBASE_KEY,
       },
       context

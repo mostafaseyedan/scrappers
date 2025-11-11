@@ -294,8 +294,8 @@ export async function run(
 ) {
   const BASE_URL = env.BASE_URL!;
   const SERVICE_KEY = env.DEV_SERVICE_KEY!;
-  const USER = env.DEV_GOVEDIRECTIONS_USER!;
-  const PASS = env.DEV_GOVEDIRECTIONS_PASS!;
+  const USER = env.DEV_GOVDIRECTIONS_USER!;
+  const PASS = env.DEV_GOVDIRECTIONS_PASS!;
   const VENDOR = "govdirections";
   let results = {};
 
