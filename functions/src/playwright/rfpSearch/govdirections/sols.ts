@@ -161,13 +161,28 @@ async function processDetailPage(
 ): Promise<Record<string, any> | false> {
   try {
     // Wait for main content
-    await detailPage.waitForSelector(".container .well");
+    await detailPage.waitForSelector(".container .well, .container");
+
+    // Check for membership paywall/upgrade required page
+    const paywallCheck = await detailPage.locator('h3:has-text("Membership Requires an Upgrade")').count();
+    if (paywallCheck > 0) {
+      console.log("  ⚠️ Skipping - Membership upgrade required (paywall)");
+      nonItCount++;
+      return false;
+    }
 
     // Extract title from h2 tag
     const titleEl = await detailPage.locator("h2").first();
-    const titleText = await titleEl.innerText();
+    const titleText = await titleEl.innerText().catch(() => "");
     // Remove "Save this Bid" button text if present
     const title = titleText.replace(/Save this Bid/g, "").trim();
+
+    // Skip if no title found
+    if (!title) {
+      console.log("  ⚠️ Skipping - No title found on detail page");
+      nonItCount++;
+      return false;
+    }
 
     // Extract event date
     let closingDate = "";
@@ -195,6 +210,13 @@ async function processDetailPage(
       const allDescTexts = await descParagraphs.allInnerTexts();
       // Join all paragraphs with double newline, then clean up whitespace
       description = allDescTexts.join("\n\n").replace(/\s+/g, " ").trim();
+    }
+
+    // Skip if no meaningful description (less than 20 characters suggests missing content)
+    if (!description || description.length < 20) {
+      console.log(`  ⚠️ Skipping - No description found (length: ${description.length})`);
+      nonItCount++;
+      return false;
     }
 
     // Extract reference number
