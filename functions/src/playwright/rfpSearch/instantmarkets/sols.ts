@@ -172,8 +172,18 @@ async function scrapeAllSols(
     // Dismiss modal again in case it reappears during pagination
     await dismissPushNotificationModal(page);
 
-    // Wait for any modal animations to complete
-    await page.waitForTimeout(1500);
+    // Wait for any Angular overlay/modal to disappear completely
+    try {
+      await page.waitForFunction(() => {
+        const overlayPane = document.querySelector('.cdk-overlay-pane');
+        if (!overlayPane) return true;
+        const style = window.getComputedStyle(overlayPane);
+        return style.pointerEvents === 'none';
+      }, { timeout: 3000 });
+      console.log("  ✓ Overlay cleared");
+    } catch {
+      console.log("  ⚠️ Overlay still present, proceeding anyway");
+    }
 
     // Check for next page button
     const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
