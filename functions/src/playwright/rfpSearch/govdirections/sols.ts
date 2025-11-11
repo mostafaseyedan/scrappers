@@ -186,13 +186,15 @@ async function processDetailPage(
       externalLink = (await linkEl.getAttribute("href")) || "";
     }
 
-    // Extract description from summary section - the <p> after the h3
+    // Extract description from summary section - ALL <p> tags after the h3
     let description = "";
-    const descSection = detailPage.locator(
+    const descParagraphs = detailPage.locator(
       'h3:has-text("Summary Information") ~ p'
     );
-    if ((await descSection.count()) > 0) {
-      description = await descSection.first().innerText();
+    if ((await descParagraphs.count()) > 0) {
+      const allDescTexts = await descParagraphs.allInnerTexts();
+      // Join all paragraphs with double newline, then clean up whitespace
+      description = allDescTexts.join("\n\n").replace(/\s+/g, " ").trim();
     }
 
     // Extract reference number
