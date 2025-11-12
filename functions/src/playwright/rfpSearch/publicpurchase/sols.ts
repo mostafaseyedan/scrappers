@@ -30,26 +30,33 @@ async function processRow(
   env: Record<string, any>,
   context: BrowserContext
 ) {
-  const publishDate = sanitizeDateString(
-    await row.locator("> td:nth-child(3)").innerText()
-  );
-  const closingDate = sanitizeDateString(
-    await row.locator("> td:nth-child(4)").innerText()
-  );
-  const sol = {
-    title: await row.locator("> td:nth-child(1)").innerText(),
-    issuer: await row.locator("> td:nth-child(2)").innerText(),
-    publishDate: publishDate || null,
-    closingDate: closingDate || null,
-    site: "publicpurchase",
-    siteId: await row.locator("> td:nth-child(7)").innerText(),
-    siteUrl:
-      "https://www.publicpurchase.com" +
-      (await row
-        .locator("> td:nth-child(1) > a[href]")
-        .first()
-        .getAttribute("href")),
-  };
+  let sol;
+
+  try {
+    const publishDate = sanitizeDateString(
+      await row.locator("> td:nth-child(3)").innerText({ timeout: 5000 })
+    );
+    const closingDate = sanitizeDateString(
+      await row.locator("> td:nth-child(4)").innerText({ timeout: 5000 })
+    );
+    sol = {
+      title: await row.locator("> td:nth-child(1)").innerText({ timeout: 5000 }),
+      issuer: await row.locator("> td:nth-child(2)").innerText({ timeout: 5000 }),
+      publishDate: publishDate || null,
+      closingDate: closingDate || null,
+      site: "publicpurchase",
+      siteId: await row.locator("> td:nth-child(7)").innerText({ timeout: 5000 }),
+      siteUrl:
+        "https://www.publicpurchase.com" +
+        (await row
+          .locator("> td:nth-child(1) > a[href]")
+          .first()
+          .getAttribute("href", { timeout: 5000 })),
+    };
+  } catch (error) {
+    logger.error("Failed to extract row data", error);
+    return false;
+  }
 
   if (sol.closingDate && !isNotExpired(sol)) {
     expiredCount++;
@@ -101,14 +108,31 @@ export async function scrapeAllSols(
 
   do {
     console.log(`PublicPurchase - Page ${currPage}`);
-    const rows = page.locator("#invitedBids tbody > tr:visible");
+    // Remove :visible as it's not supported by Playwright - select all rows then filter
+    const rows = page.locator("#invitedBids tbody > tr");
     const rowCount = await rows.count();
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const sol = await processRow(row, env, context).catch((err: unknown) =>
-        console.warn(err)
-      );
+
+      // Check if row is visible and has expected structure
+      const isVisible = await row.isVisible().catch(() => false);
+      const cellCount = await row.locator("> td").count();
+
+      if (!isVisible) {
+        logger.log(`Skipping hidden row ${i}`);
+        continue;
+      }
+
+      if (cellCount < 7) {
+        logger.log(`Skipping row ${i} - only has ${cellCount} cells`);
+        continue;
+      }
+
+      const sol = await processRow(row, env, context).catch((err: unknown) => {
+        logger.error(`Error processing row ${i}`, err);
+        return false;
+      });
       if (sol && sol?.siteId) allSols.push(sol);
     }
 
