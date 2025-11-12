@@ -29,7 +29,7 @@ async function processRow(
   row: Locator,
   env: Record<string, any>,
   context: BrowserContext
-) {
+): Promise<false | Record<string, any>> {
   let sol;
 
   try {
@@ -83,7 +83,13 @@ async function processRow(
     .catch((err: unknown) => {
       logger.error("Failed to save sol", err, sol);
       failCount++;
+      return null;
     });
+
+  if (!newRecord) {
+    return false;
+  }
+
   successCount++;
   logger.log(`Saved sol: ${newRecord.id}`);
 
