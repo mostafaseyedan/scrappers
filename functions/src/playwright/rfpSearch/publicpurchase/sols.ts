@@ -135,11 +135,11 @@ export async function scrapeAllSols(
         continue;
       }
 
-      const sol = await processRow(row, env, context).catch((err: unknown) => {
+      const sol = await processRow(row, env, context).catch((err: unknown): false => {
         logger.error(`Error processing row ${i}`, err);
         return false;
       });
-      if (sol !== false && sol?.siteId) allSols.push(sol);
+      if (sol !== false && sol.siteId) allSols.push(sol);
     }
 
     const prevPage = page.locator(
