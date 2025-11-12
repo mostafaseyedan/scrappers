@@ -139,7 +139,7 @@ export async function scrapeAllSols(
         logger.error(`Error processing row ${i}`, err);
         return false;
       });
-      if (sol && sol?.siteId) allSols.push(sol);
+      if (sol !== false && sol?.siteId) allSols.push(sol);
     }
 
     const prevPage = page.locator(
