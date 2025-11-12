@@ -121,7 +121,14 @@ async function scrapeAllSols(
   let allSols: Record<string, any>[] = [];
 
   await page.waitForTimeout(3000);
-  await page.reload();
+
+  // Click "Go to My Bids" button to navigate to solicitations page
+  const goToBidsBtn = page.locator('button:has-text("Go to My Bids")');
+  if (await goToBidsBtn.isVisible()) {
+    await goToBidsBtn.click();
+    await page.waitForTimeout(2000);
+  }
+
   await page.waitForSelector(".MuiDataGrid-virtualScrollerRenderZone", {
     timeout: 120000,
   });
