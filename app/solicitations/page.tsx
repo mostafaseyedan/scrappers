@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 // Removed unused Select UI imports
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Solicitation } from "./solicitation";
 import queryString from "query-string";
 import { useDebouncedCallback } from "use-debounce";
@@ -22,6 +23,154 @@ import { chat as chatModel } from "@/app/models2";
 
 import styles from "./page.module.scss";
 
+const SOURCE_BRANDING: Record<
+  string,
+  { color: string; logo?: string; textColor?: string }
+> = {
+  biddirect: {
+    color: "#005F9E",
+    logo: "/images/logos/biddirect.png",
+  },
+  bidnetdirect: {
+    color: "#005F9E",
+    logo: "/images/logos/biddirect.png",
+  },
+  bidsync: {
+    color: "#1E3A8A",
+    logo: "/images/logos/bidsync_logo_primary2.png",
+  },
+  bonfirehub: {
+    color: "#FF6B35",
+    logo: "/images/logos/bonfire-wide-card-image.png",
+  },
+  bonfire: {
+    color: "#FF6B35",
+    logo: "/images/logos/bonfire-wide-card-image.png",
+  },
+  BonfireHub: {
+    color: "#FF6B35",
+    logo: "/images/logos/bonfire-wide-card-image.png",
+  },
+  bonafirehub: {
+    color: "#FF6B35",
+    logo: "/images/logos/bonfire-wide-card-image.png",
+  },
+  cammnet: {
+    color: "#6D28D9",
+    logo: "/images/logos/cammnet.png",
+  },
+  commbuys: {
+    color: "#2563EB",
+    logo: "/images/logos/commbuys.gif",
+  },
+  demandstar: {
+    color: "#1F2937",
+    logo: "/images/logos/Demandstar-logo-primary-endorsed-2048x428.png",
+    textColor: "#FFFFFF",
+  },
+  findrfp: {
+    color: "#D97706",
+    logo: "/images/logos/findrfp-logo.gif",
+  },
+  floridabids: {
+    color: "#0EA5E9",
+  },
+  govdirections: {
+    color: "#2563EB",
+    logo: "/images/logos/govdirections-logo.png",
+  },
+  governmentbidders: {
+    color: "#DC2626",
+    logo: "/images/logos/logo_governmentbidders.png",
+    textColor: "#FFFFFF",
+  },
+  highergov: {
+    color: "#0F766E",
+    logo: "/images/logos/highergov_logo.jpg",
+    textColor: "#FFFFFF",
+  },
+  instantmarkets: {
+    color: "#9333EA",
+    logo: "/images/logos/instantmarkets_square_1200x1200.png",
+    textColor: "#FFFFFF",
+  },
+  merx: {
+    color: "#BE123C",
+    textColor: "#FFFFFF",
+  },
+  mygovwatch: {
+    color: "#14B8A6",
+    logo: "/images/logos/mygovwatch.png",
+  },
+  omniapartners: {
+    color: "#111827",
+    logo: "/images/logos/omniapartners.jpg",
+    textColor: "#FFFFFF",
+  },
+  publicpurchase: {
+    color: "#F59E0B",
+    logo: "/images/logos/publicpurchase.png",
+  },
+  rfpmart: {
+    color: "#B91C1C",
+    logo: "/images/logos/rfpmart.png",
+    textColor: "#FFFFFF",
+  },
+  techbids: {
+    color: "#4C1D95",
+    logo: "/images/logos/techbids.svg",
+    textColor: "#FFFFFF",
+  },
+  txsmartbuy: {
+    color: "#B91C1C",
+    logo: "/images/logos/TxSmartBuy_rgb.avif",
+    textColor: "#FFFFFF",
+  },
+  vendorline: {
+    color: "#0EA5E9",
+    logo: "/images/logos/vendorline.png",
+  },
+  vendorlink: {
+    color: "#16A34A",
+    logo: "/images/logos/vendorlink.png",
+  },
+  vendorregistry: {
+    color: "#EA580C",
+    logo: "/images/logos/vendorregistry_en-logo-inverted-rgb-2000px@72ppi.png",
+    textColor: "#FFFFFF",
+  },
+};
+
+const LOGO_VARIANTS: Record<string, "dark" | "muted"> = {
+  vendorregistry: "dark",
+  governmentbidders: "muted",
+};
+
+const FALLBACK_COLORS = [
+  "#2563EB",
+  "#DB2777",
+  "#0EA5E9",
+  "#059669",
+  "#F97316",
+  "#7C3AED",
+  "#DC2626",
+  "#14B8A6",
+  "#F59E0B",
+  "#1D4ED8",
+];
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const pickColor = (key: string) =>
+  FALLBACK_COLORS[hashString(key) % FALLBACK_COLORS.length];
+
 type SearchSolsParams = {
   q?: string;
   limit?: number;
@@ -34,8 +183,9 @@ type ActiveSection = "solicitations" | "logs" | "sources" | "chat";
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("solicitations");
-  const [sols, setSols] = useState<any[]>([]);
-  const [limit] = useState(2000); // Sidebar fetches up to 2000 records
+  const [allSols, setAllSols] = useState<any[]>([]); // Store ALL relevant solicitations
+  const [sols, setSols] = useState<any[]>([]); // Filtered solicitations for display
+  const [limit] = useState(500); // Sidebar fetches up to 500 records (Firestore filters out nonRelevant)
   const [filterFacets, setFilterFacets] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
@@ -47,8 +197,8 @@ export default function Page() {
   const [q, setQ] = useState("");
   const [listError, setListError] = useState("");
   const [sort, setSort] = useState("updated desc");
-  const [totalFiltered, setTotalFiltered] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [, setTotalFiltered] = useState(0);
+  const [, setTotalRecords] = useState(0);
   const [activeSolId] = useState<string>("");
   const [selectedSolId, setSelectedSolId] = useState<string | null>(null);
   const [expandedSolIds, setExpandedSolIds] = useState<string[]>([]);
@@ -58,8 +208,33 @@ export default function Page() {
   const [isListCollapsed, setIsListCollapsed] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [, setCalculatingScores] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(
+    () => new Set()
+  );
   const userContext = useContext(UserContext);
   const getUser = userContext?.getUser;
+
+  // Filter allSols locally based on filters state (instant, no API call)
+  const filteredSols = useMemo(() => {
+    if (!allSols.length) return [];
+
+    let filtered = allSols;
+
+    // Apply cnStatus filter
+    if (filters.cnStatus) {
+      filtered = filtered.filter((sol) => sol.cnStatus === filters.cnStatus);
+    }
+
+    // Apply other filters
+    for (const [key, value] of Object.entries(filters)) {
+      if (key !== "cnStatus" && value) {
+        filtered = filtered.filter((sol) => sol[key] === value);
+      }
+    }
+
+    return filtered;
+  }, [allSols, filters]);
 
   const debouncedSearchSols = useDebouncedCallback(
     async (params: Partial<SearchSolsParams>) => {
@@ -91,53 +266,57 @@ export default function Page() {
   async function searchSols(
     params: Partial<SearchSolsParams> = { filters: {} }
   ) {
-    const {
-      q: paramQ,
-      limit: paramLimit,
-      page: paramPage,
-      sort: paramSort,
-      filters: paramFilters,
-    } = params;
+    setIsLoading(true);
+    try {
+      const {
+        q: paramQ,
+        limit: paramLimit,
+        page: paramPage,
+        sort: paramSort,
+        filters: paramFilters,
+      } = params;
 
-    // Use state if param is undefined
-    const finalLimit = paramLimit ?? limit;
-    const finalPage = paramPage ?? page;
-    const finalSort = paramSort ?? sort;
-    const finalFilters = paramFilters ?? filters;
-    const finalQ = paramQ || q;
+      // Use state if param is undefined
+      const finalLimit = paramLimit ?? limit;
+      const finalPage = paramPage ?? page;
+      const finalSort = paramSort ?? sort;
+      const finalFilters = paramFilters ?? filters;
+      const finalQ = paramQ || q;
 
-    const flattenedFilters = {} as Record<string, any>;
-    for (const [key, value] of Object.entries(finalFilters)) {
-      flattenedFilters[`filters.${key}`] = value;
+      const flattenedFilters = {} as Record<string, any>;
+      for (const [key, value] of Object.entries(finalFilters)) {
+        flattenedFilters[`filters.${key}`] = value;
+      }
+
+      const queryObject = {
+        q: finalQ,
+        limit: finalLimit,
+        page: finalPage,
+        sort: finalSort,
+        ...flattenedFilters,
+      } as Record<string, any>;
+      if (q) delete queryObject["filters.cnStatus"];
+      const urlQueryString = queryString.stringify(queryObject);
+      const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
+      const data = await resp.json();
+      const total = data.total || 0;
+      let dbSols = data.results || [];
+
+      if (dbSols.length > 0) {
+        dbSols = await processIncomingSols(dbSols);
+      }
+
+      setSols(dbSols);
+
+      if (q || Object.keys(finalFilters).length > 0) {
+        setTotalFiltered(total);
+      } else {
+        setTotalFiltered(0);
+        setTotalRecords(total);
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    const queryObject = {
-      q: finalQ,
-      limit: finalLimit,
-      page: finalPage,
-      sort: finalSort,
-      ...flattenedFilters,
-    } as Record<string, any>;
-    if (q) delete queryObject["filters.cnStatus"];
-    const urlQueryString = queryString.stringify(queryObject);
-    const resp = await fetch(`/api/solicitations/search?${urlQueryString}`);
-    const data = await resp.json();
-    const total = data.total || 0;
-    let dbSols = data.results || [];
-
-    if (dbSols.length > 0) {
-      dbSols = await processIncomingSols(dbSols);
-    }
-
-    setSols(dbSols);
-
-    if (q || Object.keys(finalFilters).length > 0) {
-      setTotalFiltered(total);
-    } else {
-      setTotalFiltered(0);
-      setTotalRecords(total);
-    }
-
   }
 
   const getFilterFacets = async () => {
@@ -147,39 +326,41 @@ export default function Page() {
   };
 
   async function getSols() {
-    let sols = await solModel
-      .get({ limit, page, sort, filters })
-      .catch((err: unknown) => {
-        console.error(err);
-        return { error: err instanceof Error ? err.message : String(err) };
-      });
-    const total = sols.total || 0;
+    setIsLoading(true);
+    try {
+      // Fetch ALL relevant solicitations WITHOUT cnStatus filter (for local filtering)
+      const solsResponse = await solModel
+        .get({ limit: 10000, sort, filters: {} }) // No filters - get all relevant records
+        .catch((err: unknown) => {
+          console.error(err);
+          return { error: err instanceof Error ? err.message : String(err) };
+        });
+      const total = solsResponse.total || 0;
 
-    if (sols.error || !sols.results) {
-      setListError(sols.error || "An unknown server error occurred");
-      return;
-    }
+      if (solsResponse.error || !solsResponse.results) {
+        setListError(solsResponse.error || "An unknown server error occurred");
+        return;
+      }
 
-    if (sols.results.length === 0) {
-      setSols([]);
-      setTotalRecords(0);
-      setListError("");
-      return;
-    }
+      if (solsResponse.results.length === 0) {
+        setAllSols([]);
+        setSols([]);
+        setTotalRecords(0);
+        setListError("");
+        return;
+      }
 
-    if (sols.results?.length) {
-      sols = await processIncomingSols(sols.results);
-      setListError("");
-      setSols(sols);
-    }
+      if (solsResponse.results?.length) {
+        const processedSols = await processIncomingSols(solsResponse.results);
+        setListError("");
+        setAllSols(processedSols); // Store ALL solicitations
+        // setSols will be updated by the useEffect watching filteredSols
+      }
 
-    if (Object.keys(filters).length > 0) {
-      setTotalFiltered(total);
-    } else {
-      setTotalFiltered(0);
       setTotalRecords(total);
+    } finally {
+      setIsLoading(false);
     }
-
   }
 
   const refreshSols: (options?: {
@@ -331,6 +512,7 @@ export default function Page() {
     getFilterFacets();
   }, []);
 
+  // Load ALL relevant solicitations once on mount
   useEffect(() => {
     (async () => {
       document.title = `Solicitations | Cendien Recon`;
@@ -342,7 +524,12 @@ export default function Page() {
     return () => {
       // window.removeEventListener("focus", () => refreshSols());
     };
-  }, [filters, q]);
+  }, [q]); // Removed 'filters' - now filters are applied locally via useMemo
+
+  // Update displayed sols when filters change (instant, no API call)
+  useEffect(() => {
+    setSols(filteredSols);
+  }, [filteredSols]);
 
   useEffect(() => {
     refreshSols({ list: true, topBar: false });
@@ -354,9 +541,53 @@ export default function Page() {
     // Don't update URL - it causes unnecessary re-renders and slows down navigation
   };
 
-  const isFilteredView = Boolean(q || Object.keys(filters).length > 0);
-  const matchingTotal = isFilteredView ? totalFiltered : totalRecords;
-  const totalDisplayed = matchingTotal || sols.length;
+  const totalDisplayed = sols.length;
+
+  const groupedSols = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string;
+        label: string;
+        color: string;
+        logo?: string;
+        items: typeof sols;
+      }
+    >();
+
+    sols.forEach((sol) => {
+      const key = sol.site || sol.sourceKey || "unknown";
+      const branding = SOURCE_BRANDING[key] || {};
+      const color = branding.color || pickColor(key);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: sol.site || sol.sourceKey || "Unknown Source",
+          color,
+          logo: branding.logo,
+          items: [],
+        });
+      }
+      groups.get(key)!.items.push(sol);
+    });
+
+    return Array.from(groups.values()).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [sols]);
+
+  const toggleSourceGroup = (key: string) => {
+    setExpandedSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className={styles.page}>
@@ -412,21 +643,90 @@ export default function Page() {
             <div className={styles.pageLayout_leftPanel_list}>
               {listError ? (
                 <p className="p-4 error">{listError}</p>
-              ) : sols?.length ? (
-                sols.map((sol, index) => (
-                  <Solicitation
-                    key={sol.id || `sol-${index}`}
-                    sol={sol}
-                    refreshSols={refreshSols}
-                    onSelectSol={() => handleSelectSol(sol.id)}
-                    isSelected={selectedSolId === sol.id}
-                    expandedSolIds={expandedSolIds}
-                    setExpandedSolIds={setExpandedSolIds}
-                    variant={
-                      expandedSolIds.includes(sol.id) ? "expanded" : "compact"
-                    }
-                  />
-                ))
+              ) : isLoading ? (
+                <div className={styles.pageLayout_leftPanel_loading}>
+                  Loading solicitations…
+                </div>
+              ) : groupedSols.length ? (
+                groupedSols.map((group) => {
+                  const isCollapsed = !expandedSources.has(group.key);
+                  return (
+                    <div
+                      key={group.key}
+                      className={styles.pageLayout_leftPanel_group}
+                    >
+                      <button
+                        type="button"
+                        className={styles.pageLayout_leftPanel_groupHeader}
+                        onClick={() => toggleSourceGroup(group.key)}
+                        aria-expanded={!isCollapsed}
+                        style={{ borderLeftColor: group.color }}
+                      >
+                        <div
+                          className={styles.pageLayout_leftPanel_groupHeaderIconWrap}
+                        >
+                          <ChevronRight
+                            className={`${styles.pageLayout_leftPanel_groupHeaderIcon} ${
+                              !isCollapsed
+                                ? styles.pageLayout_leftPanel_groupHeaderIcon__expanded
+                                : ""
+                            }`}
+                          />
+                        </div>
+                        <div className={styles.pageLayout_leftPanel_groupHeaderTitle}>
+                          <span
+                            className={styles.pageLayout_leftPanel_groupHeaderText}
+                          >
+                            {group.label}
+                          </span>
+                          {group.logo && (
+                            <span
+                              className={styles.pageLayout_leftPanel_groupHeaderLogo}
+                              data-variant={LOGO_VARIANTS[group.key]}
+                            >
+                              <Image
+                                src={group.logo}
+                                alt={`${group.label} logo`}
+                                width={120}
+                                height={40}
+                                loading="lazy"
+                                unoptimized
+                                style={{ height: 18, width: "auto" }}
+                              />
+                            </span>
+                          )}
+                        </div>
+                        {isCollapsed && (
+                          <span
+                            className={styles.pageLayout_leftPanel_groupHeaderCount}
+                          >
+                            {group.items.length}
+                          </span>
+                        )}
+                      </button>
+                      {!isCollapsed && (
+                        <div className={styles.pageLayout_leftPanel_groupList}>
+                          {group.items.map((sol, index) => (
+                            <Solicitation
+                              key={sol.id || `sol-${index}`}
+                              sol={sol}
+                              refreshSols={refreshSols}
+                              onSelectSol={() => handleSelectSol(sol.id)}
+                              isSelected={selectedSolId === sol.id}
+                              expandedSolIds={expandedSolIds}
+                              setExpandedSolIds={setExpandedSolIds}
+                              variant={
+                                expandedSolIds.includes(sol.id)
+                                  ? "expanded"
+                                  : "compact"
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <p className="p-4">No results found</p>
               )}

@@ -72,7 +72,6 @@ export async function PATCH(
   let results;
   let status = 200;
 
-  if (updateData.cnStatus === "notPursuing") updateData.cnType = "nonRelevant";
   if (updateData.publishDate === "") updateData.publishDate = null;
   if (updateData.closingDate === "") updateData.closingDate = null;
 
@@ -147,8 +146,6 @@ export async function PUT(
   const user = await checkSession(req);
   let results = {};
   let status = 200;
-
-  if (updateData.cnStatus === "notPursuing") updateData.cnType = "nonRelevant";
 
   try {
     if (!user) throw new Error("Unauthenticated");

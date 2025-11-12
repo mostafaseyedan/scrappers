@@ -45,6 +45,25 @@ async function test() {
   const page = context.pages()[0];
 
   try {
+    // Add page event listeners for debugging
+    page.on('console', msg => {
+      const type = msg.type();
+      if (type === 'error' || type === 'warning') {
+        console.log(`[Browser ${type}]:`, msg.text());
+      }
+    });
+
+    page.on('pageerror', error => {
+      console.log('[Browser Page Error]:', error.message);
+    });
+
+    // Log page navigation
+    page.on('load', () => {
+      console.log(`📄 Page loaded: ${page.url()}`);
+    });
+
+    console.log("🔍 Starting scraper with debug logging enabled...\n");
+
     const results = await govdirections(
       page,
       {
@@ -57,10 +76,81 @@ async function test() {
       context
     );
 
-    console.log("✅ Test completed successfully!");
+    console.log("\n✅ Test completed successfully!");
     console.log("Results:", JSON.stringify(results, null, 2));
   } catch (error) {
-    console.error("❌ Test failed:", error);
+    console.error("\n❌ Test failed:", error);
+
+    // Capture comprehensive debug info on error
+    try {
+      console.log("\n🔍 [TEST] Detailed Debug Info:");
+      console.log("  Current URL:", page.url());
+      console.log("  Page title:", await page.title().catch(() => "Unable to get title"));
+
+      // List all forms on error
+      const forms = await page.locator("form").all().catch(() => []);
+      console.log(`\n  📋 Forms on page: ${forms.length}`);
+      for (let i = 0; i < forms.length; i++) {
+        const form = forms[i];
+        const id = await form.getAttribute("id").catch(() => null);
+        const action = await form.getAttribute("action").catch(() => null);
+        const visible = await form.isVisible().catch(() => false);
+        console.log(`    Form ${i}: id="${id}", action="${action}", visible=${visible}`);
+      }
+
+      // List all input fields on error
+      const inputs = await page.locator("input").all().catch(() => []);
+      console.log(`\n  📝 Input fields on page: ${inputs.length}`);
+      for (let i = 0; i < Math.min(inputs.length, 15); i++) {
+        const input = inputs[i];
+        const type = await input.getAttribute("type").catch(() => null);
+        const id = await input.getAttribute("id").catch(() => null);
+        const name = await input.getAttribute("name").catch(() => null);
+        const value = await input.getAttribute("value").catch(() => null);
+        const visible = await input.isVisible().catch(() => false);
+        console.log(`    Input ${i}: type="${type}", id="${id}", name="${name}", value="${value}", visible=${visible}`);
+      }
+
+      // List all buttons on error
+      const buttons = await page.locator("button, input[type='submit']").all().catch(() => []);
+      console.log(`\n  🔘 Buttons on page: ${buttons.length}`);
+      for (let i = 0; i < buttons.length; i++) {
+        const button = buttons[i];
+        const type = await button.getAttribute("type").catch(() => null);
+        const value = await button.getAttribute("value").catch(() => null);
+        const text = await button.innerText().catch(() => "");
+        const visible = await button.isVisible().catch(() => false);
+        console.log(`    Button ${i}: type="${type}", value="${value}", text="${text}", visible=${visible}`);
+      }
+
+      // List all select dropdowns on error
+      const selects = await page.locator("select").all().catch(() => []);
+      console.log(`\n  📊 Select dropdowns on page: ${selects.length}`);
+      for (let i = 0; i < selects.length; i++) {
+        const select = selects[i];
+        const name = await select.getAttribute("name").catch(() => null);
+        const id = await select.getAttribute("id").catch(() => null);
+        const visible = await select.isVisible().catch(() => false);
+        console.log(`    Select ${i}: name="${name}", id="${id}", visible=${visible}`);
+      }
+
+      // Get page HTML snippet (first 3000 chars)
+      const bodyHTML = await page.locator("body").innerHTML().catch(() => "Unable to get HTML");
+      console.log(`\n  📄 Page HTML length: ${bodyHTML.length} characters`);
+      if (bodyHTML.length < 3000) {
+        console.log("\n  Full HTML:\n", bodyHTML);
+      } else {
+        console.log("\n  HTML snippet (first 3000 chars):\n", bodyHTML.substring(0, 3000) + "...");
+      }
+
+      // Take screenshot
+      const screenshot = await page.screenshot({ fullPage: false }).catch(() => null);
+      if (screenshot) {
+        console.log("\n  📸 Screenshot captured (not displayed in terminal)");
+      }
+    } catch (debugError) {
+      console.error("  Failed to capture debug info:", debugError);
+    }
   } finally {
     await browser.close();
     console.log("");

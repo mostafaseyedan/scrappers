@@ -26,7 +26,16 @@ export async function GET(
     if (id.startsWith("service")) {
       results = { displayName: id };
     } else {
-      results = await auth.getUser(id);
+      try {
+        results = await auth.getUser(id);
+      } catch (authError: any) {
+        // User was deleted from Firebase Auth, return placeholder
+        if (authError?.code === "auth/user-not-found") {
+          results = { displayName: "Deleted User", uid: id };
+        } else {
+          throw authError;
+        }
+      }
     }
   } catch (error) {
     console.error(`Failed to get from ${COLLECTION} ${id}`, error);

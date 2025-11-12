@@ -92,6 +92,13 @@
       }
     }
 
+    &_loading {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--muted-foreground);
+      font-size: 14px;
+    }
+
     &_collapsedHint {
       position: absolute;
       inset: 0;
@@ -108,6 +115,111 @@
         text-transform: uppercase;
         color: var(--muted-foreground);
       }
+    }
+
+    &_group {
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    &_groupHeader {
+      width: 100%;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 600;
+      color: #000;
+      transition: background 0.2s ease;
+      border-left: 4px solid var(--border);
+
+      &:hover {
+        background: var(--muted);
+      }
+    }
+
+    &_groupHeaderIcon {
+      width: 16px;
+      height: 16px;
+      color: var(--muted-foreground);
+      transition: transform 0.2s ease;
+
+      &__expanded {
+        transform: rotate(90deg);
+      }
+    }
+
+    &_groupHeaderIconWrap {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &_groupHeaderTitle {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    &_groupHeaderText {
+      font-size: 16px;
+      font-weight: 600;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    &_groupHeaderLogo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      max-height: 24px;
+
+      &[data-variant="dark"] {
+        background: #1f2937;
+        border-color: #1f2937;
+      }
+
+      &[data-variant="muted"] {
+        background: #4b5563;
+        border-color: #4b5563;
+      }
+
+      img {
+        max-height: 18px;
+        max-width: 80px;
+        object-fit: contain;
+        display: block;
+      }
+    }
+
+    &_groupHeaderCount {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--foreground);
+      background: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    &_groupList {
+      padding: 0 0 8px;
     }
   }
 

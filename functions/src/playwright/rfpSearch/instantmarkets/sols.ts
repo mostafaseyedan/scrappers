@@ -20,6 +20,9 @@ async function login(page: Page, user: string, pass: string) {
   await page.fill("input[placeholder=\"Enter your email address\"]", user);
   await page.fill("input[placeholder=\"Enter your password\"]", pass);
   await page.click("button:has-text('Login')");
+
+  // Wait for navigation after login
+  await page.waitForTimeout(2000);
 }
 
 async function processRow(
@@ -51,7 +54,7 @@ async function processRow(
       .innerText(),
     location: location.substr(1, location.length - 2),
     issuer,
-    closingDate: sanitizeDateString(closingDate),
+    closingDate: closingDate === "N/A" ? null : sanitizeDateString(closingDate),
     site: "instantmarkets",
     siteUrl: "https://www.instantmarkets.com" + siteUrl,
     siteId,
@@ -122,22 +125,47 @@ async function scrapeAllSols(
       if (sol) allSols.push(sol);
     }
 
-    const popupDismiss = await page.locator(
-      "button:has-text(\"Don't Ask Again\")"
-    );
-    const popupDismissCount = await popupDismiss.count();
-    if (popupDismissCount > 0) await popupDismiss.click();
+    // Wait for any Angular overlay/modal to disappear completely
+    try {
+      await page.waitForFunction(() => {
+        const overlayPane = document.querySelector('.cdk-overlay-pane');
+        if (!overlayPane) return true;
+        const style = window.getComputedStyle(overlayPane);
+        return style.pointerEvents === 'none';
+      }, { timeout: 3000 });
+      console.log("  ✓ Overlay cleared");
+    } catch {
+      console.log("  ⚠️ Overlay still present, proceeding anyway");
+    }
 
-    await page.waitForTimeout(1000);
-
+    // Check for next page button
     const nextPage = page.locator("pagination-async button:has-text(\"Next \")");
     const nextPageCount = await nextPage.count();
+    console.log(`  Looking for Next button: found ${nextPageCount}`);
 
     if (nextPageCount === 0) {
+      console.log("  No Next button found - last page reached");
       lastPage = true;
     } else {
-      await nextPage.click();
-      await page.waitForTimeout(1000);
+      try {
+        // Check if button is enabled
+        const isDisabled = await nextPage.getAttribute("disabled");
+        if (isDisabled !== null) {
+          console.log("  Next button is disabled - last page reached");
+          lastPage = true;
+        } else {
+          console.log("  Clicking Next button...");
+          // Use force:true to bypass actionability checks if modal overlay is blocking
+          await nextPage.click({ timeout: 5000, force: true });
+          await page.waitForTimeout(2000);
+          console.log("  ✓ Navigated to next page");
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.log(`  ⚠️ Failed to click Next button: ${errorMsg}`);
+        console.log("  Assuming last page reached");
+        lastPage = true;
+      }
     }
     currPage++;
   } while (!lastPage);

@@ -24,34 +24,45 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const includeNonRelevant = searchParams.get("includeNonRelevant") === "true";
 
-    // Fetch records from Firestore
-    const records = await fireGet(COLLECTION, queryOptions);
+    // Extract cnStatus filter to apply in-memory
+    const statusFilter = queryOptions.filters?.cnStatus;
+    const otherFilters = { ...queryOptions.filters };
+    delete otherFilters.cnStatus;
 
-    // Filter out nonRelevant items unless explicitly requested to include them
-    const filteredRecords = includeNonRelevant
-      ? records
-      : records.filter((record: any) => record.cnType !== "nonRelevant");
+    // Fetch ALL records with sorting, no status filter yet
+    const fetchOptions = {
+      ...queryOptions,
+      filters: otherFilters, // Remove cnStatus from Firestore query
+      limit: 3000, // Fetch enough to get all relevant records (174 relevant out of ~3000 total)
+    };
 
-    // Count total matching records
-    let totalCount: number;
-    if (includeNonRelevant) {
-      // When including nonRelevant, just count what we fetched
-      totalCount = filteredRecords.length;
-    } else {
-      // For UI requests, count all non-relevant records
-      const allRecords = await fireGet(COLLECTION, {
-        ...queryOptions,
-        limit: 10000, // Fetch large batch to count properly
-      });
-      totalCount = allRecords.filter(
-        (record: any) => record.cnType !== "nonRelevant"
-      ).length;
-    }
+    console.log('Fetching with options:', JSON.stringify(fetchOptions));
+    const allRecords = await fireGet(COLLECTION, fetchOptions);
+    console.log(`Fetched ${allRecords.length} records from Firestore`);
+
+    // Filter out nonRelevant in memory (fast for small dataset)
+    const relevantRecords = includeNonRelevant
+      ? allRecords
+      : allRecords.filter((r: any) => r.cnType !== "nonRelevant");
+    console.log(`After cnType filter: ${relevantRecords.length} relevant records`);
+
+    // Apply cnStatus filter in memory
+    const filteredRecords = statusFilter
+      ? relevantRecords.filter((r: any) => r.cnStatus === statusFilter)
+      : relevantRecords;
+    console.log(`After cnStatus filter: ${filteredRecords.length} records (status: ${statusFilter || 'none'})`);
+
+    // Apply pagination in memory
+    const page = queryOptions.page || 1;
+    const limit = queryOptions.limit || 500;
+    const startIndex = (page - 1) * limit;
+    const paginatedRecords = filteredRecords.slice(startIndex, startIndex + limit);
+    console.log(`After pagination: ${paginatedRecords.length} records (page ${page}, limit ${limit})`);
 
     results = {
-      total: totalCount,
-      count: filteredRecords.length,
-      results: filteredRecords,
+      total: filteredRecords.length,
+      count: paginatedRecords.length,
+      results: paginatedRecords,
     };
   } catch (error) {
     console.error(`Failed to get ${COLLECTION}`, error);
