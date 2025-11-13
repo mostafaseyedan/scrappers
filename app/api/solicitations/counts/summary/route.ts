@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const countByType = (type: string) =>
       relevantRecords.filter((r: any) => r.cnType === type).length;
 
-    results = {
+    const statusCounts = {
       new: countByStatus("new"),
       researching: countByStatus("researching"),
       pursuing: countByStatus("pursuing"),
@@ -46,6 +46,10 @@ export async function GET(req: NextRequest) {
       awarded: countByStatus("awarded"),
       notWon: countByStatus("notWon"),
       notPursuing: countByStatus("notPursuing"),
+    };
+
+    results = {
+      ...statusCounts,
       erp: countByType("erp"),
       staffing: countByType("staffing"),
       itSupport: countByType("itSupport"),
@@ -56,7 +60,25 @@ export async function GET(req: NextRequest) {
       total: relevantRecords.length,
     };
 
+    // DIAGNOSTIC: Check for missing/invalid cnStatus
+    const sumOfStatusCounts = Object.values(statusCounts).reduce((a: number, b: number) => a + b, 0);
+    const missingStatusCount = relevantRecords.length - sumOfStatusCounts;
+
+    if (missingStatusCount > 0) {
+      const invalidRecords = relevantRecords.filter((r: any) =>
+        !['new', 'researching', 'pursuing', 'preApproval', 'submitted', 'negotiation', 'monitor', 'foia', 'awarded', 'notWon', 'notPursuing'].includes(r.cnStatus)
+      );
+      console.warn(`[Counts] WARNING: ${missingStatusCount} records with missing/invalid cnStatus!`);
+      console.warn(`[Counts] Invalid status examples:`, invalidRecords.slice(0, 5).map((r: any) => ({
+        id: r.id,
+        cnStatus: r.cnStatus,
+        cnType: r.cnType,
+        title: r.title?.substring(0, 50)
+      })));
+    }
+
     console.log("[Counts] Results:", results);
+    console.log("[Counts] Sum of individual statuses:", sumOfStatusCounts, "Total:", relevantRecords.length);
   } catch (error) {
     console.error(`Failed to get ${COLLECTION} count`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
